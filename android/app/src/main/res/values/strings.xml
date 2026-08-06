@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">观己</string>
+    <string name="title_activity_main">观己</string>
+    <string name="package_name">com.guanji.app</string>
+    <string name="custom_url_scheme">com.guanji.app</string>
+    <string name="widget_name">观己</string>
+    <string name="widget_action">记录一下</string>
+    <string name="widget_desc">一键打开观己并记录</string>
+    <string name="widget_today_default">今天还没记录</string>
+    <string name="widget_today_status">今天已记录 %1$d 次</string>
+    <string name="widget_open_label">打开记录面板</string>
+
+    <!-- 数据看板 -->
+    <string name="stats_title">观己 · 数据看板</string>
+    <string name="stats_week_unit">次 / 周</string>
+    <string name="stats_today">今日 %1$d 次</string>
+    <string name="stats_streak">连续 %1$d 天</string>
+    <string name="stats_delta">较上周 %1$s</string>
+    <string name="stats_delta_na">较上周 —</string>
+    <string name="stats_desc">查看本周记录概览</string>
+
+    <!-- 本周节奏 -->
+    <string name="week_title">观己 · 本周节奏</string>
+    <string name="week_day_mon">一</string>
+    <string name="week_day_tue">二</string>
+    <string name="week_day_wed">三</string>
+    <string name="week_day_thu">四</string>
+    <string name="week_day_fri">五</string>
+    <string name="week_day_sat">六</string>
+    <string name="week_day_sun">日</string>
+    <string name="week_desc">查看本周每天记录次数</string>
+
+    <!-- 连续进度 -->
+    <string name="streak_title">观己 · 连续记录</string>
+    <string name="streak_unit">天</string>
+    <string name="streak_progress">距离 %1$d 天还有 %2$d 天</string>
+    <string name="streak_zero">今天开始也不迟</string>
+    <string name="streak_desc">查看连续记录进度</string>
+
+    <!-- 今日卡片 -->
+    <string name="today_title">观己 · 今天</string>
+    <string name="today_done">今天已记录 %1$d 次</string>
+    <string name="today_done_hint">记录本身就是觉察</string>
+    <string name="today_pending">今天还没记录</string>
+    <string name="today_pending_hint">想记就记，不想也没关系</string>
+    <string name="today_desc">查看今日记录状态</string>
+</resources>

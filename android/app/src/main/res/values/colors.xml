@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 浅色模式：Apple 风格配色（与 Web 层一致） -->
+    <color name="widget_card">#FFFFFF</color>
+    <color name="widget_ink">#000000</color>
+    <color name="widget_ink2">#8E8E93</color>
+    <color name="widget_ink3">#C7C7CC</color>
+    <color name="widget_accent">#007AFF</color>
+    <color name="widget_bar">#D9E5F5</color>
+</resources>

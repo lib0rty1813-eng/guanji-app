@@ -1,0 +1,64 @@
+package com.guanji.app;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.webkit.WebView;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+
+    /** 桌面小组件点击标记：打开 App 后弹出记录面板 */
+    public static final String EXTRA_GUANJI_RECORD = "guanji_record";
+    /** 桌面小组件点击标记：打开 App 后自动保存一条「就现在」默认记录 */
+    public static final String EXTRA_GUANJI_QUICK_RECORD = "guanji_quick_record";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        handleWidgetIntent(getIntent());
+    }
+
+    /* 自定义插件注册必须在 bridge 创建（super.load）之前 */
+    @Override
+    public void load() {
+        registerPlugin(WidgetStatsPlugin.class);   // #32-#36：小组件统计同步
+        super.load();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleWidgetIntent(intent);
+    }
+
+    private void handleWidgetIntent(Intent intent) {
+        if (intent == null) return;
+        if (intent.getBooleanExtra(EXTRA_GUANJI_RECORD, false)) {
+            intent.removeExtra(EXTRA_GUANJI_RECORD);
+            runWhenReady("window.__guanjiOpenRecord ? (window.__guanjiOpenRecord(), 'ok') : 'pending'");
+        } else if (intent.getBooleanExtra(EXTRA_GUANJI_QUICK_RECORD, false)) {
+            intent.removeExtra(EXTRA_GUANJI_QUICK_RECORD);
+            runWhenReady("window.__guanjiQuickRecord ? (window.__guanjiQuickRecord(), 'ok') : 'pending'");
+        }
+    }
+
+    /* 等 WebView 就绪后执行 JS（冷启动/热启动均可，最多重试 40 次约 12 秒）。
+       evaluateJavascript 回调值带 JSON 引号（如 "ok"），需匹配带引号形式 */
+    private void runWhenReady(String jsExpr) {
+        final WebView wv = bridge != null ? bridge.getWebView() : null;
+        if (wv == null) return;
+        wv.postDelayed(new Runnable() {
+            int tries = 0;
+
+            @Override
+            public void run() {
+                tries++;
+                wv.evaluateJavascript(jsExpr, value -> {
+                    boolean ok = value != null && value.trim().equals("\"ok\"");
+                    if (!ok && tries < 40) wv.postDelayed(this, 300);
+                });
+            }
+        }, 500);
+    }
+}

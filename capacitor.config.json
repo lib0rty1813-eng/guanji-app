@@ -1,0 +1,12 @@
+{
+  "appId": "com.guanji.app",
+  "appName": "观己",
+  "webDir": "www",
+  "android": {
+    "androidSystemBarStyle": {
+      "style": "light",
+      "color": "#F2F2F7",
+      "colorDark": "#121212"
+    }
+  }
+}

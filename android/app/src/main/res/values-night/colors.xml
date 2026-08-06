@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色模式：Material #121212 体系（与 Web 层一致） -->
+    <color name="widget_card">#1E1E1E</color>
+    <color name="widget_ink">#FFFFFF</color>
+    <color name="widget_ink2">#B0B0B4</color>
+    <color name="widget_ink3">#6E6E73</color>
+    <color name="widget_accent">#0A84FF</color>
+    <color name="widget_bar">#2C3A4A</color>
+</resources>

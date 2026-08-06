@@ -1,0 +1,35 @@
+# 依赖
+node_modules/
+
+# Android 构建产物 / 机器相关
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/.cxx/
+android/app/release/
+
+# Capacitor 同步生成（由 npx cap sync 重新生成）
+android/app/src/main/assets/
+
+# 调试残留
+build-err*.txt
+logcat*.txt
+build-log.txt
+*.log
+
+# 截图存档
+screenshots/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 密钥/凭据（防止误提交）
+*.key
+*.pem
+.env
+.env.*

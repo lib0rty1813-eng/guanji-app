@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>观己 · UI 原型</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23007AFF'/%3E%3Cpath d='M32 18c-6 0-10 4.2-10 9.8 0 6.5 7.5 11.8 9.4 13.1a1.2 1.2 0 0 0 1.2 0c1.9-1.3 9.4-6.6 9.4-13.1C42 22.2 38 18 32 18Zm0 13.3a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css?v=18">
+<script>
+  /* 防闪烁：在渲染前根据 localStorage + 系统设置确定主题 */
+  (function () {
+    try {
+      var t = localStorage.getItem('guanji_theme') || 'system';
+      var dark = t === 'dark' || (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone">
+
+    <!-- 状态栏 -->
+    <div class="statusbar">
+      <span class="sb-time">9:41</span>
+      <span class="sb-icons">
+        <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#000000"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#000000"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#000000"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#000000"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11"><path d="M7.5 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="#000000"/><path d="M7.5 6.5C5.5 6.5 3.8 7.7 3 9.4l1.8.9c.5-1 1.5-1.7 2.7-1.7s2.2.7 2.7 1.7l1.8-.9c-.8-1.7-2.5-2.9-4.5-2.9Z" fill="#000000"/><path d="M7.5 3.4C3.9 3.4.9 5.3-.2 8.1l1.9 1c.9-2 2.9-3.3 5.8-3.3s4.9 1.3 5.8 3.3l1.9-1C14.1 5.3 11.1 3.4 7.5 3.4Z" fill="#000000"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12"><rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="#000000" fill="none"/><rect x="2" y="2" width="15" height="8" rx="1.8" fill="#000000"/><rect x="21.8" y="4" width="1.8" height="4" rx="0.9" fill="#000000"/></svg>
+      </span>
+    </div>
+
+    <!-- 屏幕：首页看板 -->
+    <main class="screen" id="screen-home">
+      <header class="home-header">
+        <div>
+          <p class="eyebrow" id="todayLabel">8月5日 · 周三</p>
+          <h1 class="screen-title" id="greetingTitle">今天，感觉如何？</h1>
+          <p class="header-sub hidden" id="greetingTip"></p>
+        </div>
+        <button class="icon-btn" id="backfillBtn" title="补记">
+          <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><rect x="2" y="3.5" width="16" height="14" rx="3" stroke="#000000" stroke-width="1.5"/><path d="M2 8h16M6.5 1.8v3.4M13.5 1.8v3.4" stroke="#000000" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+
+      <!-- 今日焦点区：无卡片，大数字为主角 -->
+      <div class="focus-row">
+        <div class="focus-left">
+          <span class="focus-num"><span id="todayNumVal">0</span><small> 次</small></span>
+        </div>
+        <button class="record-btn" id="recordBtn">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          记录
+        </button>
+      </div>
+      <div class="focus-meta">
+        <p class="focus-status" id="todayStatus">今天 · 尚未记录</p>
+        <p class="focus-sub" id="todaySub">一切如常，无需评判</p>
+      </div>
+
+      <hr class="rule">
+
+      <!-- 统计行：无卡片，竖线分隔 -->
+      <div class="stats-row">
+        <div class="stat-cell">
+          <p class="stat-num" id="weekCount">—</p>
+          <p class="stat-label">本周次数</p>
+        </div>
+        <div class="stat-cell">
+          <p class="stat-num down" id="weekDelta">—</p>
+          <p class="stat-label">较上周</p>
+        </div>
+        <div class="stat-cell">
+          <p class="stat-num plain" id="streakNum">—</p>
+          <p class="stat-label">连续天数</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <p class="card-title">次数趋势</p>
+            <p class="card-sub">每天次数</p>
+          </div>
+          <div class="seg-row mini" id="chartSeg">
+            <span class="seg-slide" id="chartSegSlide"></span>
+            <button class="seg active" data-days="14">14 天</button>
+            <button class="seg" data-days="30">30 天</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="areaChart"></div>
+        <div class="month-summary" id="monthSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><p class="card-title">时段分布</p><p class="card-sub">哪段时间最常出现</p></div>
+        <div class="ring-row">
+          <div class="ring-wrap" id="ringChart"></div>
+          <div class="ring-list" id="ringList"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><p class="card-title">最近记录</p><p class="card-sub">最近 7 条</p></div>
+        <div id="recentList"></div>
+      </div>
+
+      <p class="disclaimer" style="text-align:center">数据只保存在这台设备上</p>
+    </main>
+
+    <!-- 屏幕：AI 分析 -->
+    <main class="screen hidden" id="screen-analysis">
+      <header class="screen-header">
+        <div>
+          <p class="eyebrow">AI 洞察</p>
+          <h1 class="screen-title">回顾与建议</h1>
+          <p class="header-sub">基于你的记录，生成温和的观察</p>
+        </div>
+      </header>
+
+      <div class="card empty-card" id="analysisEmpty">
+        <p class="empty-text">让 AI 看看你这段时间的节奏，<br>找出藏在数据里的模式。</p>
+        <button class="btn-primary" id="genBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5v13M1.5 8h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          生成本周分析
+        </button>
+      </div>
+
+      <div id="analysisResult" class="hidden">
+        <!-- 报告由 JS 渲染 -->
+      </div>
+
+      <div id="askSection" class="hidden">
+        <p class="ask-title">想再聊聊什么？</p>
+        <div class="chips" id="askChips">
+          <button class="chip" data-q="我的频率算高吗？">我的频率算高吗？</button>
+          <button class="chip" data-q="怎么减少深夜看片？">怎么减少深夜看片？</button>
+          <button class="chip" data-q="压力大时怎么办？">压力大时怎么办？</button>
+        </div>
+        <div id="askAnswer" class="ask-answer hidden"></div>
+      </div>
+    </main>
+
+    <!-- 屏幕：我的 -->
+    <main class="screen hidden" id="screen-me">
+      <header class="screen-header">
+        <div>
+          <p class="eyebrow">设置</p>
+          <h1 class="screen-title">我的</h1>
+        </div>
+      </header>
+
+      <div class="card">
+        <p class="card-title" style="margin-bottom:14px">隐私说明</p>
+        <ul class="privacy-list">
+          <li><span class="dot"></span>所有记录只保存在这台设备上，不上传云端</li>
+          <li><span class="dot"></span>AI 分析时，仅上传聚合后的统计特征（每周次数、时段分布等），不会上传单条记录</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <p class="card-title" style="margin-bottom:14px">外观</p>
+        <div class="chips" id="themeChips">
+          <button class="chip active" data-theme-mode="system">跟随系统</button>
+          <button class="chip" data-theme-mode="light">浅色</button>
+          <button class="chip" data-theme-mode="dark">深色</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-title" style="margin-bottom:14px">AI 设置</p>
+        <p class="field-label">提供商</p>
+        <div class="chips" id="providerChips">
+          <button class="chip active" data-provider="deepseek">DeepSeek</button>
+          <button class="chip" data-provider="openai">OpenAI</button>
+          <button class="chip" data-provider="custom">自定义</button>
+        </div>
+        <p class="field-label">Base URL</p>
+        <input type="text" id="aiBaseUrlInput" placeholder="https://api.deepseek.com" autocomplete="off" spellcheck="false">
+        <p class="field-label">模型</p>
+        <input type="text" id="aiModelInput" placeholder="deepseek-chat" autocomplete="off" spellcheck="false">
+        <p class="field-label">API 密钥</p>
+        <div class="picker-row">
+          <input type="password" id="apiKeyInput" placeholder="sk-…" autocomplete="off">
+          <button class="btn-ghost" id="apiKeySave" style="padding:11px 20px;border-radius:12px">保存</button>
+        </div>
+        <button class="btn-primary" id="aiTestBtn" style="width:100%;margin-top:14px">测试连接</button>
+        <p class="disclaimer" style="margin-top:12px" id="aiTestStatus">密钥与配置只保存在这台设备上。AI 分析时仅上传聚合统计特征，不会上传单条记录。</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title" style="margin-bottom:6px">记录提醒</p>
+        <label class="switch-row">
+          <span>每日温和提醒</span>
+          <span class="switch" id="reminderSwitch"><span class="knob"></span></span>
+        </label>
+        <div class="picker-row hidden" id="reminderTimeRow">
+          <input type="time" id="reminderTime" value="21:00">
+        </div>
+        <p class="disclaimer" style="margin-top:12px">到点提醒你记录一下，只发本机通知，不上传任何数据。不想被打扰随时可关。</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title" style="margin-bottom:6px">正向反馈</p>
+        <label class="switch-row">
+          <span>连续记录里程碑肯定</span>
+          <span class="switch" id="positiveSwitch"><span class="knob"></span></span>
+        </label>
+        <p class="disclaimer" style="margin-top:12px">连续记录达到 7 / 30 天时，首页出现一句温和的肯定。</p>
+      </div>
+
+      <div class="card">
+        <p class="card-title" style="margin-bottom:6px">数据管理</p>
+        <button class="row-btn" id="exportBtn">
+          <span>导出数据</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="#C7C7CC" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="row-btn danger" id="clearBtn">
+          <span>清除全部数据</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="#007AFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="row-btn" id="restoreBtn">
+          <span>恢复演示数据</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="#C7C7CC" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div class="card about-card">
+        <div class="logo-mark">
+          <svg width="26" height="26" viewBox="0 0 46 46"><path d="M23 12c-6 0-10 4.2-10 9.8 0 6.5 7.5 11.8 9.4 13.1a1.2 1.2 0 0 0 1.2 0c1.9-1.3 9.4-6.6 9.4-13.1C33 16.2 29 12 23 12Zm0 13.3a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" fill="#FFFFFF"/></svg>
+        </div>
+        <p class="about-name">观己</p>
+        <p class="about-ver">v2.5 · 数据仅存本地</p>
+      </div>
+    </main>
+
+    <!-- 底部 Tab（悬浮胶囊 + 滑块跟踪） -->
+    <nav class="tabbar" id="tabbar">
+      <span class="tab-slide" id="tabSlide"></span>
+      <button class="tab active" data-screen="home">
+        <span class="tab-pill">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3.5 10.2 11 4l7.5 6.2V18a1.5 1.5 0 0 1-1.5 1.5h-4V14h-4v5.5H5A1.5 1.5 0 0 1 3.5 18v-7.8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          首页
+        </span>
+      </button>
+      <button class="tab" data-screen="analysis">
+        <span class="tab-pill">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 18.5V12M9.5 18.5V5.5M15 18.5V9M20 18.5H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          分析
+        </span>
+      </button>
+      <button class="tab" data-screen="me">
+        <span class="tab-pill">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="6.5" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 19c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          我的
+        </span>
+      </button>
+    </nav>
+
+    <!-- 记录面板 -->
+    <div class="backdrop hidden" id="sheetBackdrop"></div>
+    <section class="sheet hidden" id="recordSheet">
+      <div class="sheet-grab" id="recordGrab"><div class="sheet-handle"></div></div>
+      <p class="sheet-title">记录</p>
+
+      <div id="stepTime">
+        <p class="field-label">时间</p>
+        <div class="seg-row" id="timeSegRow">
+          <span class="seg-slide" id="timeSegSlide"></span>
+          <button class="seg active" id="nowSeg">就现在</button>
+          <button class="seg" id="customSeg">补记</button>
+        </div>
+        <p class="time-display" id="timeDisplay"></p>
+        <div class="picker-row hidden" id="pickerRow">
+          <input type="date" id="pickDate">
+          <input type="time" id="pickTime">
+        </div>
+      </div>
+
+      <div id="stepDetails" class="hidden">
+        <p class="field-label">时长</p>
+        <div class="slider-row">
+          <input type="range" id="durSlider" min="0" max="60" step="5" value="0">
+          <span class="dur-label" id="durLabel">未记录</span>
+        </div>
+
+        <p class="field-label">情绪（可多选）</p>
+        <div class="chips" id="moodChips"></div>
+
+        <p class="field-label">诱因（可多选）</p>
+        <div class="chips" id="triggerChips"></div>
+
+        <label class="switch-row">
+          <span>这次有伴随看片吗</span>
+          <span class="switch" id="mediaSwitch"><span class="knob"></span></span>
+        </label>
+
+        <p class="field-label">备注（可选）</p>
+        <textarea id="noteInput" rows="2" placeholder="想记点什么，就写点什么"></textarea>
+      </div>
+
+      <div class="sheet-actions" id="sheetActions">
+        <button class="btn-ghost hidden" id="prevBtn">上一步</button>
+        <button class="btn-primary" id="nextBtn">下一步</button>
+        <button class="btn-primary hidden" id="saveBtn">存为记录</button>
+      </div>
+    </section>
+
+    <!-- 日历视图（历史记录日历） -->
+    <section class="calendar-sheet hidden" id="calendarSheet">
+      <div class="sheet-grab" id="calendarGrab"><div class="sheet-handle"></div></div>
+      <div class="cal-head">
+        <button class="cal-nav" id="calPrev" aria-label="上个月">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4l-5 5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="cal-title" id="calTitle">2026年8月</span>
+        <button class="cal-nav" id="calNext" aria-label="下个月">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="cal-today" id="calToday">回今天</button>
+      </div>
+      <div class="cal-week">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-divider"></div>
+      <div class="cal-day-detail" id="calDayDetail"></div>
+      <div class="cal-actions">
+        <button class="btn-primary" id="calAddBtn" style="flex:1">
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          补记这一天
+        </button>
+        <button class="btn-ghost" id="calClose">完成</button>
+      </div>
+    </section>
+
+    <!-- 确认弹层 -->
+    <div class="backdrop hidden" id="dialogBackdrop">
+      <div class="dialog">
+        <p class="dialog-title">清除全部数据？</p>
+        <p class="dialog-text">所有记录将永久删除，且无法找回。数据只在本机，清除后无法恢复。</p>
+        <div class="dialog-actions">
+          <button class="btn-ghost" id="dialogCancel">取消</button>
+          <button class="btn-danger" id="dialogConfirm">清除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加自定义情绪/诱因（#24） -->
+    <div class="backdrop hidden" id="addBackdrop">
+      <div class="dialog">
+        <p class="dialog-title" id="addDialogTitle">添加情绪</p>
+        <input type="text" id="addInput" maxlength="8" placeholder="输入名称（不超过 6 个字）" autocomplete="off">
+        <div class="dialog-actions">
+          <button class="btn-ghost" id="addCancel">取消</button>
+          <button class="btn-primary" id="addConfirm">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast hidden" id="toast"></div>
+  </div>
+</div>
+
+<script src="app.js?v=18"></script>
+</body>
+</html>
