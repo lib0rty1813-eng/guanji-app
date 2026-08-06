@@ -9,19 +9,52 @@
 - **记录**：一键快速记录、完整记录面板（情绪 / 诱因 / 时长 / 看片 / 备注）、补记历史日期、编辑与删除
 - **首页**：今日概览、时段分布环图、次数趋势（14 / 30 天）、本月对比、最近记录
 - **历史日历**：月历角标、选天明细、补记直达
-- **AI 分析**：仅上传聚合特征，生成温和非评判的报告（模式识别 / 情绪观察 / 诱因分布 / 温和建议），支持追问
-- **AI 多提供商**：默认 DeepSeek，可选 OpenAI 或自定义（Base URL / 模型 / API 密钥按提供商分别保存，含连接测试）
+- **AI 分析**：仅上传聚合特征，生成温和非评判的报告（模式识别 / 情绪观察 / 诱因分布 / 温和建议），支持追问；记录变更后报告自动刷新
+- **AI 多提供商**：默认 DeepSeek，可选 OpenAI 或自定义（Base URL / 模型 / API 密钥**按提供商分别保存**，含连接测试）
 - **桌面小组件（2x2，共 5 个）**：一键快速记录、数据看板、本周节奏、连续进度、今日卡片
 - **每日温和提醒**：可选，默认关闭
 - **深色模式**：跟随系统 + 手动覆盖
-- **记录编辑后报告自动刷新**：保证分析时效性
+
+## 设计风格
+
+界面遵循 Apple 设计语言，注重克制与温度：
+
+- **毛玻璃悬浮 Tab 栏**：底部胶囊形悬浮导航，半透明毛玻璃（`backdrop-filter: blur`）+ 细边框 + 柔和投影，内容在其下滚动
+- **卡片式布局**：圆角卡片 + 轻盈层级（`--shadow-1` ~ `--shadow-4`），信息密度克制，留白充足
+- **专注排版**：大数字突出核心数据（今日次数、连续天数），辅助信息用次级灰（`--ink-2`）退后
+- **弹性动效**：统一弹簧曲线（`--ease-spring`）——Tab 滑块跟踪、分段控件滑块、弹层进出场（上滑进入、下滑淡出）、环图分段动画
+- **手势交互**：弹层小横杠可拖拽关闭（超阈值下滑关闭、未达阈值回弹），点击空白处关闭
+- **深色模式**：Material #121212 标准，全色板变量化（含图表色），防闪烁加载
+- **动效降级**：尊重系统 `prefers-reduced-motion`，动画时长压缩
+- **大字体适配**：系统字体缩放下布局保持单行不换行、关键按钮不压缩
 
 ## 隐私设计（核心承诺）
 
-- **数据仅存本地**：所有记录保存在设备本地（Capacitor Preferences / WebView 存储），不注册账号、不上传云端
+- **数据仅存本地**：所有记录保存在设备本地（Capacitor Preferences），不注册账号、不上传云端
 - **AI 只接收聚合特征**：发送给 AI 的只有统计摘要（本周次数、时段分布、情绪/诱因占比、连续天数等），**不含任何单条记录**，更不含时间、备注等原始内容
-- **密钥也只在本地**：API 密钥按提供商分别保存在本机，连接测试与调用均从设备直连
+- **密钥也只在本地**：API 密钥按提供商分别保存在本机，调用从设备直连
 - 分析报告附隐私说明，App 内「我的」页可随时查看
+
+## 安卓 App 安装与使用
+
+> 面向普通用户。目前通过 APK 直接安装（未上架应用商店）。
+
+### 安装
+
+1. 构建或获取 `app-debug.apk`（见下方「从源码构建」，产物在 `android/app/build/outputs/apk/debug/`）
+2. 把 APK 传到手机（数据线 / 微信 / 网盘均可）
+3. 手机上点击 APK 安装；若提示「未知来源」，在设置中允许本次安装（各厂商路径不同，一般为「设置 → 安全 → 允许安装未知应用」）
+4. 打开「观己」，桌面长按可添加 5 种 2x2 小组件
+
+### 首次使用
+
+- 首页为空时，可到「我的 → 恢复演示数据」体验完整功能（随时可清除）
+- **配置 AI 分析**（可选，需自备密钥）：
+  1. 「我的 → AI 设置」选择提供商（DeepSeek 默认 / OpenAI / 自定义）
+  2. 填入 Base URL、模型和 API 密钥（DeepSeek 密钥在 [platform.deepseek.com](https://platform.deepseek.com) 申请）
+  3. 点「测试连接」验证，再点「保存」——密钥按提供商分别保存，切换提供商自动回显各自配置
+  4. 回到「分析」页，AI 自动生成报告
+- 记录提醒：「我的 → 记录提醒」可设置每日温和提醒（默认关闭）
 
 ## 技术栈
 
@@ -32,16 +65,18 @@
 | 原生 | Kotlin / Java（自定义插件 + 5 个 AppWidgetProvider） |
 | 存储 | @capacitor/preferences（本地） |
 | AI | OpenAI 兼容接口（DeepSeek 默认 / OpenAI / 自定义） |
-| 持久化同步 | WebView → SharedPreferences（自定义 Capacitor 插件，驱动小组件） |
+| 小组件联动 | WebView → SharedPreferences 同步（自定义 Capacitor 插件） |
 
-## 环境要求
+## 从源码构建（开发者）
+
+### 环境要求
 
 - Node.js 18+
 - JDK 17 或 21
 - Android SDK（`ANDROID_HOME` 环境变量）
-- 安卓 7.0（API 24）以上设备（本地安装需开启「允许安装未知来源」）
+- 安卓 7.0（API 24）以上设备
 
-## 构建
+### 构建
 
 ```bash
 # 1. 安装依赖
@@ -55,14 +90,13 @@ cd android
 gradlew.bat assembleDebug        # Windows
 ./gradlew assembleDebug           # macOS / Linux
 
-# 4. 产物
-# android/app/build/outputs/apk/debug/app-debug.apk
+# 4. 产物：android/app/build/outputs/apk/debug/app-debug.apk
 
 # 5. 安装到已连接设备
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-浏览器调试（无需安卓环境）：
+### 浏览器调试（仅前端开发，无需安卓环境）
 
 ```bash
 python -m http.server 8123 --directory www
@@ -80,7 +114,7 @@ guanji-app/
 │       ├── WidgetStatsPlugin.kt     # WebView → 原生统计同步插件
 │       └── Guanji*Widget.kt         # 5 个桌面小组件
 ├── assets/               # 应用图标源文件
-├── debug/                # 真机验证脚本（WebView DevTools）
+├── debug/                # 真机验证脚本（WebView DevTools 驱动）
 ├── IMPROVEMENTS.md       # 改进意见清单（需求 → 方案 → 实施记录）
 └── CHANGELOG.md          # 更新日志
 ```
