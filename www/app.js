@@ -414,21 +414,30 @@ function resetSheetStyle(sheetEl) {
   sheetEl.style.transform = '';
   sheetEl.style.opacity = '';
   sheetEl.style.animation = '';
+  sheetEl.style.backdropFilter = '';        // #44：恢复 CSS 毛玻璃
+  sheetEl.style.webkitBackdropFilter = '';
+  sheetEl.style.background = '';            // #44：恢复 CSS 半透明玻璃背景
 }
 
-/* 退场：下滑 + 淡出，动画结束后才隐藏 */
+/* 退场：遮罩与卡片同步平滑退出（#49：统一 easeOutCubic 曲线 + 同速淡出 + 微缩放，一体感） */
 function animateSheetClose(sheetEl, backdropEl, doHide) {
-  sheetEl.style.transition = 'transform 0.25s var(--ease-spring), opacity 0.25s ease';
-  sheetEl.style.transform = 'translateY(100%)';
-  sheetEl.style.opacity = '0.6';
-  backdropEl.style.transition = 'opacity 0.25s ease';
+  // #44：退场转不透明 + 关闭毛玻璃
+  sheetEl.style.backdropFilter = 'none';
+  sheetEl.style.webkitBackdropFilter = 'none';
+  sheetEl.style.background = 'var(--card)';
+  const CURVE = 'cubic-bezier(0.33, 1, 0.68, 1)';
+  // 下滑 + 微缩 + 同步淡出（两属性同曲线同速——此前「先透明卡顿」根因是曲线不同步）
+  sheetEl.style.transition = `transform 0.3s ${CURVE}, opacity 0.3s ${CURVE}`;
+  sheetEl.style.transform = 'translateY(100%) scale(0.98)';
+  sheetEl.style.opacity = '0';
+  backdropEl.style.transition = `opacity 0.3s ${CURVE}`;
   backdropEl.style.opacity = '0';
   setTimeout(() => {
     doHide();
     resetSheetStyle(sheetEl);
     backdropEl.style.transition = '';
     backdropEl.style.opacity = '';
-  }, 260);
+  }, 320);
 }
 
 /* 拖拽热区：Pointer Events 统一鼠标/触摸，超过阈值关闭，否则回弹 */
@@ -647,11 +656,19 @@ function openEditRecord(id) {
   $('mediaSwitch').classList.toggle('on', !!rec.media);
   $('noteInput').value = rec.note || '';
   updateTimeDisplay();
+
+  // #46：编辑直达详情（单页编辑）——stepTime 保留可见（时间 seg 可调），详情直接展开，无需「下一步」
+  $('stepDetails').classList.remove('hidden');
+  $('nextBtn').classList.add('hidden');
+  $('prevBtn').classList.add('hidden');
+  $('saveBtn').classList.remove('hidden');
 }
 
 function openSheet(mode, presetDate) {
   sheetMode = mode;
   if (mode !== 'edit') editingId = null;   // 新增/补记重置编辑目标
+  // #48：面板打开时清除触发按钮焦点（触摸聚焦按钮，拖拽退出路径不转移焦点会残留高亮）
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   resetSheetStyle($('recordSheet'));   // #29：清除退场/拖拽残留，sheetUp 重播
   $('moodChips').querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
   $('triggerChips').querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
@@ -1571,6 +1588,7 @@ function makeChip(text) {
   const b = document.createElement('button');
   b.className = 'chip';
   b.textContent = text;
+  b.dataset.text = text;   // #47：× 子元素会混入 textContent，用 dataset 存纯净文本
   b.addEventListener('click', () => b.classList.toggle('active'));
   return b;
 }
@@ -1583,11 +1601,50 @@ function makeAddChip(group) {
   return b;
 }
 
+/* #47（方案 A）：自定义项右上角 × 删除按钮（长按方案已弃用——Android 系统长按菜单抢占） */
+function attachChipDelete(b) {
+  const x = document.createElement('span');
+  x.className = 'chip-x';
+  x.textContent = '×';
+  x.setAttribute('aria-label', '删除这个选项');
+  x.addEventListener('click', (e) => {
+    e.stopPropagation();   // 不触发 chip 选中
+    openDeleteDialog(b);
+  });
+  b.appendChild(x);
+}
+
+/* 删除确认弹层（#47） */
+let delTarget = null;
+let delGroup = 'mood';
+
+function openDeleteDialog(chip) {
+  delGroup = chip.closest('.chips').id === 'moodChips' ? 'mood' : 'trigger';
+  delTarget = chip.dataset.text || chip.textContent;   // #47：用 dataset 文本（排除 × 子元素）
+  $('delDialogText').textContent = `「${delTarget}」将从选项列表中移除，已保存的记录不受影响。`;
+  $('delBackdrop').classList.remove('hidden');
+}
+
+function closeDeleteDialog() {
+  animateDialogClose($('delBackdrop'));
+}
+
+$('delCancel').addEventListener('click', closeDeleteDialog);
+$('delConfirm').addEventListener('click', () => {
+  const key = delGroup === 'mood' ? CUSTOM_MOODS_KEY : CUSTOM_TRIGGERS_KEY;
+  saveCustomList(key, loadCustomList(key).filter((t) => t !== delTarget));
+  closeDeleteDialog();
+  if (delGroup === 'mood') renderMoodChips(); else renderTriggerChips();
+  toast('已删除：' + delTarget);
+});
+$('delBackdrop').addEventListener('click', (e) => { if (e.target === $('delBackdrop')) closeDeleteDialog(); });
+
 function renderMoodChips(selectText) {
   const box = $('moodChips');
   box.innerHTML = '';
   [...MOODS, ...loadCustomList(CUSTOM_MOODS_KEY)].forEach((t) => {
     const b = makeChip(t);
+    if (!MOODS.includes(t)) { b.dataset.custom = '1'; attachChipDelete(b); }   // #47：自定义项可删除
     if (t === selectText) b.classList.add('active');
     box.appendChild(b);
   });
@@ -1599,6 +1656,7 @@ function renderTriggerChips(selectText) {
   box.innerHTML = '';
   [...TRIGGERS, ...loadCustomList(CUSTOM_TRIGGERS_KEY)].forEach((t) => {
     const b = makeChip(t);
+    if (!TRIGGERS.includes(t)) { b.dataset.custom = '1'; attachChipDelete(b); }   // #47：自定义项可删除
     if (t === selectText) b.classList.add('active');
     box.appendChild(b);
   });
@@ -1612,12 +1670,44 @@ function openAddDialog(group) {
   addTarget = group;
   $('addDialogTitle').textContent = group === 'mood' ? '添加情绪' : '添加诱因';
   $('addInput').value = '';
+  $('addCount').textContent = '';      // #47：清空字数提示
+  $('addPreview').textContent = '';    // #47：清空「将添加」预览（残留修复）
   $('addBackdrop').classList.remove('hidden');
   setTimeout(() => $('addInput').focus(), 120);
 }
 
+/* #47：输入时实时字数提示（n/6）+ 「将添加：xxx」预览 */
+$('addInput').addEventListener('input', () => {
+  const text = $('addInput').value.trim();
+  const n = text.length;
+  $('addCount').textContent = n ? `${n}/6` : '';
+  $('addPreview').textContent = n ? `将添加：${text}` : '';
+});
+
 function closeAddDialog() {
-  $('addBackdrop').classList.add('hidden');
+  animateDialogClose($('addBackdrop'));
+}
+
+/* #47/#49：对话框退场动画（与 sheet 同曲线，淡出 + 轻微下移，0.25s 后隐藏）——不再瞬间消失 */
+function animateDialogClose(backdropEl) {
+  const dialog = backdropEl.querySelector('.dialog');
+  if (!dialog) { backdropEl.classList.add('hidden'); return; }
+  dialog.style.animation = 'none';   // fadeUp 动画层会覆盖内联 transform/opacity
+  const CURVE = 'cubic-bezier(0.33, 1, 0.68, 1)';
+  backdropEl.style.transition = `opacity 0.25s ${CURVE}`;
+  backdropEl.style.opacity = '0';
+  dialog.style.transition = `transform 0.25s ${CURVE}, opacity 0.25s ${CURVE}`;
+  dialog.style.transform = 'translateY(12px)';
+  dialog.style.opacity = '0';
+  setTimeout(() => {
+    backdropEl.classList.add('hidden');
+    backdropEl.style.transition = '';
+    backdropEl.style.opacity = '';
+    dialog.style.transition = '';
+    dialog.style.transform = '';
+    dialog.style.opacity = '';
+    dialog.style.animation = '';
+  }, 270);
 }
 
 function confirmAddCustom() {
@@ -1637,7 +1727,8 @@ function confirmAddCustom() {
 $('addBackdrop').addEventListener('click', (e) => { if (e.target === $('addBackdrop')) closeAddDialog(); });
 $('addCancel').addEventListener('click', closeAddDialog);
 $('addConfirm').addEventListener('click', confirmAddCustom);
-$('addInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmAddCustom(); });
+// #47：移除 Enter 直接提交——「退出键盘就完成添加」的困惑根源，必须点「添加」按钮确认
+// $('addInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmAddCustom(); });
 
 // 时长滑块
 $('durSlider').addEventListener('input', () => {

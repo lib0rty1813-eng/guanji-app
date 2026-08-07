@@ -219,6 +219,27 @@ renderHome();
 - 2026-08-06：第 43 条方案决策确认——**选择方案 B（按提供商分别保存密钥）**：aiConfig 扩展 per-provider 结构 + active 记忆 + v1 旧配置迁移（旧 key 归入原 provider），切换自动回显；A 方案弃用，仅记录
 - 2026-08-06：第 42 条方案决策确认——**键盘弹出时隐藏 tab 栏**（visualViewport 检测 + .keyboard-up 移出屏外），仅记录
 - 2026-08-06：**v2.5 实施完成**：#42 键盘弹出隐藏 tabbar（isKeyboardUp 视觉视口差 >150px + visualViewport/window resize 监听 + .tabbar.keyboard-up translateY(180%)/opacity 0 过渡）；#43 per-provider 密钥（guanji_ai_config_v2 {providers, active} + v1 迁移旧 key 归入原 provider + 旧独立 apiKey 归入 deepseek + switchProvider 切换回显完整配置 + saveAIConfig 按 active 保存 + syncActiveConfig 扁平视图）；浏览器验证（迁移/回显/切换/持久化全过；CDP 确认 keyboard-up 规则生效，headless 不推进过渡属环境限制）；真机验证（#43 全过；#42 class/CSS/过渡全过；旧手机 Flyme 键盘为 overlay 模式视口不变属机型差异，adjustResize 机型真实键盘待新手机插回验证）；versionCode 16 / versionName 2.5，资源版本 ?v=18
+- 2026-08-07：新增第 44 条【Bug】（记录页/日历页点空白退出时卡片模糊感，疑似退场动画），定位根因（.sheet backdrop-filter blur(30px) 毛玻璃 + 退场下滑 opacity 0.6 → 玻璃条扫过内容），方案草案（退场时临时关 backdrop-filter / 切不透明背景 / 缩短动画）已写入，仅记录
+- 2026-08-07：新增第 45 条【Bug】（深色模式首页日历图标不可读），定位根因（backfillBtn SVG 硬编码 stroke="#000000"，深色背景 #121212 上不可见），方案草案（stroke 改 currentColor + .icon-btn color:var(--ink)，检查全站硬编码图标色）已写入，仅记录
+- 2026-08-07：新增第 46 条意见（编辑记录跳入开始页而非详情页——openEditRecord 复用 openSheet 默认第一步），方案草案（编辑直达第二步详情，保留时间 seg 可调）已写入，仅记录
+- 2026-08-07：新增第 47 条意见（自定义添加项对话框：键盘弹出无确认提示、Enter 直接添加、无删除选项），定位现状（openAddDialog focus 弹键盘 + keydown Enter 直接 confirmAddCustom + 自定义项无删除 UI），方案草案（对话框按钮键盘可见 + 字数提示 + 自定义 chip 删除入口待确认交互）已写入，仅记录
+- 2026-08-07：第 47 条方案决策确认——删除交互选**长按弹出删除确认**（600ms 长按自定义 chip → 确认弹层），仅记录
+- 2026-08-07：**v2.6 实施完成**：#44 退场动画关闭毛玻璃（animateSheetClose 动画期间 backdropFilter:none + resetSheetStyle 恢复，消除玻璃条扫过内容的模糊感）；#45 图标颜色变量化（index.html 硬编码 #000000/#C7C7CC/#007AFF → currentColor ×7 处，.icon-btn 加 color:var(--ink)，深色模式日历图标/行箭头/模拟状态栏全部自适应）；#46 编辑直达详情（openEditRecord 单页编辑：stepTime 保留可见时间 seg 可调 + stepDetails 直接展开 + saveBtn 显示、next/prev 隐藏）；#47 添加对话框字数提示（n/6 实时）+ 长按删除自定义项（data-custom 标记 + 600ms 长按确认弹层 + 删除后重渲染，内置预设不可删、历史记录不受影响）；versionCode 17 / versionName 2.6，资源版本 ?v=19
+- 2026-08-07：**#44/#47 用户复测未通过**——#44 仍有「段落感」（v2.6 只关 blur，opacity 0.6 半透明下滑仍有叠影，升级方案：退场时背景转不透明 var(--card)）；#47 三处新问题（① 长按触发系统复制菜单——系统长按 500ms 早于 600ms，修复 user-select:none + touch-callout:none + pointerdown/contextmenu preventDefault；② 删除确认卡片被记录卡片遮住——.backdrop z-index 20 < .sheet 30，修复 dialog 弹层 z-index 提至 40；③ 添加流程不透明——Enter 直接提交造成「退出键盘即添加」错觉，修复移除 Enter 提交 + 键盘弹出对话框上移 + 「将添加：xxx」预览），条目标记回待修复/待实施，仅记录
+- 2026-08-07：**v2.7 实施完成**：#44 退场背景转不透明（animateSheetClose 动画期间 background:var(--card) + backdropFilter:none，resetSheetStyle 恢复——下滑为实心卡片，彻底消除半透明叠影段落感）；#47 三处（① chips user-select:none + -webkit-touch-callout:none + pointerdown preventDefault + contextmenu 拦截，长按不再触发系统复制菜单；② addBackdrop/delBackdrop 加 .dialog-layer z-index:40（高于 sheet 30），删除确认不再被面板遮住；③ 移除 Enter 直接提交（只能点「添加」）、输入时「将添加：xxx」预览、键盘弹出时对话框 translateY(-24%) 上移按钮不被遮挡）；versionCode 18 / versionName 2.7，资源版本 ?v=20
+- 2026-08-07：**#47 v2.7 复测反馈**——添加窗口键盘弹出时整体偏上：根因（adjustResize 下视口压缩 + backdrop flex 居中已自动把对话框放在键盘上方，-24% 手动上移双重复合导致偏上），方案（移除 kb 手动上移规则与联动，依赖系统压缩居中），仅记录
+- 2026-08-07：**#47 v2.7 复测反馈 2**——① 删除首次长按无效二次才成功：根因推断（Android WebView 系统长按文本选择菜单原生层抢跑，DOM contextmenu 拦不住），方案 A（自定义 chip 右上角 × 删除按钮，推荐）/ B（长按缩短 400ms）待确认；② 添加框「将添加」预览残留上次输入：根因实锤（openAddDialog 漏清 addPreview），修复方案（补清空）已写入，仅记录
+- 2026-08-07：**#47 删除交互方案决策确认——方案 A（chip 右上角 × 按钮）**：仅自定义项显示 ×，点击弹删除确认，绕开系统长按冲突；长按删除逻辑（initChipLongPress/longPressFired/pointerdown preventDefault/contextmenu 拦截）随补丁移除；方案 B 弃用，仅记录
+- 2026-08-07：**#44 v2.7 复测反馈 2**——退场「先降透明度卡一下，然后才退出完成」：根因已定位（animateSheetClose 同时过渡 transform+opacity，transform 弹簧曲线起始段斜率极慢而 opacity ease 均匀下降 → 感知先透明卡顿再滑动），方案（退场去掉 opacity 过渡只保留下滑，backdrop 淡出保留），仅记录
+- 2026-08-07：**v2.8 补丁实施完成**：#44 退场去掉 opacity 过渡（只下滑，backdrop 淡出保留——无「先透明卡顿」）；#47 移除 kb 手动上移（-24% 规则与联动删除，adjustResize 压缩视口自动居中，对话框不再偏上）；#47 openAddDialog 补清 addPreview（预览残留修复）；#47 删除交互改方案 A（chip × 按钮：attachChipDelete 附加 ×、.chip-x 样式、click stopPropagation + 删除确认；长按逻辑 initChipLongPress/longPressFired/pointerdown preventDefault/contextmenu 全部移除）；versionCode 19 / versionName 2.8，资源版本 ?v=21
+- 2026-08-07：**#44/#47 v2.8 复测反馈**——退出生硬（日历卡片 + 添加卡片）：根因 1（sheet 退场弹簧曲线起始段 ~0.1s 不动再加速 → 顿感，改快启慢停曲线）；根因 2（dialog 关闭直接 display:none 无退场动画，需加 animateDialogClose 淡出+位移），方案已写入，仅记录
+- 2026-08-07：**v2.9 实施完成**：#44 sheet 退场曲线改快启慢停（transform 0.22s cubic-bezier(0.55,0,0.55,0.2)——开始即滑无顿感，替代弹簧曲线）；#47 新增 animateDialogClose（淡出 + translateY(10px) 0.2s 后隐藏，fadeUp 动画层先关闭防覆盖），closeAddDialog/closeDeleteDialog 走退场动画——添加/删除卡片不再瞬间消失；versionCode 20 / versionName 2.9，资源版本 ?v=22
+- 2026-08-07：新增第 48 条【Bug】（编辑面板拖拽小横条退出后首页编辑按钮残留选中状态；点空白退出无此问题），初步定位（焦点残留：拖拽路径 pointer capture 无 click 语义不 blur 按钮，点空白路径 pointerdown 在 backdrop 移走焦点），方案草案（openEditRecord 主动 blur 触发按钮），待真机确认，仅记录
+- 2026-08-07：#48 真机定位确认——触摸点击编辑按钮焦点落于按钮（activeElement=recent-edit）；拖拽退出（adb swipe 真实模拟）后焦点仍残留（focusOnBtn:true），点空白退出无残留；方案定案（openSheet 统一 blur 当前焦点，编辑/新增/补记全受益；:focus-visible 键盘环保留），仅记录
+- 2026-08-07：新增第 49 条意见（退场动画平滑化：日历/记录卡片点空白退出做平滑效果），定位现状（v2.9 遮罩 ease 均匀淡出与卡片快启慢停下滑曲线不同步、缺乏一体感），方案草案（统一 easeOutCubic 曲线 + 0.3s 时长 + 卡片同步淡出与微缩放 scale(0.98) + dialog 统一），待确认微缩放是否采用，仅记录
+- 2026-08-07：**v3.0 实施完成**：#48 openSheet 统一 blur 当前焦点（面板打开即清除触发按钮焦点，拖拽退出不再残留高亮；:focus-visible 键盘环保留）；#49 退场平滑化（sheet 与 backdrop 统一 easeOutCubic cubic-bezier(0.33,1,0.68,1) 0.3s——下滑 translateY(100%) + 微缩 scale(0.98) + 同步淡出（两属性同曲线同速，无「先透明」），遮罩与卡片一体退场；animateDialogClose 同曲线 0.25s 统一）；versionCode 21 / versionName 3.0，资源版本 ?v=23
+- 2026-08-07：新增第 50 条【Bug】（触摸设备按钮取消选中后残留 hover 黑字——点击变蓝、再点取消边框恢复但字仍黑、第三次才完全恢复；全 App 共性问题），浏览器真实鼠标复现根因（指针停留 :hover 粘滞，.chip:hover color:var(--ink) 覆盖基础灰字；styles.css 共 16 条 :hover 规则受影响），方案（全部 :hover 规则包裹 @media (hover: hover)，触摸设备无粘滞）；**用户指定版本号不变（保持 v3.0，实施时跳过版本升级）**，仅记录
+- 2026-08-07：**#50 实施完成（版本号保持 v3.0，versionCode 21 不变）**：16 条 :hover 规则全部包裹 @media (hover: hover)（icon-btn/tab/btn-primary/btn-ghost×2/btn-danger/record-btn/row-btn/seg/chip/chip-add/cal-nav/cal-cell×2/recent-del/recent-edit）；资源版本 ?v=23→24（?v 是缓存标识非版本号）；真机验证 4 项 PASS——真实触摸点击变蓝 rgb(0,98,204) → 取消选中**直接恢复灰字 rgb(142,142,147)**（修复前为黑 rgb(0,0,0)）；桌面鼠标 hover 效果保留（浏览器真实 hover 黑字仍在）
 - 2026-08-06：**v2.1 实施完成（4 条）**：#28 记录面板自适应 + 切换高度过渡动画（去 min-height，JS 测量过渡 0.35s 弹性，动画后清理内联）；#29 弹层小横杠拖拽关闭（Pointer Events 阈值 90px 回弹，sheet-grab 热区）+ 出场/退场动画（sheetUp 保持 + 退场下滑淡出 0.25s + backdrop 淡入淡出，关闭/拖拽/点空白统一走退场）；#30 AI 设置卡 label 统一 16px 上间距（组合选择器 + 删内联）；#31 提醒时间清空自动恢复 21:00（显示与存储一致）；versionCode 12 / versionName 2.1
 - 2026-08-06：新增第 32 条意见（小组件一键快速记录 + 信息增强：widget 点击只弹面板非快捷记录；方案草案——quick_record 意图由 WebView 自动存默认记录零数据风险 + 今日次数/连续天数同步展示 + 双按钮布局），仅记录
 - 2026-08-06：新增第 33 条意见（再增加一个独立 2x2 数据看板小组件：今日/本周/连续/环比展示，独立 provider 与快速记录 widget 并存，复用 stats 同步机制，点击打开首页），仅记录
@@ -1569,6 +1590,214 @@ Android WebView 的系统字体缩放（textZoom）只放大文本、不放大�
 ### 验收要点
 - 切回 DeepSeek 后密钥输入框为空（A）/ 回显 DeepSeek 已保存的密钥（B）
 - 保存后 AI 调用使用当前提供商对应的 key；连接测试用当前输入框内容
+
+---
+
+## 44. 【Bug】记录页/日历页点空白退出时卡片出现模糊感/段落感 ✅ 已修复（v2.9）
+
+### 需求（用户原话）
+记录页和日历页，如果点击空白处退出，卡片会出现模糊感，怀疑是退出动画的问题。
+
+### 根因（已定位）
+- `.sheet`（styles.css:681）带 `backdrop-filter: blur(30px)` 毛玻璃 + 半透明背景（`--glass`）
+- 退场动画 `animateSheetClose`（app.js:420）：`translateY(100%)` 下滑 + `opacity: 0.6`，backdrop 同步淡出
+- 退场过程中毛玻璃 sheet 半透明地滑过下方卡片内容 → 30px 模糊条扫过内容 = 用户看到的「模糊感」
+
+### ✅ v2.6 已修（2026-08-07）：退场期间临时 backdropFilter:none + 动画结束恢复——但用户复测仍有「段落感」
+
+### 🆕 复测反馈与新根因（2026-08-07）
+- 用户：**「点击空白处退出，卡片还是会有段落感」**——v2.6 只关了 blur，但退场仍是 **opacity 0.6 半透明下滑**：半透明 sheet 滑过内容、且 backdrop 淡出后 sheet 直接叠在页面上滑动 → 两层内容视觉交叠 = 「段落感/断层感」
+
+### ✅ v2.7 已修（2026-08-07）：退场背景转不透明 var(--card)——段落感消除
+
+### 🆕 v2.7 复测反馈 2（2026-08-07）：退场「先降透明度卡一下，然后才退出完成」
+- 根因（已定位）：`animateSheetClose` 同时过渡 transform 与 opacity，但 **transform 用弹簧曲线 `--ease-spring`（cubic-bezier(0.23,1,0.32,1.05)）起始段斜率极慢**（前 ~0.1s 几乎不动），opacity 用 ease 均匀下降 → 感知为「透明度先降 → 卡片卡住不动 → 才下滑」
+- 方案：**退场去掉 opacity 过渡**（opacity 保持 1，只做 transform 下滑，backdrop 遮罩淡出保留）——无透明闪烁、下滑即退；或统一两属性用同曲线（推荐前者，最简单干净）
+
+### 🆕 v2.8 复测反馈（2026-08-07）：退场「很生硬」（日历卡片 + 添加卡片）
+- 用户：**「现在点击空白处退出又很生硬，日历卡片和添加卡片」**
+- 根因 1（sheet）：v2.8 去掉 opacity 后，下滑动画仍用弹簧曲线 `--ease-spring`（cubic-bezier 0.23,1,0.32,1.05）——**起始段 ~0.1s 几乎不动再突然加速** →「顿一下再走」= 生硬
+- 根因 2（dialog）：添加/删除对话框 `.backdrop` 关闭是 `classList.add('hidden')` **直接瞬间消失，无退场动画**
+
+### 升级方案（v2.9）
+- sheet 退场曲线改**快启慢停**（如 `cubic-bezier(0.55, 0, 0.55, 0.2)` ease-in 风格，或 `transform 0.22s ease-in`）——开始立即滑动，结束自然减速
+- dialog 退场加动画：复用 animateSheetClose 思路做 animateDialogClose（opacity→0 + translateY(10px) 或 scale(0.95)，0.2s 后 hidden），closeAddDialog/closeDeleteDialog 走动画
+
+### 验收要点
+- 记录面板/日历弹层点空白退出：**开始即滑动无停顿、退出干净**；背景遮罩淡出
+- 添加/删除对话框关闭：平滑淡出+位移，无瞬间消失
+- 打开动画（sheetUp / dialog fadeUp）质感不变；正常使用不受影响
+
+---
+
+## 48. 【Bug】编辑面板拖拽退出后首页编辑按钮残留选中状态 ✅ 已修复（v3.0）
+
+### 需求（用户原话）
+首页的最近记录，点击修改后，拉动卡片小横条退出到首页，编辑按钮还是选中状态；但点击空白处退出就没有这个问题。
+
+### 现状与初步定位（✅ 真机已确认 2026-08-07）
+- 真机触摸点击编辑按钮 → `document.activeElement` 停留在 `.recent-edit`（触摸聚焦按钮）
+- **拖拽小横条退出**（adb swipe 模拟真实拖拽）：`sheetHidden: true` 后 `activeElement` 仍为 `recent-edit`、按钮 `:focus` 匹配——**焦点残留**（拖拽走 pointer capture 手势，无 click 语义、不转移焦点）
+- **点空白退出**：pointerdown 落在 backdrop（不可聚焦元素）→ 浏览器把焦点移走（blur）→ 无残留
+- 视觉呈现：按钮 :focus 在魅族 WebView 上带默认高亮 → 用户看到的「选中状态」
+
+### 方案（✅ 已确认可行）
+1. `openSheet` 打开面板时统一清除焦点：`if (document.activeElement && document.activeElement.blur) document.activeElement.blur()`（编辑/新增/补记全部受益）
+2. 键盘 Tab 导航的 `:focus-visible` 焦点环保留不受影响
+
+### 验收要点
+- 编辑 → 拖拽小横条退出：按钮无选中/高亮残留
+- 编辑 → 点空白退出：同前（无残留）
+- 键盘 Tab 导航仍可见 :focus-visible 焦点环
+
+---
+
+## 49. 退场动画平滑化：遮罩与卡片同步联动 ✅ 已实施（v3.0）
+
+### 需求（用户原话）
+看看还有没有办法继续优化，日历和记录卡片点击空白处退出动画，可不可以做出一个平滑效果。
+
+### 现状（v2.9）
+- sheet：`transform 0.22s cubic-bezier(0.55,0,0.55,0.2)`（快启慢停）下滑 + 不透明背景
+- backdrop：`opacity 0.22s ease` 淡出
+- **问题**：两条曲线/语义不同步——遮罩按 ease 均匀消失，卡片按快启慢停下滑，视觉上「各走各的」，退出缺乏一体感
+
+### 方案（草案）
+- **统一曲线**：sheet 与 backdrop 都用 `cubic-bezier(0.33, 1, 0.68, 1)`（easeOutCubic——立即响应、末端柔缓停住），时长统一 **0.3s**（比 0.22s 从容）
+- **卡片同步淡出 + 微缩放**：opacity 1→0 与下滑**同曲线同速**（消除「透明先降」的关键是曲线同步，而非去掉透明度）；`scale(0.98)` 微缩（iOS 弹层退场质感：下滑+微缩+同步淡出）
+- backdrop 同 0.3s 同曲线 → 遮罩与卡片一起退场，一体感
+- dialog 退场（animateDialogClose）顺带统一同曲线 0.25s
+
+### 待确认问题
+- 微缩放 scale(0.98) 是否采用（推荐加，iOS 质感；不加则纯下滑+淡出同步）
+
+### 验收要点
+- 点空白退出：遮罩与卡片**同步**平滑退场（无先透明、无顿感、无生硬）
+- 打开动画（sheetUp）质感不变；拖拽退出同样平滑
+- 对话框关闭统一顺滑
+
+---
+
+## 50. 【Bug】触摸设备按钮取消选中后残留 hover 黑字（全 App 共性问题） ✅ 已修复（v3.0，版本号不变）
+
+### 需求（用户原话）
+点击记录页的选项第一次点击，按钮整体变蓝色，再次点击取消，按钮边框变成正常未点击的灰色，但是按钮里面的字体还是黑色，不是未点击状态的灰色；再次点击的时候才变成未点击状态的完全体。可能是整个 app 的共性问题。
+
+### 根因（✅ 浏览器已复现 2026-08-07）
+- Playwright 真实鼠标复现：指针停留在 chip 上（hover 粘滞）→ 取消选中（移除 active）后 `:hover` 仍匹配 → `.chip:hover { color: var(--ink) }` 黑色覆盖基础灰（--ink-2）；指针移出才恢复灰字 rgb(142,142,147)
+- 触摸设备上指针位置保持 → `:hover` 粘滞（sticky hover）→ **全 App 共性问题**：所有 :hover 样式（styles.css 共 16 条：chip/chip-add/btn-primary/btn-ghost/btn-danger/record-btn/row-btn/seg/tab/icon-btn/cal-nav/cal-cell/recent-del/recent-edit）在取消选中后都会残留 hover 态
+
+### 方案
+- 将所有 `:hover` 规则包裹进 `@media (hover: hover)`——hover 效果仅对支持悬停的设备（桌面鼠标）生效，触摸设备无粘滞 hover
+- 共 16 条规则（含深色变体）逐条包裹，保持原有样式不变
+
+### 实施清单
+1. `styles.css`：`:hover` 规则 ×16 包裹 `@media (hover: hover) { ... }`（icon-btn/tab/btn-primary/btn-ghost×2/btn-danger/record-btn/row-btn/seg/chip/chip-add/cal-nav/cal-cell×2/recent-del/recent-edit）
+2. 验证：触摸模拟（hover:none）下选中→取消→文字直接灰；桌面鼠标 hover 效果不变
+
+### 验收要点
+- 记录页选项：第一次点蓝、再点取消直接恢复灰字（无需第三次点击）
+- 全 App 按钮/选项/图标同规则；桌面浏览器 hover 效果保留
+- 版本号不 bump（用户指定保持 v3.0）
+
+---
+
+## 45. 【Bug】深色模式下首页日历图标不可读 ✅ 已修复（v2.6）
+
+### 需求（用户原话）
+打开深色模式后，首页的日历图标有可读性问题。
+
+### 根因（已定位）
+- `backfillBtn` 的 SVG（index.html:46）**硬编码 `stroke="#000000"`**——深色模式背景 `#121212` 上黑色图标几乎不可见；浅色模式正常所以之前未发现
+- `.icon-btn`（styles.css:191）未设置 `color`，无法通过 currentColor 继承
+
+### 方案（草案）
+- SVG 的 stroke 改 `currentColor`；`.icon-btn { color: var(--ink) }`（深浅色自适应）
+- 检查全站其他硬编码 `#000000`/`#FFFFFF` 的图标（header 区域）
+
+### 验收要点
+- 深色模式下首页日历图标清晰可见（浅色文字）；浅色模式不变
+- 图标 hover/active 反馈正常
+
+---
+
+## 46. 编辑记录时直达详情页（跳过时间步骤） ✅ 已实施（v2.6）
+
+### 需求（用户原话）
+最近记录点击修改，为什么不是自己跳入记录详细页修改，而跳入记录开始页。
+
+### 现状
+- `openEditRecord` → `openSheet('edit')` → openSheet 默认显示第一步（stepTime：时间模式切换 + 时间显示），需再点「下一步」才到详情（情绪/诱因/时长/备注）
+- 编辑时时间已预填（补记 seg 激活），第一步的「现在/补记」切换在编辑场景意义不大
+
+### 方案（草案）
+- `openEditRecord` 打开面板后**直接进入第二步**：隐藏 stepTime、显示 stepDetails、显示 saveBtn、隐藏 nextBtn（与 openSheet 初始状态相反）
+- 保留「现在/补记」seg 在详情页顶部可见（时间仍需可改——编辑模式下可调整时间 seg 后再保存）
+- 检查 updateTimeDisplay/滑块定位 initSegSlide 在直达第二步时是否正确初始化
+
+### 验收要点
+- 点「✎ 编辑」→ 面板直接显示详情（情绪/诱因/时长/备注已预填），无需再点下一步
+- 编辑模式下仍可切换「现在/补记」调整时间；保存行为不变
+
+---
+
+## 47. 自定义添加项对话框交互与删除能力 ✅ 已实施（v2.9）
+
+### 需求（用户原话）
+记录详细页的可添加选项的逻辑有问题，点击添加按钮后，就直接弹出了键盘，在键盘上输入没有任何提醒，退出键盘就完成了添加，对应添加不满意，也没有删除选项。
+
+### 现状（已定位）
+- `openAddDialog`（app.js:1611）：打开后 120ms 自动 `focus()` → 键盘立即弹出
+- 输入后按输入法「完成/回车」= `keydown Enter` → `confirmAddCustom`（app.js:1640）直接添加并关闭——无中间确认，用户感觉「退出键盘就完成了添加」
+- 反馈有 toast（重复/超长/成功）但键盘遮挡下不明显；placeholder 有提示但用户未感知
+- **自定义项无删除入口**：#24 实现只有 loadCustomList/saveCustomList（localStorage），chips 渲染时无删除 UI
+
+### 方案（草案）
+1. **交互确认**：对话框内加明确的「添加 / 取消」按钮（已有 addConfirm/addCancel 但键盘弹出时在键盘下方不可见？）——改为：Enter 只「确认」，并保证按钮可见（对话框整体上移/键盘弹出时 dialog 贴键盘顶）；输入中显示实时字数提示（如「3/6」）
+2. **删除能力**：自定义 chip（非内置预设）增加删除入口——chip 右上角小 ×（仅自定义项显示），点击 → 确认删除 → 从 localStorage 移除并重渲染；或长按 chip 弹出删除确认
+3. 删除后该选项从所有后续记录面板消失（历史记录保留原文本不受影响）
+
+### 待确认问题
+- 删除交互：~~chip 右上角 ×（直观） vs~~ **长按弹出删除确认**（✅ 已确认 2026-08-07：长按自定义 chip → 弹出删除确认弹层）
+
+### ✅ v2.6 已修（2026-08-07）：字数提示 n/6 + data-custom 标记 + 600ms 长按删除确认 + click 抑制——但用户复测仍有三处问题
+
+### 🆕 v2.7 复测反馈 2（2026-08-07）：删除首次长按无效 + 预览残留
+- **删除情绪：第一次长按不行，第二次长按才能删除**——根因推断：Android WebView 系统长按文本选择菜单在原生层（约 500ms）触发，DOM 层 `contextmenu` 拦截对其无效（魅族定制内核尤甚），第一次长按被系统菜单抢占；取消后第二次长按才轮到我们的 600ms 定时器。方案 A（推荐）：删除交互改为**自定义 chip 右上角小 × 按钮**（绕开系统长按冲突，点击即弹确认）；方案 B：保留长按但缩短至 400ms + 真机验证是否仍被抢——待确认
+- **添加框下小字残留上次输入**——根因实锤：`openAddDialog`（app.js:1679）只清空 `addCount`，**漏清 `addPreview`**（「将添加：xxx」）；修复：openAddDialog 加 `$('addPreview').textContent = ''`
+
+### 升级实施清单（v2.7 补丁）
+1. `styles.css`：删除 `.backdrop.dialog-layer.kb .dialog { transform: translateY(-24%); animation: none; }`
+2. `app.js`：`syncTabbarKeyboard` 删除 addBackdrop/delBackdrop 的 kb class 联动（tabbar 隐藏保留）
+3. `app.js`：`openAddDialog` 清空 `addPreview`
+4. `app.js`/`styles.css`：删除交互——**方案 A（✅ 已确认 2026-08-07）：自定义 chip 右上角小 × 按钮**（仅 data-custom 项显示；chip 相对定位 + × 绝对定位右上角；点击 × 弹出删除确认弹层；长按删除逻辑移除）；~方案 B 长按缩短 400ms 弃用~
+5. 验证：键盘弹出对话框不偏上；预览不残留；chip × 点击稳定弹出删除确认
+
+### 🆕 v2.7 复测反馈（2026-08-07）：键盘弹出时添加窗口整体偏上
+- 用户：**「添加情绪，没有考虑到手机键盘的弹出，然后导致添加情绪的窗口，在手机屏幕总体偏上」**
+- 根因：v2.7 为防按钮被键盘遮挡加了 `kb` 时 `.dialog { transform: translateY(-24%) }` 手动上移——但 `adjustResize` 下键盘弹出时**视口本身已被压缩**、`.backdrop`（flex 居中）已自动把对话框居中在键盘上方区域；再叠加 -24% 手动上移 = 双重复合 → 窗口整体偏上
+- 方案：**移除 kb 手动上移**（styles.css:686 删除该规则；app.js syncTabbarKeyboard 删除 addBackdrop/delBackdrop 的 kb 联动）——依赖系统视口压缩的自动居中即可；若个别机型 overlay 模式（视口不压缩）键盘遮住按钮，再按需加「贴键盘顶」方案（届时单独评估）
+
+### 升级实施清单（v2.7 补丁）
+1. `styles.css`：删除 `.backdrop.dialog-layer.kb .dialog { transform: translateY(-24%); animation: none; }`
+2. `app.js`：`syncTabbarKeyboard` 删除 addBackdrop/delBackdrop 的 kb class 联动（tabbar 隐藏保留）
+3. 验证：真机键盘弹出时添加对话框居中于剩余视口（键盘上方），不偏上、按钮不被遮
+
+### 🆕 复测反馈与新根因（2026-08-07）
+1. **长按触发手机复制功能**：Android 系统长按文本菜单（约 500ms）早于我们的 600ms 长按触发——系统复制/选择菜单先弹出。修复：chips 加 `user-select:none; -webkit-user-select:none; -webkit-touch-callout:none` + pointerdown/contextmenu `preventDefault()`
+2. **删除确认卡片被记录卡片遮住（层级问题）**：`.backdrop` z-index 20 < `.sheet` z-index 30（styles.css:670/690）——记录面板内长按弹出的 delBackdrop 被面板（sheet）盖住。修复：addBackdrop/delBackdrop 单独提升 z-index 至 40（高于 sheet 30、低于 toast 50）；sheetBackdrop 保持 20
+3. **添加流程依旧不透明不方便**：输入法「完成/回车」= Enter → 立即添加并关闭（用户误以为「退出键盘就完成添加」）。修复：**移除 keydown Enter 直接提交**（只能点「添加」按钮，动作明确）；键盘弹出时对话框上移（复用 isKeyboardUp 检测加 class，避免按钮被键盘遮住）；输入中实时预览「将添加：xxx」
+
+### 升级实施清单（v2.7）
+1. `styles.css`：`.backdrop.dialog-layer { z-index: 40 }`（addBackdrop/delBackdrop 加该 class）；chips `user-select:none; -webkit-touch-callout:none`；键盘弹出对话框上移样式
+2. `app.js`：移除 addInput keydown Enter 提交；`initChipLongPress` pointerdown `e.preventDefault()` + chips `contextmenu` preventDefault；`isKeyboardUp` 时 addBackdrop 加键盘态 class；addInput input 更新「将添加：xxx」预览
+3. `index.html`：addDialog 加预览元素（`#addPreview`）
+4. 验证：长按不弹系统复制菜单、删除确认在面板之上可见、Enter 不添加、键盘弹出时按钮可见
+
+### 验收要点
+- 添加对话框：键盘弹出时按钮可见可点；有字数提示；Enter 确认有明确反馈
+- 自定义项可删除：删除后不再出现在 chips；历史记录不受影响
+- 内置预设项不可删除
 
 ---
 

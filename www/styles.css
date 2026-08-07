@@ -189,6 +189,7 @@ body {
   min-width: 0;
 }
 .icon-btn {
+  color: var(--ink);   /* #45：图标 currentColor 跟随深浅色 */
   flex-shrink: 0;   /* 禁止被长文本挤压变形 */
   width: 42px; height: 42px;
   border-radius: 50%;
@@ -198,7 +199,10 @@ body {
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.2s ease;
 }
+/* #50：hover 效果仅对支持悬停的设备生效（触摸设备无粘滞 hover，取消选中直接恢复基础态） */
+@media (hover: hover) {
 .icon-btn:hover { border-color: var(--ink-3); }
+}
 .icon-btn:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 .icon-btn:active { transform: scale(0.92); }
 
@@ -390,7 +394,9 @@ body {
   transition: color 0.2s ease;
   min-height: 44px;
 }
+@media (hover: hover) {
 .tab:hover { color: var(--ink-2); }
+}
 .tab:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: -2px; border-radius: 8px; }
 .tab.active { color: var(--accent-deep); font-weight: 700; }
 .tab.active svg { stroke-width: 2.2; }
@@ -433,7 +439,9 @@ body {
   box-shadow: var(--shadow-2);
   transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
+@media (hover: hover) {
 .btn-primary:hover { background: var(--accent-deep); transform: translateY(-1px); }
+}
 .btn-primary:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 .btn-primary:active { transform: scale(0.97); box-shadow: none; }
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -450,8 +458,10 @@ body {
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
 }
+@media (hover: hover) {
 .btn-ghost:hover { background: #DCDCE0; border-color: var(--ink-3); }
 :root[data-theme="dark"] .btn-ghost:hover { background: #3A3A3C; border-color: #48484A; }
+}
 .btn-ghost:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 .btn-ghost:active { transform: scale(0.97); }
 
@@ -467,7 +477,9 @@ body {
   cursor: pointer;
   transition: transform 0.15s ease;
 }
+@media (hover: hover) {
 .btn-danger:hover { background: #743614; }
+}
 .btn-danger:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 .btn-danger:active { transform: scale(0.97); }
 
@@ -487,7 +499,9 @@ body {
   box-shadow: var(--shadow-2);
   transition: transform 0.15s ease, background 0.2s ease;
 }
+@media (hover: hover) {
 .record-btn:hover { background: var(--accent-deep); }
+}
 .record-btn:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 2px; }
 .record-btn:active { transform: scale(0.96); }
 
@@ -651,7 +665,9 @@ body {
   transition: color 0.2s ease;
 }
 .row-btn:last-child { border-bottom: none; }
+@media (hover: hover) {
 .row-btn:hover { color: var(--accent-deep); }
+}
 .row-btn:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: -2px; border-radius: 8px; }
 .row-btn:active { opacity: 0.7; }
 .row-btn.danger { color: var(--accent-deep); }
@@ -677,6 +693,10 @@ body {
   to { opacity: 1; }
 }
 .backdrop.hidden { display: none; }
+
+/* #47：对话框类弹层（添加/删除）置于 sheet（z-index 30）之上、toast（50）之下；
+   键盘弹出不手动上移——adjustResize 已压缩视口并自动居中（-24% 上移会导致窗口整体偏上） */
+.backdrop.dialog-layer { z-index: 40; }
 
 .sheet {
   position: absolute;
@@ -766,7 +786,9 @@ body {
   min-height: 40px;
   white-space: nowrap;   /* 系统字体放大时「30 天」不在空格处断行 */
 }
+@media (hover: hover) {
 .seg:hover { color: var(--ink); }
+}
 .seg:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 1px; }
 .seg.active {
   background: var(--card);
@@ -828,6 +850,7 @@ body {
 /* 标签组 */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
+  position: relative;   /* #47：× 删除按钮定位基准 */
   border: 1px solid var(--line);
   background: var(--card);
   border-radius: 999px;
@@ -838,8 +861,32 @@ body {
   cursor: pointer;
   transition: all 0.18s ease;
   min-height: 38px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;   /* #47：长按不触发系统复制/选择菜单 */
 }
+
+/* #47（方案 A）：自定义项右上角 × 删除按钮（仅自定义项附加） */
+.chip-x {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  color: #FFF;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.chip-x:active { transform: scale(0.8); background: var(--accent-deep); }
+@media (hover: hover) {
 .chip:hover { border-color: var(--ink-3); color: var(--ink); }
+}
 .chip:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 1px; }
 .chip.active {
   background: var(--accent-soft);
@@ -855,7 +902,9 @@ body {
   color: var(--ink-3);
   font-weight: 500;
 }
+@media (hover: hover) {
 .chip-add:hover { border-color: var(--accent); color: var(--accent); }
+}
 
 /* 开关 */
 .switch-row {
@@ -918,6 +967,7 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
 }
 .dialog-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.01em; }
 .dialog-text { font-size: 13px; color: var(--ink-2); line-height: 1.8; letter-spacing: 0.02em; }
+.dialog-hint { font-size: 11px; color: var(--ink-2); margin-top: 6px; letter-spacing: 0.04em; }   /* #47：字数提示 */
 .dialog-actions { display: flex; gap: 10px; margin-top: 22px; }
 .dialog-actions .btn-ghost, .dialog-actions .btn-danger { flex: 1; }
 
@@ -1000,7 +1050,9 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease;
 }
+@media (hover: hover) {
 .cal-nav:hover { background: #DCDCE0; }
+}
 .cal-nav:active { transform: scale(0.92); }
 .cal-today {
   border: none;
@@ -1047,10 +1099,14 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease;
 }
+@media (hover: hover) {
 .cal-cell:hover { background: var(--bg-elev); }
+}
 .cal-cell:active { transform: scale(0.9); }
 .cal-cell.empty { cursor: default; }
+@media (hover: hover) {
 .cal-cell.empty:hover { background: none; }
+}
 .cal-cell.today .cal-daynum {
   color: var(--accent);
   font-weight: 700;
@@ -1119,7 +1175,9 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease;
 }
+@media (hover: hover) {
 .recent-del:hover { background: #DCDCE0; color: var(--ink); }
+}
 .recent-del:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 1px; }
 .recent-del:active { transform: scale(0.9); }
 
@@ -1136,7 +1194,9 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease;
 }
+@media (hover: hover) {
 .recent-edit:hover { background: #DCDCE0; color: var(--ink); }
+}
 .recent-edit:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 1px; }
 .recent-edit:active { transform: scale(0.9); }
 
