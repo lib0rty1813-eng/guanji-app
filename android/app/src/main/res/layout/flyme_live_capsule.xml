@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #52：魅族实况通知胶囊布局（RemoteViews，Chronometer 系统级走秒） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="4dp">
+
+    <Chronometer
+        android:id="@+id/capsule_chronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:format="计时 %s" />
+</LinearLayout>

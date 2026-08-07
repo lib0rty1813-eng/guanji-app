@@ -1,6 +1,7 @@
 package com.guanji.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.webkit.WebView;
 
@@ -17,12 +18,14 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         handleWidgetIntent(getIntent());
+        handleTimerDismissFlag();
     }
 
     /* 自定义插件注册必须在 bridge 创建（super.load）之前 */
     @Override
     public void load() {
         registerPlugin(WidgetStatsPlugin.class);   // #32-#36：小组件统计同步
+        registerPlugin(TimerLiveUpdatePlugin.class);   // #51：计时实况通知
         super.load();
     }
 
@@ -30,6 +33,16 @@ public class MainActivity extends BridgeActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleWidgetIntent(intent);
+        handleTimerDismissFlag();
+    }
+
+    /* #51：计时通知被划掉 → 读标记后清掉，通知 JS 温和提示一次 */
+    private void handleTimerDismissFlag() {
+        SharedPreferences prefs = getSharedPreferences(TimerLiveUpdatePlugin.PREFS, MODE_PRIVATE);
+        if (prefs.getBoolean(TimerLiveUpdatePlugin.KEY_DISMISSED, false)) {
+            prefs.edit().remove(TimerLiveUpdatePlugin.KEY_DISMISSED).apply();
+            runWhenReady("window.__guanjiTimerDismissed ? (window.__guanjiTimerDismissed(), 'ok') : 'pending'");
+        }
     }
 
     private void handleWidgetIntent(Intent intent) {

@@ -240,6 +240,15 @@ renderHome();
 - 2026-08-07：**v3.0 实施完成**：#48 openSheet 统一 blur 当前焦点（面板打开即清除触发按钮焦点，拖拽退出不再残留高亮；:focus-visible 键盘环保留）；#49 退场平滑化（sheet 与 backdrop 统一 easeOutCubic cubic-bezier(0.33,1,0.68,1) 0.3s——下滑 translateY(100%) + 微缩 scale(0.98) + 同步淡出（两属性同曲线同速，无「先透明」），遮罩与卡片一体退场；animateDialogClose 同曲线 0.25s 统一）；versionCode 21 / versionName 3.0，资源版本 ?v=23
 - 2026-08-07：新增第 50 条【Bug】（触摸设备按钮取消选中后残留 hover 黑字——点击变蓝、再点取消边框恢复但字仍黑、第三次才完全恢复；全 App 共性问题），浏览器真实鼠标复现根因（指针停留 :hover 粘滞，.chip:hover color:var(--ink) 覆盖基础灰字；styles.css 共 16 条 :hover 规则受影响），方案（全部 :hover 规则包裹 @media (hover: hover)，触摸设备无粘滞）；**用户指定版本号不变（保持 v3.0，实施时跳过版本升级）**，仅记录
 - 2026-08-07：**#50 实施完成（版本号保持 v3.0，versionCode 21 不变）**：16 条 :hover 规则全部包裹 @media (hover: hover)（icon-btn/tab/btn-primary/btn-ghost×2/btn-danger/record-btn/row-btn/seg/chip/chip-add/cal-nav/cal-cell×2/recent-del/recent-edit）；资源版本 ?v=23→24（?v 是缓存标识非版本号）；真机验证 4 项 PASS——真实触摸点击变蓝 rgb(0,98,204) → 取消选中**直接恢复灰字 rgb(142,142,147)**（修复前为黑 rgb(0,0,0)）；桌面鼠标 hover 效果保留（浏览器真实 hover 黑字仍在）
+- 2026-08-07：新增第 51 条意见（「就现在」改造成运动记录式计时：点下一步开始计时、结束跳转记录页选情绪诱因、时长精准），判断契合觉察定位 + 与 widget 快速记录分工 + 技术可行（durLabel 数据源支持任意时长）；方案草案（计时器态步骤一 + 开始/结束 + 自动进详情预填 + 中途退出取消不保存）与 3 个待确认问题已写入，仅记录
+- 2026-08-07：#51 补充——用户提出计时中切出应用用安卓实况通知（Live Updates）显示计时（官方文档链接）；确认可行（targetSdk 36 ≥ 35、WidgetStatsPlugin 插件先例、计时器为官方适用场景），且 WebView 切后台 JS 定时器挂起 → 通知 chronometer 系统级计时是后台精准计时的解法；写入「扩展：计时通知」小节（提升条件/降级链/POST_NOTIFICATIONS 权限/setDeleteIntent/Flyme OEM 验证），仅记录
+- 2026-08-07：#51 待确认问题全部拍板（方案 A×3）——计时中关闭面板取消不保存 + 温和提示；时长按分钟取整（不足 1 分钟按 1）；计时态隐藏「现在/补记」seg；实况通知降级链默认方案无异议（15+ 提升 / 12-14 常驻 / 权限拒绝纯 App 内计时），仅记录
+- 2026-08-07：#51 细化为 **v4.0 核心更新**（用户指定）——完成代码核对（openSheet/saveRecord/closeSheet/插件调用/registerPlugin 全部对接点确认）+ 资料佐证（实况通知 = Android 16/API 36 特性，compileSdk 36 + target 36 项目已满足；setRequestPromotedOngoing 由 androidx.core 1.17.0-alpha01 加入，项目 1.17.0 恰好包含；MDN 佐证 hidden 页面 rAF 停止/定时器限流 → 时间戳差值渲染 + 系统级 chronometer 双保险；官方提升条件清单全部满足）；新增设计：杀进程恢复机制（ongoing 通知不随进程消亡，localStorage 持久化 startTime + 启动检测恢复）、deleteIntent 广播标记（划掉不强行拉起 App）、权限降级链、边界清单、验证计划；实施清单扩至 11 项，仅记录
+- 2026-08-07：#51 补充 5b——用户提出①保留经典模式（有人喜欢原来的「就现在」：下一步→手动时长）加按钮选择；②像测试 AI 一样加实况通知测试（验证手机是否支持）。判断：经典模式需保留但避免每次二选一负担（计时主推 + 步骤一「不想计时？直接填写」小字入口 + 设置页「记录方式」偏好）；通知测试价值大于 AI 测试（OEM 是否真支持提升，直接成为真机验证工具，getLiveUpdateStatus 分级提示 + 15s 示例通知）。方案写入 5b，3 个待确认问题（默认记录方式/测试按钮位置/入口文案）已列，仅记录
+- 2026-08-07：#51 5b 深化定稿（3 项全部按推荐确认）——「记录方式」默认计时（localStorage guanji_record_mode，openSheet('now') 读取分流计时器态/经典流程）；经典入口「不想计时？直接填写」（不改变偏好）+ quick 模式对称入口「想要精准计时？开始计时」；测试按钮落位设置页「关于」卡独立小卡（内联 3 行状态区：系统/通知权限/实况通知，比 toast 持久），分级处理（16+ 可提升发测试通知 / 12-15 普通通知 / 权限拒绝引导），测试通知 15s 自动取消；quick 模式天然无计时冲突（幂等入口），仅记录
+- 2026-08-07：**#51 实施完成（v3.1，versionCode 22，用户指定版本号 3.1）**：计时状态机（startTimedRecord/finishTimedRecord/cancelTimer/renderTimerTick，纯时间戳差值零累积误差；分钟取整不足 1 按 1）；计时器态 UI（timerBox 大数字 tabular-nums + seg/pickerRow 隐藏 + nextBtn「开始记录/结束记录」）；「不想计时？直接填写」直达详情 + quick 模式对称入口（会话级切换不改偏好）；记录方式设置卡（timer/quick 默认 timer）；设置页「实况通知」测试卡（getLiveUpdateStatus 内联 3 行分级 + testLiveUpdate 15s 自消）；杀进程恢复（guanji_timer_v1 启动检测 → 恢复面板 + toast）；closeSheet 计时中取消不保存 + 温和提示；visibilitychange 切回校正；TimerLiveUpdatePlugin.kt（渠道 IMPORTANCE_LOW/ongoing/chronometer/when/progress/API36 setRequestPromotedOngoing/deleteIntent 广播/POST_NOTIFICATIONS 权限回调/getLiveUpdateStatus/testLiveUpdate）+ TimerDeleteReceiver.kt（划掉标记不拉起 App）+ ic_stat_timer.xml + Manifest 双权限 + MainActivity registerPlugin + 划掉标记 JS 提示；nextBtn 分流按当前面板计时器态而非偏好（修掉 quick 偏好 + 恢复计时的组合 bug，浏览器回归抓出）；版本 v3.1/22/资源 ?v=25；浏览器回归 11 项 PASS + 真机 8 项 PASS（魅族 Android 16：canPostPromoted=false 实况通知提升不可用 → 降级链生效，普通常驻通知 posted 验证（id 4101/ONGOING_EVENT/title「观己 · 计时中」/contentIntent/deleteIntent）、结束计时通知消失、杀进程恢复 00:23 精确）；截图存档 2 张（通知栏 + 计时面板）
+- 2026-08-07：新增第 52 条意见（魅族实况通知适配——用户提供 GitHub Demo Ruyue-Kinsenka/Flyme-Live-Notification-Demo），已通读源码分析：魅族私有胶囊机制 = 标准通知 addExtras 注入私有 key（is_live/notification.live.operation/type/capsule{status/type/content/icon/bgColor/contentColor/remote.view}）+ 自定义 contentView + IMPORTANCE_HIGH + VISIBILITY_PUBLIC；判断可行（魅族走胶囊/非魅族标准提升双轨，未知 extras 无副作用）但必须 Build.MANUFACTURER 判断仅在魅族附加（contentView 会破坏标准提升条件）；胶囊 RemoteViews 可用 Chronometer 组件系统级走秒；方案/实施清单/2 个待确认问题（是否实施、渠道重要性）已写入，仅记录
+- 2026-08-07：**#52 实施完成（v3.2，versionCode 23）**：isFlyme() 检测（Build.MANUFACTURER==Meizu）；Flyme 分支——startTimer/testLiveUpdate 在标准通知（ongoing/chronometer/Progress）基础上 addExtras 魅族私有胶囊（is_live=true/operation=0/type=2/capsule{status=1/type=5/content「观己 · 计时中」/icon 时钟/bgColor #007AFF/contentColor 白/capsule.content.remote.view=flyme_live_capsule 布局}）+ notification.contentView 换 flyme_live_content 布局（标题 + Chronometer）；胶囊/主内容 RemoteViews 均用 Chronometer 组件（SystemClock.elapsedRealtime 换算 base，系统级走秒后台精准）；仅魅族附加（非魅族标准提升条件不被破坏）；新布局 flyme_live_capsule.xml/flyme_live_content.xml；渠道保持 IMPORTANCE_LOW（胶囊生效与渠道关系待观察）；真机验证：dumpsys 确认 extras 全部注入（is_live=true/operation=0/type=2/capsule Bundle 2436B）+ contentView 附加（0x7f0b0020），通知栏截图确认自定义布局生效（「观己 · 计时中 已计时 00:12」系统级秒数跳动），**用户确认魅族实况通知调用成功**；版本 v3.2/23/about-ver v3.2；截图存档 v32_flyme_capsule.png
 - 2026-08-06：**v2.1 实施完成（4 条）**：#28 记录面板自适应 + 切换高度过渡动画（去 min-height，JS 测量过渡 0.35s 弹性，动画后清理内联）；#29 弹层小横杠拖拽关闭（Pointer Events 阈值 90px 回弹，sheet-grab 热区）+ 出场/退场动画（sheetUp 保持 + 退场下滑淡出 0.25s + backdrop 淡入淡出，关闭/拖拽/点空白统一走退场）；#30 AI 设置卡 label 统一 16px 上间距（组合选择器 + 删内联）；#31 提醒时间清空自动恢复 21:00（显示与存储一致）；versionCode 12 / versionName 2.1
 - 2026-08-06：新增第 32 条意见（小组件一键快速记录 + 信息增强：widget 点击只弹面板非快捷记录；方案草案——quick_record 意图由 WebView 自动存默认记录零数据风险 + 今日次数/连续天数同步展示 + 双按钮布局），仅记录
 - 2026-08-06：新增第 33 条意见（再增加一个独立 2x2 数据看板小组件：今日/本周/连续/环比展示，独立 provider 与快速记录 widget 并存，复用 stats 同步机制，点击打开首页），仅记录
@@ -1699,6 +1708,207 @@ Android WebView 的系统字体缩放（textZoom）只放大文本、不放大�
 - 记录页选项：第一次点蓝、再点取消直接恢复灰字（无需第三次点击）
 - 全 App 按钮/选项/图标同规则；桌面浏览器 hover 效果保留
 - 版本号不 bump（用户指定保持 v3.0）
+
+---
+
+## 51. 「就现在」改造成运动记录式计时（时长精准化） ✅ 已实施（v3.1）
+
+### 需求（用户原话）
+现在记录有两个模式「就现在」和「补记」。「就现在」现状：打开后读取当前时间 → 点下一步 → 选时长/情绪/诱因。想法：把「就现在」改成像运动软件一样的运动记录——点下一步后**开始计时**，结束后结束计时，然后跳转到记录页选情绪和诱因，时长记录更精准。
+
+### 定位判断（已与用户确认倾向）
+- 契合「温和觉察」产品定位：开始/结束计时 = 正念仪式；与 widget 一键快速记录形成分工（快速记=无时长，就现在=计时精准）
+- 技术可行：保存时长从 durLabel 解析（#38），任意分钟数（含 >60）可保存；滑块位置按比例换算
+
+### 方案（草案）
+1. 「就现在」步骤一：时间 seg 区域变为**计时器态**——大数字计时显示（时:分:秒递增）+ 文案「开始记录时计时」；「下一步」按钮改「开始记录」
+2. 点击「开始记录」→ 记录 startTime（Date.now）→ 计时器递增显示（每秒更新）
+3. 步骤一按钮变「结束记录」→ 点击 → 计算 duration = 实际分钟（向下取整，不足 1 分钟按 1）→ **自动进入 stepDetails**，durLabel 预填实际分钟、durSlider 按比例定位
+4. 情绪/诱因/看片/备注流程不变；保存走原逻辑
+5. **兜底**：计时中关闭面板（拖拽/点空白/切 tab）→ **取消计时不保存** + toast 温和提示「已取消本次计时」；补记模式不变
+
+### 待确认问题（✅ 2026-08-07 全部确认方案 A）
+- ~~计时中关闭面板：取消不保存 vs 提示确认~~ ✅ 已确认：**取消不保存** + toast 温和提示「已取消本次计时」
+- ~~计时精度：按分钟取整 vs 精确到秒~~ ✅ 已确认：**按分钟取整**（不足 1 分钟按 1 分钟，数据模型不变）
+- ~~步骤一在计时模式下是否仍显示「现在/补记」seg~~ ✅ 已确认：**隐藏 seg**（计时只属于「就现在」，补记不需要计时）
+
+### 扩展：计时通知（安卓实况通知，用户 2026-08-07 提出）
+开始计时后切出应用，用安卓原生实况通知（Live Updates）显示计时状态（参考 https://developer.android.google.cn/develop/ui/views/notifications/live-update）。
+
+**可行性（已确认）**：targetSdk 36 ≥ 35 满足实况通知要求；已有 WidgetStatsPlugin 自定义 Kotlin 插件先例；计时器是官方文档点名的适用场景（进行中/用户发起/时间敏感）。
+
+**为什么必要**：WebView 切后台 JS 定时器被系统挂起，App 内计时会停摆；实况通知计时（setUsesChronometer）由系统驱动，后台依然精准跳动，切回时用 Date.now() - startTime 校准。
+
+**方案（草案）**：
+1. 新插件 LiveUpdatePlugin（路径照 WidgetStatsPlugin）：开始 → ongoing 通知 + setUsesChronometer（ProgressStyle）；结束/取消 → cancel
+2. Android 15+（API 35）请求 EXTRA_REQUEST_PROMOTED_ONGOING 提升为实况通知
+3. 降级链：Android 12-14 → 普通常驻通知（无锁屏胶囊）；Android 13+ 首次计时请求 POST_NOTIFICATIONS 运行时权限；拒绝 → 纯 App 内计时照常（通知只是增强，不阻塞主功能）
+4. 用户从通知划掉 → setDeleteIntent 检测 → App 内温和提示「计时已从通知移除，仍在计时中」
+5. 魅族 Flyme OEM 可附加条件，真机需验证提升效果
+
+### 细化设计 v4.0（2026-08-07 深化：代码核对 + 资料佐证）
+
+#### 0. 资料佐证与可行性结论（✅ 全部通过）
+| 关键点 | 佐证结论 | 项目状态 |
+|---|---|---|
+| 实况通知起始版本 | **Android 16（API 36）** 特性，需 compileSdk 36 + target Android 16（官方 Live Updates 文档 + Android 16 QPR1 报道） | compileSdk 36 / targetSdk 36 ✅ |
+| 请求提升 API | `NotificationCompat.Builder#setRequestPromotedOngoing(true)`，**androidx.core 1.17.0-alpha01（2025-06-18）加入**（官方 release notes 原文 "NotificationCompat.Builder.setRequestPromotedOngoing() aggiunti"） | androidxCoreVersion = 1.17.0 ✅ |
+| 提升硬性条件 | 样式须为 标准/BigText/Call/Progress/Metric 之一；manifest 声明 `POST_PROMOTED_NOTIFICATIONS`（非运行时权限）；ongoing；contentTitle；禁 RemoteViews/group summary/colorized；渠道非 IMPORTANCE_MIN（官方文档） | 设计全部满足 ✅ |
+| 状态检查 API | `FLAG_PROMOTED_ONGOING` / `hasPromotableCharacteristics()` / `canPostPromotedNotifications()` / `Settings.ACTION_MANAGE_APP_PROMOTED_NOTIFICATIONS` | 用于权限引导 ✅ |
+| 后台 JS 定时器 | hidden 页面 rAF 完全停止、定时器预算制限流（MDN Page Visibility：Chrome 后台 10s 后限流）→ 显示层后台不可靠 | 时间戳差值渲染方案 ✅ |
+| 系统级计时 | `setUsesChronometer(true)` + `setWhen(startTime)`：通知时间由系统时钟驱动，后台不依赖 JS | 通知显示精准 ✅ |
+| 时长数据模型 | duration 保存从 durLabel 正则解析（app.js:754），任意分钟数（含 >60）可存 | 无需改模型 ✅ |
+
+#### 1. 代码对接点（已核对 app.js 现状）
+- `openSheet('now')`（app.js:667）：stepTime 含 timeSegRow（就现在/补记 seg）+ timeDisplay + pickerRow；nextBtn（app.js:1558 点击→隐藏 stepTime 显示 stepDetails + transitionSheetHeight）
+- `saveRecord()`（app.js:750）：`/^(\d+)/` 从 durLabel 解析 duration（`duration || null`）——计时结束预填 label 即保存正确
+- `closeSheet()`（app.js:711）→ animateSheetClose：计时兜底挂在此处
+- 插件调用模式：`window.Capacitor.Plugins.WidgetStats.syncStats({stats})`（app.js:1982，try/catch 非原生静默）——LiveUpdate 插件照此
+- 原生注册：MainActivity.load() 中 registerPlugin（super.load() 之前，MainActivity.java:24）
+
+#### 2. Web 层设计
+- **计时器 UI**：stepTime 新增 `#timerBox`（初始 hidden）：大数字 `#timerDisplay`（48px tabular-nums，时:分:秒）+ 状态小字「切到后台也没关系，通知栏会继续计时」；「就现在」模式打开时隐藏 timeSegRow + pickerRow、显示 timerBox；timeDisplay 保留为小字当前时间
+- **状态机** `timerState = { startTime: number|null, running: boolean, intervalId }`：
+  - `startTimedRecord()`：startTime = Date.now()；1s interval 渲染；原生 startTimer；持久化 `guanji_timer_v1 = {startTime}`（localStorage）；nextBtn 文案「开始记录」→「结束记录」
+  - `renderTimerTick()`：elapsed = Date.now() - startTime（**纯差值，无累积误差**）
+  - `finishTimedRecord()`：停 interval；`duration = Math.max(1, Math.floor(elapsed/60000))`（✅ 分钟取整，不足 1 分钟按 1）；预填 durLabel=`${duration} 分钟`、durSlider=Math.min(duration,60)；自动进 stepDetails（复用 nextBtn 逻辑）；原生 stopTimer；清 guanji_timer_v1
+  - `cancelTimer()`：停 interval；原生 stopTimer；清存储；reset UI
+  - `visibilitychange`：切回前台立即 renderTimerTick()（校正后台挂起期间的显示；数值由时间戳保证）
+- **兜底（✅ 已确认）**：closeSheet 时 running → cancelTimer + toast「已取消本次计时」；补记/编辑模式零影响
+- **崩溃/杀进程恢复（v4.0 新增设计）**：开始计时即持久化 startTime；App 启动检测 guanji_timer_v1 存在 → 恢复计时并自动打开面板计时态（因为 ongoing 通知不随进程消亡，通知栏 chronometer 仍在走，必须给收尾路径）——用户在面板点「结束记录」正常收尾，或关闭面板取消
+- **权限流程**：首次点「开始记录」→ 原生检查/请求 POST_NOTIFICATIONS（Android 13+）→ 拒绝则降级纯计时 + toast 温和说明「计时仍会继续，只是没有通知提醒」
+
+#### 3. 原生层设计（TimerLiveUpdatePlugin.kt，照 WidgetStatsPlugin 模式）
+- `@CapacitorPlugin(name = "TimerLiveUpdate")`，方法：
+  - `startTimer({startTimeMs})`：渠道「计时进行中」（IMPORTANCE_LOW，非 MIN ✅）；`NotificationCompat.Builder`：setOngoing(true) / setContentTitle("观己 · 计时中") / setSmallIcon(新 drawable 时钟图标) / setWhen(startTimeMs) / setUsesChronometer(true)（系统级计时，后台精准）/ setProgress(0,0,true)（ProgressStyle 之一）/ setContentIntent(打开 App，requestCode=3) / setDeleteIntent(广播：通知被划掉 → SharedPreferences 写标记，App 前台时读取温和提示，**不强行拉起 App**)；`Build.VERSION.SDK_INT >= 36` 时 setRequestPromotedOngoing(true)（androidx 1.17.0 提供，低版本 no-op 安全）→ notify
+  - `stopTimer()`：cancel 通知
+  - `checkPermission()` / `requestPermission()`：POST_NOTIFICATIONS（Android 13+）
+  - `canPostPromoted()`：canPostPromotedNotifications()（API 36，返回用户是否允许提升）
+- `MainActivity.java`：load() 中 registerPlugin(TimerLiveUpdatePlugin.class)
+- `AndroidManifest.xml`：`POST_NOTIFICATIONS`（运行时，13+）+ `POST_PROMOTED_NOTIFICATIONS`（API 36，低版本系统自动忽略，安全）
+- 通知小图标：新增 drawable（时钟/沙漏白色轮廓，Android 通知小图标需纯 alpha 单色）
+
+#### 4. 降级链（✅ 已确认默认方案）
+| 设备 | 行为 |
+|---|---|
+| Android 16+（API 36） | 实况通知：锁屏胶囊 + AOD + 抽屉置顶，默认展开不可折叠 |
+| Android 12-15 | 普通常驻 ongoing 通知（chronometer 照常工作，行为一致仅位置不同） |
+| 通知权限被拒 | 纯 App 内计时（计时/结束/取消全流程照常，无通知） |
+| 用户划掉通知 | 计时不中断，App 内温和提示一次 |
+
+#### 5. 边界情况清单
+- 计时中杀 App → 通知残留 + 重启恢复计时（启动检测）
+- 计时中划掉通知 → 计时继续，App 提示一次
+- 计时中切后台 30 分钟 → JS 显示停但数值准（时间戳），回前台立即校正
+- 计时中打开补记/编辑面板 → 冲突处理：计时面板保持打开（记录面板互斥设计，计时态下不响应其他入口）或直接禁止——设计为：计时运行中再次点「+ 记录」打开的是计时面板本身（幂等）
+- 时长 > 60 分钟 → durLabel 直显（数据源方案已支持），滑块顶格
+- widget 快速记录/补记/编辑 → 不受影响（计时仅属「就现在」面板态）
+
+#### 5b. 扩展：经典模式保留 + 实况通知测试（用户 2026-08-07 提出）
+**背景**：用户提出①有人喜欢原来的「就现在」模式（直接下一步→手动时长），是否加按钮给用户选择；②像测试 AI 连接一样，加一个实况通知测试，验证手机是否支持此功能。
+
+**判断（已确认合理）**：
+- 现有「补记」+ widget 快记不能完全替代「就现在」经典流程（记当前时刻 + 手动时长），需保留路径；但避免每次二选一的负担——计时主推 + 一条直达经典
+- 通知测试比 AI 测试价值更大：验证 OEM（魅族 Flyme 是官方文档「OEM 可附加条件」设备）是否真显示提升效果，直接成为真机验证工具
+
+**方案（✅ 2026-08-07 细化定稿）**：
+
+1. **经典模式保留**：
+   - 计时器态步骤一主按钮「开始记录」下方加小字入口「不想计时？直接填写」→ 直接进 stepDetails（经典流程：时长滑块照旧），**不改变偏好**
+   - 设置页「记录」卡新增「记录方式」分段：**计时记录（默认）/ 快速记录**，存储 `guanji_record_mode`（localStorage），默认 'timer'
+   - openSheet('now') 读取偏好：'timer' → 计时器态；'quick' → 经典流程（步骤一 = 时间显示 + nextBtn「下一步」→ stepDetails）
+   - 可选对称入口（quick 模式步骤一加小字「想要精准计时？开始计时」→ 切计时器态）——实现成本低，视觉对称，默认纳入
+   - 计时运行中不显示「直接填写」入口（计时中只能结束/取消）
+2. **实况通知测试**（设置页「关于」卡内，独立小卡「实况通知」）：
+   - 卡内结构：标题 + 描述小字（「测试你的手机是否支持实况通知（Android 16+）」）+「测试」按钮 + **内联状态区**（3 行小字：`系统：Android 16` / `通知权限：已开启` / `实况通知：支持 · 已提升`）——内联比 toast 持久，适合测试工具定位
+   - 交互流：点「测试」→ `getLiveUpdateStatus()` → 渲染内联状态 + 分级处理：
+     - Android 16+ 且权限开且可提升 → 状态行「支持 · 已提升」+ toast「已发送测试通知，请查看锁屏/通知栏」+ `testLiveUpdate(15)`
+     - Android 12-15 → 状态行「不支持提升（系统低于 Android 16）」+ toast「将以普通常驻通知显示」+ 仍发测试通知
+     - 通知权限未授权（13+）→ 先请求权限；拒绝 → 状态行「权限未开启」+ 引导提示「计时仍可用，只是没有通知」
+   - 测试通知：标题「观己 · 实况通知测试」+ chronometer（from now）+ ProgressStyle，15s 后自动取消（JS setTimeout → stopTimer）
+   - 该按钮同时服务开发者验证（真机验证环节直接用）
+3. **偏好与计时互斥**：quick 模式不进入计时态，天然无冲突；timer 模式计时运行中「+ 记录」入口幂等打开计时面板本身
+
+#### 6. 验证计划
+- 浏览器：计时全流程（开始→tick→结束→时长预填→保存→记录正确）；中途关闭取消；CDP 模拟 visibilitychange hidden→visible 校正
+- 真机 Android 16：实况通知提升（锁屏胶囊/抽屉置顶）、后台 chronometer 跳动、杀进程恢复、划掉通知提示、权限拒绝降级
+- 真机 Android ≤15（魅族）：普通常驻通知 + 无提升降级路径
+- 回归：补记/编辑/widget 快速记录/分析页全流程
+
+#### 7. 版本与发布
+- versionCode 22 / versionName 4.0（用户明确此为 4.0 核心更新）；资源 ?v=24→25
+- CHANGELOG v4.0 条目 + GitHub Release v4.0 + APK
+
+### 实施清单
+1. `app.js`：timerState（startTime/intervalId/timerEl 更新）；startTimedRecord/finishTimedRecord/cancelTimer/renderTimerTick；visibilitychange 校正
+2. `app.js`：openSheet 'now' 模式步骤一显示计时器（隐藏 seg+pickerRow）；nextBtn 文案「开始记录/结束记录」动态切换；结束后自动进 stepDetails 预填时长（durLabel + durSlider 比例定位）；「不想计时？直接填写」小字入口
+3. `app.js`/`index.html`/`styles.css`：计时器 UI（大数字 tabular-nums、状态小字）；深色模式适配；设置页「记录方式」偏好（计时/快速）+「测试实况通知」按钮区
+4. 兜底：closeSheet 时若计时中 → cancelTimer + toast「已取消本次计时」
+5. 持久化恢复：guanji_timer_v1 启动检测 → 恢复计时态并打开面板；结束/取消清除
+6. `TimerLiveUpdatePlugin.kt`：startTimer（渠道/ongoing/chronometer/when/progress/提升请求 API36+）/stopTimer/checkPermission/requestPermission/canPostPromoted/getLiveUpdateStatus/testLiveUpdate；deleteIntent 广播标记
+7. `MainActivity.java`：registerPlugin；通知 contentIntent 打开 App（requestCode=3）；启动时读划掉标记 → JS 提示
+8. `AndroidManifest.xml`：POST_NOTIFICATIONS + POST_PROMOTED_NOTIFICATIONS；通知小图标 drawable
+9. 权限流程：首次计时请求 POST_NOTIFICATIONS，拒绝降级纯计时
+10. 版本：versionCode 22 / versionName 4.0；资源 ?v=25；CHANGELOG + Release
+11. 验证：浏览器全流程 + 真机（Android 16 提升/后台跳动/杀进程恢复/划掉提示/权限拒绝；Android ≤15 降级）+ 回归（补记/编辑/widget 快记）+ 通知测试按钮各分级
+
+### 待确认问题（✅ 2026-08-07 全部确认，5b 3 项按推荐定案）
+- ~~「记录方式」默认值~~ ✅ 已确认：**计时**（v4.0 主推），设置页可改「快速」
+- ~~「测试实况通知」按钮位置~~ ✅ 已确认：**设置页「关于」卡内**独立小卡
+- ~~经典模式入口文案~~ ✅ 已确认：「不想计时？直接填写」（quick 模式对称入口「想要精准计时？开始计时」）
+
+### 验收要点
+- 「就现在」：开始记录 → 计时递增 → 结束 → 自动进入详情且时长=实际分钟
+- 计时中拖拽/点空白退出：无记录生成 + 温和提示
+- 超长计时（>60 分钟）时长正确保存；补记模式行为不变
+
+---
+
+## 52. 魅族实况通知适配（Flyme 私有胶囊 API） ✅ 已实施（v3.2）
+
+### 需求（用户 2026-08-07 提供）
+用户提供 GitHub 仓库 `Ruyue-Kinsenka/Flyme-Live-Notification-Demo`，指出魅族实况通知（锁屏胶囊）的实现方法，希望接入。
+
+### 背景（真机已确认）
+- #51 真机验证发现：魅族（Flyme，Android 16/API 36）`canPostPromotedNotifications()` = **false** → Android 标准实况通知提升在魅族不可用，当前走普通常驻通知降级链
+- 魅族有**私有胶囊机制**（类似灵动岛/实况活动），可绕过标准提升限制
+
+### 原理分析（已通读 Demo 源码）
+标准通知 `Notification.Builder.addExtras(Bundle)` 注入魅族私有 key，Flyme 识别后渲染锁屏/悬浮胶囊：
+- 外层：`is_live=true`、`notification.live.operation=0`、`notification.live.type=2`
+- 胶囊 Bundle `notification.live.capsule`：`capsuleStatus=1`（启用）、`capsuleType=5`、`capsuleContent`（文字）、`capsuleIcon`（Icon）、`capsuleBgColor`/`capsuleContentColor`（int）、`capsule.content.remote.view`（RemoteViews 胶囊布局）
+- 主通知：`notification.contentView = contentRemoteViews`（自定义 RemoteViews 布局）
+- 配套：渠道 IMPORTANCE_HIGH、`setVisibility(VISIBILITY_PUBLIC)`（锁屏可见）、`setAutoCancel(false)`
+
+### 可行性判断（已确认）
+- **✅ 与现有方案互补**：魅族走私有胶囊，非魅族走标准提升/降级链；未知 extras 在非魅族上被系统忽略（无副作用），可双轨共存
+- **⚠️ 必须仅魅族附加**：自定义 contentView 违反标准 Live Updates「禁 customContentView」条件——若在非魅族 Android 16 也设置会**破坏标准提升**；必须 `Build.MANUFACTURER == "Meizu"` 判断
+- **⚠️ 私有 API 兼容性未知**：Demo 作者自述参数靠试（README 标注 "idk, need int"），key/值可能随 Flyme 版本变化——需真机验证
+- **💡 加分实现**：胶囊 RemoteViews 可用 **Chronometer 组件**（`RemoteViews.setChronometer`，系统级走秒）——与标准通知 chronometer 同机制，魅族胶囊也能后台精准计时
+
+### 方案（草案）
+1. `TimerLiveUpdatePlugin.kt` 加 `isFlyme()` 检测（Build.MANUFACTURER == "Meizu"，忽略大小写）
+2. Flyme 分支：标准通知（ongoing/chronometer/Progress）基础上：
+   - `addExtras(liveBundle)`：胶囊显示「观己 · 计时中」+ Chronometer（setChronometer(startTime)）
+   - 主 `contentView` 换简单 RemoteViews 布局（含 Chronometer）
+   - 新布局 `res/layout/flyme_live_capsule.xml` + `flyme_live_content.xml`
+3. `testLiveUpdate` 同步走 Flyme 分支（测试按钮直接验证胶囊效果）
+4. 非魅族设备完全不受影响（现有路径不变）
+
+### 实施清单
+1. 两个新布局 XML（胶囊 + 主内容，均含 Chronometer + 观己图标 + 文案）
+2. `isFlyme()` + Flyme extras 组装（capsuleStatus=1/capsuleType=5/operation=0/type=2，颜色用 App 主题蓝）
+3. startTimer/testLiveUpdate Flyme 分支；stopTimer 不变（同 id cancel）
+4. 构建 + 真机验证（用户魅族）：胶囊出现、秒数后台跳动、结束消失；非魅族回归
+
+### 待确认问题
+- 是否实施（实验性功能：私有 API 无官方文档，兼容性需在用户魅族真机验证）
+- 渠道重要性：Demo 用 IMPORTANCE_HIGH（有声）vs 现有 IMPORTANCE_LOW（静默）——魅族胶囊是否需要 HIGH 才生效，真机验证决定
+
+### 验收要点
+- 魅族真机：计时开始 → 锁屏/悬浮出现胶囊（观己 + 秒数系统级跳动）→ 结束消失
+- 非魅族设备：标准路径无回归（contentView 未被设置、提升条件不破坏）
+- 杀进程恢复/划掉通知/权限降级行为不变
 
 ---
 

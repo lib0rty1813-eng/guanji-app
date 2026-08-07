@@ -92,9 +92,18 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_today_info" />
         </receiver>
+
+        <!-- 计时通知被划掉的标记接收器（#51，不拉起 App） -->
+        <receiver
+            android:name=".TimerDeleteReceiver"
+            android:exported="false" />
     </application>
 
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- #51：计时通知（Android 13+ 运行时权限） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- #51：实况通知提升（Android 16+ 非运行时权限，低版本系统自动忽略） -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
 </manifest>

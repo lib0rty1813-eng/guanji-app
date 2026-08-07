@@ -690,10 +690,12 @@ function openSheet(mode, presetDate) {
     $('nowSeg').classList.remove('active');
     $('customSeg').classList.add('active');
     $('pickerRow').classList.remove('hidden');
+    showClassicStep1();   // #51：补记/编辑为经典步骤一（无计时器）
   } else {
     $('customSeg').classList.remove('active');
     $('nowSeg').classList.add('active');
     $('pickerRow').classList.add('hidden');
+    setupNowStep();   // #51：按「记录方式」偏好分流（计时器态 / 经典流程）
   }
   updateTimeDisplay();
 
@@ -709,6 +711,10 @@ function openSheet(mode, presetDate) {
 }
 
 function closeSheet() {
+  if (timerState.running) {   // #51：计时中关闭面板 = 取消计时不保存（温和提示）
+    cancelTimer();
+    toast('已取消本次计时');
+  }
   animateSheetClose($('recordSheet'), $('sheetBackdrop'), () => {
     $('recordSheet').classList.add('hidden');
     $('sheetBackdrop').classList.add('hidden');
@@ -1555,22 +1561,36 @@ function transitionSheetHeight(targetId) {
   }, 400);
 }
 
-$('nextBtn').addEventListener('click', () => {
+/* #51：步骤切换（计时态下「下一步」= 开始/结束计时） */
+function goToDetails() {
   $('stepTime').classList.add('hidden');
   $('stepDetails').classList.remove('hidden');
   $('nextBtn').classList.add('hidden');
   $('prevBtn').classList.remove('hidden');
   $('saveBtn').classList.remove('hidden');
   transitionSheetHeight('stepDetails');
-});
-$('prevBtn').addEventListener('click', () => {
+}
+
+function goToTime() {
   $('stepDetails').classList.add('hidden');
   $('stepTime').classList.remove('hidden');
   $('saveBtn').classList.add('hidden');
   $('prevBtn').classList.add('hidden');
   $('nextBtn').classList.remove('hidden');
+  if (sheetMode === 'now') setupNowStep();   // 回到步骤一：恢复计时器态/经典流程
   transitionSheetHeight('stepTime');
+}
+
+$('nextBtn').addEventListener('click', () => {
+  // #51：以「当前面板的计时器态」分流（不能依赖偏好——quick 偏好 + 杀进程恢复计时时，
+  // 恢复面板处于计时态但 loadRecordMode() 为 quick，若按偏好判断将无法结束计时）
+  if (sheetMode === 'now') {
+    if (timerState.running) { finishTimedRecord(); return; }
+    if (!$('timerBox').classList.contains('hidden')) { startTimedRecord(); return; }
+  }
+  goToDetails();
 });
+$('prevBtn').addEventListener('click', goToTime);
 $('saveBtn').addEventListener('click', saveRecord);
 
 // 选项 chips（#24：支持自定义添加，chips 尾部有「+ 添加」）
@@ -1955,6 +1975,201 @@ $('restoreBtn').addEventListener('click', () => {
   bindGenBtn();
 });
 
+/* ---------- #51：「就现在」计时（计时记录模式 + 实况通知） ---------- */
+
+/* 「记录方式」偏好（设置页「记录方式」卡）：timer = 计时记录（默认）/ quick = 快速记录 */
+function loadRecordMode() {
+  try { return localStorage.getItem('guanji_record_mode') || 'timer'; } catch (e) { return 'timer'; }
+}
+function saveRecordMode(m) {
+  try { localStorage.setItem('guanji_record_mode', m); } catch (e) {}
+}
+
+const TIMER_STORE_KEY = 'guanji_timer_v1';
+let timerState = { startTime: null, running: false, intervalId: null };
+
+function fmtElapsed(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = String(m).padStart(2, '0'), ss = String(sec).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+/* 纯时间戳差值渲染：后台 JS 挂起不影响数值，切回前台由 visibilitychange 校正 */
+function renderTimerTick() {
+  if (!timerState.running) return;
+  $('timerDisplay').textContent = fmtElapsed(Date.now() - timerState.startTime);
+}
+
+/* 原生实况通知（非原生环境静默跳过，模式同 syncWidgetStats） */
+function notifyStartTimer(startTimeMs) {
+  try {
+    const P = window.Capacitor && window.Capacitor.Plugins;
+    if (P && P.TimerLiveUpdate) P.TimerLiveUpdate.startTimer({ startTimeMs });
+  } catch (e) { /* 非原生/插件不可用 */ }
+}
+function notifyStopTimer() {
+  try {
+    const P = window.Capacitor && window.Capacitor.Plugins;
+    if (P && P.TimerLiveUpdate) P.TimerLiveUpdate.stopTimer();
+  } catch (e) { /* 非原生/插件不可用 */ }
+}
+
+function startTimedRecord() {
+  timerState.startTime = Date.now();
+  timerState.running = true;
+  timerState.intervalId = setInterval(renderTimerTick, 1000);
+  renderTimerTick();
+  try { localStorage.setItem(TIMER_STORE_KEY, String(timerState.startTime)); } catch (e) {}
+  $('nextBtn').textContent = '结束记录';
+  $('modeLink').classList.add('hidden');   // 计时中不可跳过
+  notifyStartTimer(timerState.startTime);
+}
+
+function finishTimedRecord() {
+  clearInterval(timerState.intervalId);
+  const elapsed = Date.now() - timerState.startTime;
+  const duration = Math.max(1, Math.floor(elapsed / 60000));   // 分钟取整，不足 1 分钟按 1
+  timerState.running = false;
+  timerState.startTime = null;
+  try { localStorage.removeItem(TIMER_STORE_KEY); } catch (e) {}
+  notifyStopTimer();
+  $('durLabel').textContent = `${duration} 分钟`;
+  $('durSlider').value = Math.min(duration, 60);
+  goToDetails();
+}
+
+function cancelTimer() {
+  if (!timerState.running) return;
+  clearInterval(timerState.intervalId);
+  timerState.running = false;
+  timerState.startTime = null;
+  try { localStorage.removeItem(TIMER_STORE_KEY); } catch (e) {}
+  notifyStopTimer();
+  $('timerDisplay').textContent = '00:00';
+}
+
+/* 步骤一布局：计时器态（timer 模式 / 计时中）vs 经典流程（quick 模式） */
+function setupNowStep() {
+  if (timerState.running) {
+    $('timeSegRow').classList.add('hidden');
+    $('timerBox').classList.remove('hidden');
+    $('nextBtn').textContent = '结束记录';
+    $('modeLink').classList.add('hidden');
+    renderTimerTick();
+    return;
+  }
+  if (loadRecordMode() === 'quick') {
+    $('timeSegRow').classList.remove('hidden');
+    $('timerBox').classList.add('hidden');
+    $('nextBtn').textContent = '下一步';
+    $('modeLink').textContent = '想要精准计时？开始计时';
+    $('modeLink').classList.remove('hidden');
+  } else {
+    $('timeSegRow').classList.add('hidden');
+    $('timerBox').classList.remove('hidden');
+    $('nextBtn').textContent = '开始记录';
+    $('modeLink').textContent = '不想计时？直接填写';
+    $('modeLink').classList.remove('hidden');
+    $('timerDisplay').textContent = '00:00';
+  }
+}
+
+/* 补记/编辑：经典步骤一（seg + 时间显示，无计时器） */
+function showClassicStep1() {
+  $('timeSegRow').classList.remove('hidden');
+  $('timerBox').classList.add('hidden');
+  $('modeLink').classList.add('hidden');
+  $('nextBtn').textContent = '下一步';
+}
+
+/* 计时模式 ⇄ 经典流程 会话级切换（不改变设置页偏好） */
+$('modeLink').addEventListener('click', () => {
+  if (sheetMode !== 'now' || timerState.running) return;
+  if (loadRecordMode() === 'quick') {
+    $('timeSegRow').classList.add('hidden');
+    $('timerBox').classList.remove('hidden');
+    $('nextBtn').textContent = '开始记录';
+    $('modeLink').textContent = '不想计时？直接填写';
+    $('timerDisplay').textContent = '00:00';
+  } else {
+    goToDetails();   // 「不想计时？直接填写」→ 直接进详情（时长滑块照旧）
+  }
+});
+
+/* 后台挂起校正：切回前台立即重渲染（数值由时间戳保证） */
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && timerState.running) renderTimerTick();
+});
+
+/* 设置页「记录方式」偏好 UI */
+function initRecordModeUI() {
+  const chips = [...$('recordModeChips').querySelectorAll('.chip')];
+  chips.forEach((c) => c.classList.toggle('active', c.dataset.recordMode === loadRecordMode()));
+  chips.forEach((c) => c.addEventListener('click', () => {
+    saveRecordMode(c.dataset.recordMode);
+    chips.forEach((x) => x.classList.toggle('active', x === c));
+  }));
+}
+
+/* 设置页「实况通知」测试（分级提示 + 内联状态区） */
+async function testLiveUpdate() {
+  const P = window.Capacitor && window.Capacitor.Plugins;
+  if (!P || !P.TimerLiveUpdate) {
+    $('liveTestStatus').textContent = '当前是浏览器预览环境，实况通知需要在安卓手机上测试。';
+    return;
+  }
+  try {
+    let st = await P.TimerLiveUpdate.getLiveUpdateStatus();
+    let rows = [
+      `系统：Android ${st.sdkInt}`,
+      `通知权限：${st.permissionGranted ? '已开启' : '未开启'}`,
+      st.supported ? '实况通知：支持 · 已提升' : '实况通知：不支持提升（系统低于 Android 16，将以普通通知显示）',
+    ];
+    $('liveTestStatus').innerHTML = rows.join('<br>');
+    if (!st.permissionGranted) {
+      const res = await P.TimerLiveUpdate.requestNotificationPermission();
+      if (!res.granted) { toast('未获得通知权限，计时仍可用，只是没有通知'); return; }
+      st = await P.TimerLiveUpdate.getLiveUpdateStatus();
+      rows = [
+        `系统：Android ${st.sdkInt}`,
+        '通知权限：已开启',
+        st.supported ? '实况通知：支持 · 已提升' : '实况通知：不支持提升（系统低于 Android 16，将以普通通知显示）',
+      ];
+      $('liveTestStatus').innerHTML = rows.join('<br>');
+    }
+    P.TimerLiveUpdate.testLiveUpdate({ seconds: 15 });
+    toast('已发送测试通知，请查看锁屏/通知栏');
+  } catch (e) {
+    $('liveTestStatus').textContent = '测试失败：' + e.message;
+  }
+}
+$('liveTestBtn').addEventListener('click', testLiveUpdate);
+
+/* 通知被划掉（原生 deleteIntent 广播标记）→ 温和提示一次，不强行拉起 App */
+window.__guanjiTimerDismissed = () => { toast('计时已从通知移除，计时仍在继续'); return 'ok'; };
+
+/* 杀进程恢复：ongoing 通知不随进程消亡，启动检测未完成计时 → 恢复并打开面板收尾 */
+(function restoreTimer() {
+  let raw = null;
+  try { raw = localStorage.getItem(TIMER_STORE_KEY); } catch (e) {}
+  if (!raw) return;
+  const startTime = parseInt(raw, 10);
+  if (!startTime || isNaN(startTime) || startTime > Date.now()) {
+    try { localStorage.removeItem(TIMER_STORE_KEY); } catch (e) {}
+    return;
+  }
+  timerState.startTime = startTime;
+  timerState.running = true;
+  timerState.intervalId = setInterval(renderTimerTick, 1000);
+  renderTimerTick();
+  notifyStartTimer(startTime);   // 幂等重建（通知可能已被系统移除）
+  openSheet('now');
+  toast('上次的计时仍在继续');
+})();
+
 /* ---------- #32-#36：小组件联动（快速记录 + 统计同步） ---------- */
 
 /* 一键快速记录（桌面小组件触发）：自动保存「就现在」默认记录 */
@@ -2037,6 +2252,7 @@ records = Storage.loadRecords();
 syncActiveConfig();
 initTheme();                       // 深色模式初始化（head 内联脚本已做初值，这里同步 UI）
 initReminderUI();                  // 提醒设置回显（#13）
+initRecordModeUI();                // #51：记录方式偏好回显
 applyReminderSchedule(loadReminder());   // 重启后恢复/更新调度（幂等）
 $('positiveSwitch').classList.toggle('on', positiveEnabled());   // 正向反馈开关回显（#17）
 

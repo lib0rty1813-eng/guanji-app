@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #52：魅族实况通知主内容布局（RemoteViews，Chronometer 系统级走秒） -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="10dp">
+
+    <TextView
+        android:id="@+id/content_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="观己 · 计时中"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <Chronometer
+        android:id="@+id/content_chronometer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:format="已计时 %s"
+        android:textSize="18sp" />
+</LinearLayout>
