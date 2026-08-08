@@ -11,10 +11,12 @@
 - **历史日历**：月历角标、选天明细、补记直达
 - **AI 分析**：仅上传聚合特征，生成温和非评判的报告（模式识别 / 情绪观察 / 诱因分布 / 温和建议），支持追问；记录变更后报告自动刷新
 - **AI 多提供商**：默认 DeepSeek，可选 OpenAI 或自定义（Base URL / 模型 / API 密钥**按提供商分别保存**，含连接测试）
-- **「就现在」计时记录**：像运动 App 一样开始/结束计时，时长自动精准填入；计时时切出应用，通知栏/锁屏持续显示系统级秒数（Android 16+ 实况通知 / 魅族锁屏胶囊 / 其他常驻通知）；计时中 App 被杀也会自动恢复
+- **「就现在」计时记录**：像运动 App 一样开始/结束计时——**全屏沉浸式计时页**（主题蓝渐变 + 超大秒数 + 脉冲徽标），结束后同屏进入**汇总页**（情绪/诱因补选、看片自动推导、「继续计时」可反悔）；时长自动精准填入
+- **实况通知（Live Updates）**：计时时切出应用，通知栏/锁屏持续显示系统级秒数（Android 16+ 实况通知 / 魅族锁屏胶囊 / 其他常驻通知）；通知自带「结束并记录 / 取消」快捷按钮；息屏 AOD 显示「已计时 X 分钟」自动刷新；计时中 App 被杀也会自动恢复衔接
 - **桌面小组件（2x2，共 5 个）**：一键快速记录、数据看板、本周节奏、连续进度、今日卡片
 - **每日温和提醒**：可选，默认关闭
 - **深色模式**：跟随系统 + 手动覆盖
+- **我的页**：AI 设置 / 记录方式 / 实况通知测试 / 数据管理（导出、清除、恢复演示数据）/ 隐私说明（数据仅存本地）
 
 ## 设计风格
 
@@ -111,9 +113,12 @@ guanji-app/
 ├── www/                  # 前端源码（index.html / styles.css / app.js）
 ├── android/              # Capacitor 安卓工程
 │   └── app/src/main/java/com/guanji/app/
-│       ├── MainActivity.java        # 启动 + 小组件意图处理
-│       ├── WidgetStatsPlugin.kt     # WebView → 原生统计同步插件
-│       └── Guanji*Widget.kt         # 5 个桌面小组件
+│       ├── MainActivity.java            # 启动 + 小组件/通知意图处理
+│       ├── WidgetStatsPlugin.kt         # WebView → 原生统计同步插件
+│       ├── TimerLiveUpdatePlugin.kt     # 计时实况通知插件（Android 16 / 魅族胶囊）
+│       ├── TimerService.kt              # 计时前台服务（息屏保活 + AlarmManager 兜底）
+│       ├── TimerAlarmReceiver.kt        # 每分钟闹钟兜底（OEM 冻结恢复）
+│       └── Guanji*Widget.kt             # 5 个桌面小组件
 ├── assets/               # 应用图标源文件
 ├── debug/                # 真机验证脚本（WebView DevTools 驱动）
 ├── IMPROVEMENTS.md       # 改进意见清单（需求 → 方案 → 实施记录）
@@ -122,7 +127,7 @@ guanji-app/
 
 ## 版本历史
 
-见 [CHANGELOG.md](./CHANGELOG.md)——从 v1.0 到 v3.2，持续迭代更新。
+见 [CHANGELOG.md](./CHANGELOG.md)——从 v1.0 到 v3.5，持续迭代更新。
 
 ## 致谢
 
