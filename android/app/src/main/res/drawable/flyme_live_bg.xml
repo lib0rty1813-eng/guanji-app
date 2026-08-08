@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- #52 强化：魅族展开卡片背景（主题蓝渐变圆角） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="135"
+        android:startColor="#0A84FF"
+        android:endColor="#0040A8" />
+    <corners android:radius="18dp" />
+</shape>

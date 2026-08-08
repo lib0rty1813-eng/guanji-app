@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观己 · 汇总页原型 v23（按钮配色 + 数字投影）</title>
+<style>
+  :root { --timer-bg-1: #0A84FF; --timer-bg-2: #0040A8; --sage: #34C759; --blue-live: #007AFF; --gray-strong: #3A3A3C; --gray-weak: #8E8E93; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0D0D0F; padding: 32px 20px 60px; color: #fff;
+  }
+  h1 { text-align: center; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .sub { text-align: center; font-size: 12px; color: #8E8E93; margin-bottom: 28px; }
+  .col { width: 340px; margin: 0 auto; }
+  .col-label { text-align: center; font-size: 13px; font-weight: 700; color: #AEAEB2; letter-spacing: 0.04em; margin-bottom: 10px; }
+  .phone {
+    width: 330px; height: 720px; margin: 0 auto;
+    border-radius: 46px; background: #000; padding: 10px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  }
+  /* v8-A 结构原样，唯一改动：.screen 背景色 */
+  .screen {
+    width: 100%; height: 100%; border-radius: 38px; overflow: hidden; position: relative;
+    background: #F2F2F7;             /* 仅此一行改动（原为蓝渐变） */
+    display: flex; flex-direction: column; align-items: center;
+    padding: 34px 24px calc(44px);
+  }
+  .sb { width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: var(--gray-strong); }
+  .sb-icons { display: flex; gap: 4px; align-items: center; }
+  .sb-icons svg { opacity: 0.9; }
+  /* 顶部：数字（上方 30 呼吸，下方 40 与内容连接——v22 删开关后放大节奏平衡） */
+  .head { text-align: center; padding: 30px 0 40px; }
+  .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; color: rgba(255,255,255,0.7); }
+  .num { font-size: clamp(32px, 9.5vw, 40px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--blue-live); font-variant-numeric: tabular-nums; margin-top: 4px; white-space: nowrap; text-shadow: 0 2px 14px rgba(0,122,255,0.35); }
+  .meta { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 14px; letter-spacing: 0.02em; }
+  .section { width: 100%; max-width: 320px; }
+  .section + .section { margin-top: 24px; }
+  .sec-label { font-size: 13px; font-weight: 700; color: var(--gray-strong); letter-spacing: 0.02em; margin-bottom: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 12px; }
+  .chip { font-family: inherit; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; padding: 7px 14px; border-radius: 999px; background: #E5E5EA; color: var(--gray-strong); border: 1px solid transparent; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .chip.active { background: rgba(255,255,255,0.95); color: var(--blue-live); border-color: transparent; box-shadow: 0 2px 8px rgba(0,122,255,0.18); }
+  .chip-add { background: none; border: 1px dashed var(--gray-weak); color: var(--gray-weak); font-weight: 500; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; font-size: 14px; color: var(--gray-strong); }
+  .switch { width: 48px; height: 28px; border-radius: 999px; background: rgba(255,255,255,0.4); position: relative; }
+  .switch.on { background: var(--sage); }
+  .switch .knob { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .switch.on .knob { left: 22px; }
+  .actions { width: 100%; max-width: 320px; margin-top: 40px; }
+  .btn-finish { display: block; width: 100%; text-align: center; padding: 17px 0; border-radius: 999px; background: var(--blue-live); color: #FFF; font-size: 17px; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 8px 24px rgba(0,122,255,0.35); }
+  .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+  .btn-resume { flex: 1; text-align: center; padding: 11px 0; border-radius: 999px; background: rgba(255,255,255,0.85); color: var(--gray-strong); font-size: 13px; font-weight: 700; letter-spacing: 0.02em; box-shadow: 0 4px 14px rgba(0,0,0,0.10); }
+  .btn-abandon { flex: 1; text-align: center; padding: 11px 0; border-radius: 999px; background: rgba(255,255,255,0.4); color: var(--gray-weak); font-size: 13px; font-weight: 600; letter-spacing: 0.02em; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .note { text-align: center; font-size: 10px; color: #6E6E73; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>汇总页 · v23（按钮配色 + 数字投影）</h1>
+<p class="sub">v8-A 全部原样（白色体系/胶囊/按钮）· 唯一改动：.screen background → #F2F2F7</p>
+
+<div class="col">
+  <p class="col-label">汇总页（继续计时）</p>
+  <div class="phone"><div class="screen">
+    <div class="sb">
+      <span>21:55</span>
+      <span class="sb-icons">
+        <svg width="16" height="10" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#fff"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#fff"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="#fff"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#fff"/></svg>
+        <svg width="22" height="11" viewBox="0 0 24 12"><rect x="0.5" y="0.5" width="20" height="11" rx="3" stroke="#fff" fill="none"/><rect x="2" y="2" width="15" height="8" rx="1.8" fill="#fff"/><rect x="21.8" y="4" width="1.8" height="4" rx="0.9" fill="#fff"/></svg>
+      </span>
+    </div>
+    <div class="head">
+      <p class="num">已计时 12 分钟</p>
+    </div>
+    <div class="section">
+      <p class="sec-label">情绪</p>
+      <div class="chips">
+        <button class="chip active">平静</button>
+        <button class="chip">放松</button>
+        <button class="chip">愉悦</button>
+        <button class="chip">无聊</button>
+        <button class="chip">焦虑</button>
+        <button class="chip">压力</button>
+        <button class="chip chip-add">+ 添加</button>
+      </div>
+    </div>
+    <div class="section">
+      <p class="sec-label">诱因</p>
+      <div class="chips">
+        <button class="chip">压力大</button>
+        <button class="chip">睡不着</button>
+        <button class="chip">睡前习惯</button>
+        <button class="chip">无聊</button>
+        <button class="chip active">看了片</button>
+        <button class="chip">无特别诱因</button>
+        <button class="chip chip-add">+ 添加</button>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="btn-finish">存为记录</div>
+      <div class="btn-row">
+        <div class="btn-resume">继续计时</div>
+        <div class="btn-abandon">放弃</div>
+      </div>
+    </div>
+  </div></div>
+  <p class="note">白色体系原样保留（白字/半透明白胶囊/白大圆按钮）· 仅背景改浅色</p>
+</div>
+</body>
+</html>

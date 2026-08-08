@@ -24,6 +24,12 @@ build-log.txt
 # 截图存档
 screenshots/
 
+# 真机调试临时产物（不入库：截图 / uiautomator 转储 / 采样输出 / 临时脚本；调试脚本本身入库）
+debug/ui*.xml
+debug/*.png
+debug/*.json
+debug/tmp-*.js
+
 # 系统文件
 .DS_Store
 Thumbs.db

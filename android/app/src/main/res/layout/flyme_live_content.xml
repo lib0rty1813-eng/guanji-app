@@ -1,27 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- #52：魅族实况通知主内容布局（RemoteViews，Chronometer 系统级走秒） -->
+<!-- #52：魅族实况通知主内容布局（RemoteViews）
+     v3.4 定稿版：G 方案——标题行（logo+标题）｜秒数行（23sp 蓝字 + 右侧绿点「进行中」）｜胶囊按钮
+     高度紧凑（Flyme 展开卡上限）；颜色/背景由 buildFlymeContentRv 显式 set -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/content_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:gravity="center_vertical"
     android:paddingStart="16dp"
-    android:paddingTop="10dp"
+    android:paddingTop="8dp"
     android:paddingEnd="16dp"
-    android:paddingBottom="10dp">
+    android:paddingBottom="8dp">
 
-    <TextView
-        android:id="@+id/content_title"
-        android:layout_width="wrap_content"
+    <!-- 标题行：logo + 标题 -->
+    <LinearLayout
+        android:id="@+id/title_row"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="观己 · 计时中"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <Chronometer
-        android:id="@+id/content_chronometer"
-        android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/logo_box"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginEnd="6dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/logo_icon"
+                android:layout_width="10dp"
+                android:layout_height="10dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/content_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="观己 · 计时中"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- 秒数行：计时 + 右侧状态 -->
+    <LinearLayout
+        android:id="@+id/chrono_row"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:format="已计时 %s"
-        android:textSize="18sp" />
+        android:layout_marginTop="3dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+
+        <Chronometer
+            android:id="@+id/content_chronometer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:format="已计时 %s"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/status_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/status_dot"
+                android:layout_width="7dp"
+                android:layout_height="7dp"
+                android:layout_marginEnd="5dp" />
+
+            <TextView
+                android:id="@+id/status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="进行中"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 按钮行：胶囊按钮 -->
+    <LinearLayout
+        android:id="@+id/btn_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btn_finish"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="5dp"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:text="结束并记录"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btn_cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="5dp"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:text="取消"
+            android:textSize="14sp" />
+    </LinearLayout>
 </LinearLayout>

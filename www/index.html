@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>观己 · UI 原型</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23007AFF'/%3E%3Cpath d='M32 18c-6 0-10 4.2-10 9.8 0 6.5 7.5 11.8 9.4 13.1a1.2 1.2 0 0 0 1.2 0c1.9-1.3 9.4-6.6 9.4-13.1C42 22.2 38 18 32 18Zm0 13.3a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z' fill='%23FFFFFF'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="styles.css?v=25">
+<link rel="stylesheet" href="styles.css?v=36">
 <script>
   /* 防闪烁：在渲染前根据 localStorage + 系统设置确定主题 */
   (function () {
@@ -155,14 +155,6 @@
       </header>
 
       <div class="card">
-        <p class="card-title" style="margin-bottom:14px">隐私说明</p>
-        <ul class="privacy-list">
-          <li><span class="dot"></span>所有记录只保存在这台设备上，不上传云端</li>
-          <li><span class="dot"></span>AI 分析时，仅上传聚合后的统计特征（每周次数、时段分布等），不会上传单条记录</li>
-        </ul>
-      </div>
-
-      <div class="card">
         <p class="card-title" style="margin-bottom:14px">外观</p>
         <div class="chips" id="themeChips">
           <button class="chip active" data-theme-mode="system">跟随系统</button>
@@ -229,6 +221,7 @@
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <p class="disclaimer" style="margin-top:12px" id="liveTestStatus">测试你的手机是否支持实况通知（Android 16+ 锁屏胶囊）。计时进行中时，通知栏会持续显示秒数。</p>
+        <p class="disclaimer" style="margin-top:4px">提示：息屏时分钟数持续刷新，需允许观己后台运行——系统设置 → 应用 → 观己 → 耗电管理 → 允许后台运行。</p>
       </div>
 
       <div class="card">
@@ -247,12 +240,18 @@
         </button>
       </div>
 
+      <!-- #68：隐私说明并入关于卡（数据相关操作后展示，强调本地存储） -->
       <div class="card about-card">
         <div class="logo-mark">
           <svg width="26" height="26" viewBox="0 0 46 46"><path d="M23 12c-6 0-10 4.2-10 9.8 0 6.5 7.5 11.8 9.4 13.1a1.2 1.2 0 0 0 1.2 0c1.9-1.3 9.4-6.6 9.4-13.1C33 16.2 29 12 23 12Zm0 13.3a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" fill="#FFFFFF"/></svg>
         </div>
         <p class="about-name">观己</p>
-        <p class="about-ver">v3.2 · 数据仅存本地</p>
+        <p class="about-ver">v3.5 · 数据仅存本地</p>
+        <!-- #69：隐私条目直接跟随品牌区（无分割线/无标题，苹果页脚风格） -->
+        <ul class="privacy-list about-privacy">
+          <li><span class="dot"></span>所有记录只保存在这台设备上，不上传云端</li>
+          <li><span class="dot"></span>AI 分析时，仅上传聚合后的统计特征（每周次数、时段分布等），不会上传单条记录</li>
+        </ul>
       </div>
     </main>
 
@@ -402,9 +401,49 @@
     </div>
 
     <div class="toast hidden" id="toast"></div>
+
+    <!-- #54/#62：全屏沉浸式计时页 + 汇总视图（同容器无缝切换，运动 App 风格） -->
+    <div class="timer-screen hidden" id="timerScreen">
+      <!-- 计时视图 -->
+      <div class="timer-screen-inner" id="timerRunView">
+        <span class="timer-live-badge"><span class="timer-live-dot"></span>进行中</span>
+        <p class="timer-big" id="timerBigDisplay">00:00</p>
+        <p class="timer-started" id="timerStartedLabel"></p>
+        <div class="timer-screen-spacer"></div>
+        <button class="timer-finish-btn" id="timerFinishBtn">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          结束记录
+        </button>
+        <button class="timer-quit-btn" id="timerQuitBtn">取消计时</button>
+      </div>
+      <!-- #62/#63：汇总视图（回退 v5：蓝渐变白色体系 + 继续计时按钮；无看片开关） -->
+      <div class="timer-screen-inner hidden" id="timerSummaryView">
+        <p class="summary-title">本次计时</p>
+        <p class="summary-duration" id="summaryDuration"></p>
+        <p class="summary-meta" id="summaryMeta"></p>
+        <div class="summary-section">
+          <p class="summary-label">情绪</p>
+          <div class="chips" id="summaryMoodChips"></div>
+        </div>
+        <div class="summary-section">
+          <p class="summary-label">诱因</p>
+          <div class="chips" id="summaryTriggerChips"></div>
+        </div>
+        <div class="summary-actions">
+          <button class="timer-finish-btn" id="summarySaveBtn">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 9.5 7.5 12.5 13.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            存为记录
+          </button>
+          <div class="summary-sub">
+            <button class="summary-resume" id="summaryResumeBtn">继续计时</button>
+            <button class="summary-abandon" id="summaryAbandonBtn">放弃</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<script src="app.js?v=24"></script>
+<script src="app.js?v=36"></script>
 </body>
 </html>

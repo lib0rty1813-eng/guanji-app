@@ -249,6 +249,37 @@ renderHome();
 - 2026-08-07：**#51 实施完成（v3.1，versionCode 22，用户指定版本号 3.1）**：计时状态机（startTimedRecord/finishTimedRecord/cancelTimer/renderTimerTick，纯时间戳差值零累积误差；分钟取整不足 1 按 1）；计时器态 UI（timerBox 大数字 tabular-nums + seg/pickerRow 隐藏 + nextBtn「开始记录/结束记录」）；「不想计时？直接填写」直达详情 + quick 模式对称入口（会话级切换不改偏好）；记录方式设置卡（timer/quick 默认 timer）；设置页「实况通知」测试卡（getLiveUpdateStatus 内联 3 行分级 + testLiveUpdate 15s 自消）；杀进程恢复（guanji_timer_v1 启动检测 → 恢复面板 + toast）；closeSheet 计时中取消不保存 + 温和提示；visibilitychange 切回校正；TimerLiveUpdatePlugin.kt（渠道 IMPORTANCE_LOW/ongoing/chronometer/when/progress/API36 setRequestPromotedOngoing/deleteIntent 广播/POST_NOTIFICATIONS 权限回调/getLiveUpdateStatus/testLiveUpdate）+ TimerDeleteReceiver.kt（划掉标记不拉起 App）+ ic_stat_timer.xml + Manifest 双权限 + MainActivity registerPlugin + 划掉标记 JS 提示；nextBtn 分流按当前面板计时器态而非偏好（修掉 quick 偏好 + 恢复计时的组合 bug，浏览器回归抓出）；版本 v3.1/22/资源 ?v=25；浏览器回归 11 项 PASS + 真机 8 项 PASS（魅族 Android 16：canPostPromoted=false 实况通知提升不可用 → 降级链生效，普通常驻通知 posted 验证（id 4101/ONGOING_EVENT/title「观己 · 计时中」/contentIntent/deleteIntent）、结束计时通知消失、杀进程恢复 00:23 精确）；截图存档 2 张（通知栏 + 计时面板）
 - 2026-08-07：新增第 52 条意见（魅族实况通知适配——用户提供 GitHub Demo Ruyue-Kinsenka/Flyme-Live-Notification-Demo），已通读源码分析：魅族私有胶囊机制 = 标准通知 addExtras 注入私有 key（is_live/notification.live.operation/type/capsule{status/type/content/icon/bgColor/contentColor/remote.view}）+ 自定义 contentView + IMPORTANCE_HIGH + VISIBILITY_PUBLIC；判断可行（魅族走胶囊/非魅族标准提升双轨，未知 extras 无副作用）但必须 Build.MANUFACTURER 判断仅在魅族附加（contentView 会破坏标准提升条件）；胶囊 RemoteViews 可用 Chronometer 组件系统级走秒；方案/实施清单/2 个待确认问题（是否实施、渠道重要性）已写入，仅记录
 - 2026-08-07：**#52 实施完成（v3.2，versionCode 23）**：isFlyme() 检测（Build.MANUFACTURER==Meizu）；Flyme 分支——startTimer/testLiveUpdate 在标准通知（ongoing/chronometer/Progress）基础上 addExtras 魅族私有胶囊（is_live=true/operation=0/type=2/capsule{status=1/type=5/content「观己 · 计时中」/icon 时钟/bgColor #007AFF/contentColor 白/capsule.content.remote.view=flyme_live_capsule 布局}）+ notification.contentView 换 flyme_live_content 布局（标题 + Chronometer）；胶囊/主内容 RemoteViews 均用 Chronometer 组件（SystemClock.elapsedRealtime 换算 base，系统级走秒后台精准）；仅魅族附加（非魅族标准提升条件不被破坏）；新布局 flyme_live_capsule.xml/flyme_live_content.xml；渠道保持 IMPORTANCE_LOW（胶囊生效与渠道关系待观察）；真机验证：dumpsys 确认 extras 全部注入（is_live=true/operation=0/type=2/capsule Bundle 2436B）+ contentView 附加（0x7f0b0020），通知栏截图确认自定义布局生效（「观己 · 计时中 已计时 00:12」系统级秒数跳动），**用户确认魅族实况通知调用成功**；版本 v3.2/23/about-ver v3.2；截图存档 v32_flyme_capsule.png
+- 2026-08-07：新增第 53 条意见（排版设计规范——统计全项目标题字体/字号/间距并文档化应用），已全量核对 styles.css 完成统计（字号阶梯 9-52px 共 19 档、权重体系 400/500/600/700/800、字距三档 -0.02~0.14em、行高四档 1.0~1.9、间距规范 5 组）；应用结论：体系已高度自洽（report-title=card-title、弹层标题统一 800、13px 次级强调统一、无同语义漂移），仅标注 2 处有意差异（about-name 0.06em 品牌感、timer-display +0.02em tabular 对齐）；规范写入 #53，仅记录
+- 2026-08-07：新增第 54 条意见（「就现在」计时升级全屏沉浸式计时页——用户描述「开始记录后还是在小卡片里，想要像运动 App 一样一整页都是时间」，代理补充细化：运动 App 进行中页形态（脉冲徽标/超大 96-120px 等宽时间/开始时刻小字/底部大按钮）+ 交互流（面板收起→全屏淡入→结束回面板详情预填→保存；下滑/退出=取消；杀进程恢复直进全屏）+ 技术方案（#timerScreen 覆盖层 z-index 60、渐变背景变量化、timerState/通知/持久化全复用）；4 个待确认问题（暂停功能/退出方式/背景风格/返回键），仅记录
+- 2026-08-07：#54 待确认问题全部按推荐拍板——不加暂停（两态保持）；下滑/退出=直接取消不弹确认；主题蓝渐变背景；返回键拦截=取消计时+温和提示，仅记录
+- 2026-08-07：**#54/#55/#56 实施完成（v3.3，versionCode 24）**：①#54 全屏沉浸式计时页——timerScreen 覆盖层（z-index 60，主题蓝渐变 --timer-bg-1/2、脉冲「进行中」徽标、96px tabular-nums 大时间、开始时刻小字、白色大圆「结束记录」按钮 + 「取消计时」）；startTimedRecord→showTimerScreen（面板保留在层下）、finishTimedRecord→hideTimerScreen+回详情预填、cancelFromTimerScreen（取消+关面板+提示）、history.pushState+popstate 拦截返回键取消；restoreTimer 恢复直进全屏；renderTimerTick 同步更新双显示；②#55 补记入口回归——setupNowStep timer 模式未计时时恢复 timeSegRow 显示（就现在=计时器态/补记=经典流程），nowSeg/customSeg 点击联动（timerBox 隐藏/显示、nextBtn 文案、modeLink、pickerRow），计时中 running 分支保持隐藏 seg；③#56 编辑移除「就现在」——openSheet edit 分支额外隐藏 timeSegRow（pickerRow 保留=纯补记语义，杜绝历史记录被覆盖为当前时刻）；版本 v3.3/24/?v=26/25/about-ver；浏览器回归全过（seg 回归/补记切换/全屏走秒/结束回详情/取消/返回键/恢复直进全屏 01:40/quick 回归/编辑无 seg）+ 真机 7 项 PASS（verify-v53.js）；截图存档 v33_timer_fullscreen.png
+- 2026-08-07：新增第 57 条意见（实况通知能力细化——双轨已验证后扩展交互闭环）：盘点现状（计时通知/标准 Live Updates/魅族胶囊/恢复/降级链/测试按钮/划掉提示/点击打开）；方案按价值排序 A 通知栏快捷操作（结束并记录/取消，标准 Action + 魅族 contentView 按钮 + JS 桥）、B 点击通知直达全屏计时页（contentIntent extra）、C 锁屏 VISIBILITY_PUBLIC、D 温和时长提醒（30/60 分钟可选）；明确不做（目标化进度条/暂停/提醒类实况）；3 个待确认问题（结束直达详情/温和提醒纳入/点击直达全屏），仅记录
+- 2026-08-07：#57 决策确认——用户指定「实现 A」（通知栏快捷操作：结束并记录/取消），A 直达详情子决策并入方案确认；B（点击直达全屏）/C（锁屏可见）/D（温和时长提醒）暂缓未拍板；计划写入，仅记录
+- 2026-08-07：**#57-A 实施完成（v3.4，versionCode 25）**：①原型先行（prototype/live-notification.html 五场景，用户定稿：300px 手机框、信息分层——标题/26px 秒数/进度条/按钮各行独立、删除副文本行）；②TimerLiveUpdatePlugin——startTimer 加 2 个 Action（「结束并记录」requestCode=4 + EXTRA_GUANJI_TIMER_FINISH /「取消」requestCode=5 + EXTRA_GUANJI_TIMER_CANCEL，timerActionPendingIntent），魅族 contentView（flyme_live_content.xml）加两个文字按钮（结束并记录蓝/取消灰，setOnClickPendingIntent 同 PendingIntent）；③MainActivity——两个常量 + handleTimerIntent（onCreate/onNewIntent）→ runWhenReady JS 桥；④app.js——window.__guanjiTimerFinish（running→finishTimedRecord 直达详情）/__guanjiTimerCancel（running→cancelFromTimerScreen 取消+提示）；冷启动衔接：进程被杀点按钮 → JS restoreTimer 先恢复 → JS 就绪后触发 finish/cancel；版本 v3.4/25/app.js?v=26；真机验证（魅族，按用户要求只验魅族路径）：dumpsys actions=2 + contentView 0x7f0b0020、热启动真实 intent finish（details=true/dur 预填/key 清）、冷启动 force-stop+finish intent（恢复→结束→详情 1 分钟）、cancel 真实 intent（running=false/无详情/key 清）；截图存档 v34_notif_actions.png；B/C/D 暂缓
+- 2026-08-07：#52 样式强化补丁（用户反馈「胶囊展开态所有样式都没生效」）——真机实测定位：魅族渲染 contentView 只尊重代码显式 set 的属性（XML 样式声明被系统卡片模板覆盖，浅色卡片黑字）；修复：flyme_live_content.xml 重写（content_root 加 flyme_live_bg 渐变 drawable 背景 + 白字）+ buildFlymeContentRv 全部显式 set（setBackgroundResource/setTextColor/setTextViewTextSize：标题 14sp 白 bold、秒数 30sp 白 bold、按钮 13sp 白/白 75%）；真机验证样式生效（蓝色渐变卡片 + 白色标题/大秒数/按钮，与系统浅色通知区分明显，层次协调）；版本号不变（v3.4 内补丁）；截图存档 v34_styled_expand.png
+- 2026-08-07：新增第 55 条【Bug】（计时模式下「补记」入口消失——用户反馈「更新后点击记录只剩直接记录和不想计时了，补录功能怎么没有了」），根因已定位：#51「计时态隐藏 seg」决策副作用——默认 timer 模式步骤一不再有「就现在/补记」切换，补记入口从主面板消失（只剩日历入口）；quick 模式不受影响；修复方案（未计时时恢复 seg 显示：就现在=计时器态/补记=经典流程，计时开始后 seg 隐藏保留），仅记录
+- 2026-08-07：新增第 56 条【Bug】（编辑模式「就现在」选项冲突——用户反馈「编辑进入的是补记但还有就现在选项，既然补记可以选时间，就现在就没意义了」），根因已定位：#46 编辑直达详情保留 seg 可切换——编辑=修改已存在记录，无「现在新建」语义，且切到就现在会把历史记录时间覆盖为当前时刻（误操作风险）；修复方案（编辑模式隐藏 timeSegRow，保留 pickerRow 时间可调=纯补记语义），仅记录
+- 2026-08-08：新增第 58 条意见（Android 16 状态条状标签 chip 优化——用户反馈「未展开状态有点丑，一个大横条，有用信息少」），根因已定位（对照官方规范：chip 最大 96dp、<7 字符全显示——标题「观己 · 计时中」6 字符被系统整段塞进 chip 成 96dp 横条，秒数又放不进）；方案（setShortCriticalText("计时中") 3 字符缩短横条 + 标题保持展开态使用 + 真机验证）；1 个待确认（chip 文本：计时中/只图标/其他），仅记录
+- 2026-08-08：**#69 实施完成（v3.5 内补丁，版本号不变）**：关于卡去分割线与「隐私说明」标题——`.about-privacy` 简化为直接挂 about-card 的 `ul.privacy-list`（品牌区后直跟 2 条隐私条目，苹果页脚风格），CSS 去 border-top/padding-top、margin-top 18px 衔接；版本号不变（26/3.5），资源 ?v=36/36；真机验证（魅族）borderTop=0px none + 无 card-title + brandY 2077→privY 2141 + 2 条文案左对齐 + v3.5；浏览器回归一致；截图 v35_about_clean.png
+- 2026-08-08：**#68 实施完成（v3.5 内补丁，版本号不变）**：独立隐私说明卡并入 about-card——品牌区（logo/观己/版本）下方新增 `.about-privacy` 分区（隐私说明标题 + 原 2 条文案），`--line` 分隔线 + 左对齐；卡片数 9→8；版本号不变（26/3.5，about-ver 保持），资源 ?v=35/35；真机验证（魅族）cardCount=8 + 分隔线 0.73px --line + 左对齐 + 2 条文案完整 + 数据管理仍在其上 + 清除弹窗回归正常；浏览器回归一致；截图 v35_about_merged.png
+- 2026-08-08：**#67 实施完成（v3.5，用户指定版本号）**：隐私说明卡从我的页顶部移至「数据管理」卡之后（新顺序 外观→AI 设置→记录提醒→正向反馈→记录方式→实况通知→数据管理→隐私说明→关于）；版本升级 versionCode 26 / versionName 3.5 / about-ver v3.5 / 资源 ?v=34；真机验证（魅族）dumpsys 26/3.5 + CDP DOM 顺序 dataBeforePrivacy=true + 清除确认弹窗回归正常；浏览器回归一致；截图 v35_me_page.png
+- 2026-08-08：**#66 实施完成（v3.4 补丁，方案 A）**：transitionSheetHeight 修复——签名改 `(from)`（调用方切步骤前测切换前高度），`to` 改测步骤切换后 sheet 自然全高（含 chrome），清理改 transitionend（防子元素冒泡校验 target/propertyName）+ 600ms 兜底，时长 0.35s→0.22s easeOutCubic 与退场语言一致；goToDetails/goToTime 同步传 from；真机逐帧验证四路径（补记下一步/小字直达单调展开、上一步单调收缩、编辑 inlineSeen=0 无回归）+ 浏览器回归 4 项 PASS 零 console 错误；资源 ?v=33/33；版本号不变；截图 v66_step_transition_fixed.png
+- 2026-08-08：新增第 66 条【Bug】（步骤切换动画「弹出一部分→卡一下→显示完整」——用户澄清：问题在「点下一步到记录页」与「点小字直接填写到记录页」，补记同，编辑无；弹出动画本身平滑）；根因已定位（魅族真机 rAF 逐帧采样 + CDP Profiler + 函数插桩三重实锤）：`goToDetails()` 的 `transitionSheetHeight('stepDetails')` 目标高度算错——sheet = grab+标题+按钮区+padding 等 chrome ≈188px，实测 `from=681.1`（sheet 全高）`to=493.3`（仅 stepDetails 自身）→ 高度过渡**反向收缩** 681→493（~350ms）→ 400ms 清理定时器在动画尾段触发 → inline 清空 → **瞬间弹回 681**（帧数据：停在 493 约 216ms 后跳回）——「卡一下显示完整」实锤；上一步同 bug；编辑直达详情不调用该函数故平滑；方案草案（A 修复目标高度 + transitionend 清理，推荐 / B 移除过渡瞬间切换 / C transform 替代），1 个待确认，仅记录
+- 2026-08-08：**#65 第三轮修复（v3.4 补丁，用户反馈「键盘和窗口重合了」）**：第二轮冻结让 dialog 居中于冻结画布 851px → bottom 541 > 可见区 528 → 底部被键盘盖住；修复 3 处——①冻结条件收窄为「对话框打开 + 键盘弹出」（设置页/备注输入保持原 adjustResize，实测 WebView 自动滚动 .screen 使输入框可见无回归）②`--kb-h` CSS 变量每帧更新 + `body.keyboard-up .backdrop.dialog-layer { bottom:auto; height:var(--kb-h) }`——对话框层只覆盖可见区域，dialog 居中于键盘上方完整露出 ③`.toast { position: fixed }`（真机媒体查询内）跟随可见区底部；真机验证（魅族，两套风格真实点按）：键盘弹出后 dialog `y=149/bottom=379 < 528` 完整露出不重合、输入后 y=148/h=232 不变、sheet 稳定 y=170、汇总页同过、设置页输入框 y=241-287 可见；截图 v65_kb_visible_panel.png / v65_kb_visible_summary.png；资源 ?v=32/32
+- 2026-08-08：**#65 根治实施（v3.4 补丁）**：第一轮只合并预览行（重叠消除）但顶起/拉扯仍在（验证方法缺陷：JS focus 已召起键盘，前后两组数据同为键盘态，误判无问题；用户复测确认）；二次定位实锤真根因——真机媒体查询 `.phone { height:100vh }` 随 adjustResize 键盘压缩（851→528）导致整棵布局树重排（sheet 顶起/dialog 重新居中/vh 间距全变）；修复 4 处：①app.js 键盘弹出冻结 html/body 为弹出前高度（kbBase 历史最大值自愈，防重载捕获压缩态）②`.phone` 改 height:100% + `.stage` height:100%（补确定参照防百分比回退撑高 1620px 回归）③`#addPreview` min-height:1.8em 预留预览行（dialog 高度恒定零跳动）④汇总页 3 处 clamp(vh) 间距固定化 28/32/32px；真机验证（魅族，键盘前后分离采样）：面板风格 sheet 键盘前后 y=170/bottom=851 完全一致（修复前顶到 top:200）、输入 5 字 dialog y=310/h=232 不变、单行预览无重叠、键盘收起解冻恢复；汇总页风格真实点按路径同样 PASS；截图 v65_keyboard_frozen.png / v65_summary_frozen.png；资源 ?v=31/31；调试工具沉淀 cdp-eval.cjs / parse-ui.cjs
+- 2026-08-08：新增第 59 条意见（AOD 息屏优化——用户澄清：观己在 AOD 有内容显示但简陋，非不可见），根因已定位：AOD 息屏卡片内容 = 通知 contentText（Maps 示例的「2 km · 转向指令」即 contentText），之前删除 contentText 后 AOD 只剩标题+图标；方案定稿（用户确认）：恢复 contentText 为动态核心信息「已计时 X 分钟」每 60s 更新（AOD/折叠态信息量提升；展开态秒数下方多一行小字已确认接受）；实施清单（Handler 定时更新 + 停止/取消清除定时器）已写入，仅记录
+- 2026-08-08：**#58/#59 实施完成（v3.4 补丁）**：①#58 chip 短文本——setShortCriticalText 用 extras 注入（NotificationCompat 无 setter、framework 无此 API/常量，实测 extras key=android.shortCriticalText；构建后 `n.extras.putCharSequence` 最稳），dumpsys 确认 shortCriticalText=「计时中」+ requestPromotedOngoing=true + PROMOTED_ONGOING 全保留；②#59 AOD 动态 contentText——startTimer 重构出 buildTimerNotification（startTimer/定时更新共用，保留 actions/胶囊/chronometer/shortCriticalText），progressText「已计时 X 分钟」（不足 1 分钟按 1），Handler(Looper.getMainLooper()) 60s 循环重新 notify，stopTimer 清除；真机验证（Android 16 PLZ110）：AOD 息屏显示「观己 · 计时中 / 已计时 2 分钟」（1→2 自动更新），锁屏后 App 后台 Handler 短时仍工作（OEM 长冻结会滞后但恢复后纠正，可接受）；截图存档 aod_check2.png
+- 2026-08-08：新增第 60 条【Bug】（AOD 息屏计时不动态刷新 + 显示滞后——用户测试：AOD 不更新、解除息屏再息屏才更新、App 7 分钟 vs AOD 4 分钟），根因已定位：#59 动态 contentText 依赖 App 进程 Handler，OEM（OPPO）息屏冻结 → 停更；7 vs 4 = contentText 停更值 vs App 实时值（非时间戳错）；AOD 卡片系统 chronometer 不独立显示秒数（实测）→ AOD 信息只能靠 contentText；方案草案（前台服务保活 TimerService + SPECIAL_USE 权限，运动 App 标准做法）+ 1 个待确认（前台服务 vs 接受滞后），仅记录
+- 2026-08-08：**#60 实施完成（v3.4 补丁，引导文案已添加）**：TimerService（前台服务 + Handler + AlarmManager 兜底）+ TimerAlarmReceiver + Manifest + 插件重构 + 设置页引导文案（息屏实时刷新需允许后台运行）；实测定论：OPPO 息屏冻结 Handler 消息队列 + 拦截高频闹钟 → 亮屏即纠正；引导设置是生态标准解法
+- 2026-08-08：新增第 61 条意见（体验优化：通知按钮回 App「先计时页再详情页」割裂——用户实测反馈，开始优化魅族/安卓 Live Updates 使用体验的第一项），根因已定位（代码时序：restoreTimer IIFE 在 JS 加载时立即恢复并 showTimerScreen 全屏，runWhenReady 轮询命中后 finish/cancel 才执行 → 全屏必然先闪现；热启动回前台同理）；方案草案（restoreTimer 延迟 showTimerScreen 400ms + running 守卫，意图在途时全屏从未显示直接进详情；纯恢复正常）；1 个待确认（延迟 400ms 过渡可接受性），仅记录
+- 2026-08-08：**#61 实施完成（v3.4 补丁，app.js?v=27）**：restoreTimer 的 showTimerScreen 延迟 400ms + running 守卫（意图在途→全屏从未显示直接进详情/关闭；纯恢复→400ms 后全屏正常）；浏览器验证两场景 PASS（意图在途：screenHidden+详情可见+dur 预填；纯恢复：全屏 01:09 正常）；真机冷启动验证 PASS（force-stop → am start --ez guanji_timer_finish → UI 树直接是详情页 stepDetails + dur「1 分钟」，无 timerScreen 元素）；cancel 路径同逻辑受益
+- 2026-08-08：新增第 62 条意见（体验优化：通知「结束并记录」直接保存跳过详情页——用户追问「流程一定要计时页→详情页吗，有没有彻底解决」），方案三选（A 推荐：通知结束直接保存，时长自动落库、情绪留空可事后编辑，与 widget 快记同哲学；B 保留详情页只优化动画；C 静默保存）；App 内结束仍进详情（快捷路径 vs 完整路径分工）；2 个待确认（方案选择 + 空情绪可接受性），仅记录
+- 2026-08-08：**#62 实施完成（v3.4 补丁，D1 全屏汇总页，用户确认）**：timerScreen 拆计时视图（timerRunView）+ 汇总视图（timerSummaryView：时长大字 40px/情绪诱因 chips 可多选/看片开关/存为记录/放弃）；结束计时 → showTimerSummary 同容器切换（替代 hideTimerScreen+goToDetails，零页面跳变）；renderMoodChips/renderTriggerChips 参数化（面板与汇总双容器）+ openDeleteDialog id 兼容 + summaryMediaSwitch 绑定；saveTimedSummary（时长自动落库 + 情绪可补选 + toast + 回首页）/abandonSummary（不保存关闭）；通知结束/冷启动意图在途 → 直接汇总（#61 延迟逻辑天然兼容）；浏览器全流程 PASS（同容器切换/保存/放弃/通知结束/冷启动意图）+ 构建安装 Android 16；资源 ?v=27/28
+- 2026-08-08：新增第 63 条意见（汇总页「继续计时」——用户反馈效果挺好但考虑误触结束想继续的情况，当前汇总页只有保存/放弃，误结束想继续只能重开丢时长）；方案草案（汇总页加「继续计时」入口 + finishTimedRecord 暂存 summaryStartTime + resumeTimer 恢复 running/localStorage/通知/计时视图，chronometer 从原 startTime 起时长连续）；2 个待确认（入口形式/继续后自动隐藏），仅记录
+- 2026-08-08：**#63 实施完成（v3.4 补丁）**：原型 13 轮迭代（v10-v23）定稿——浅色背景 + 三级层次（#007AFF>#3A3A3C>#8E8E93）+ 间距 40/24/40 + chips 无边框阴影 + 主按钮蓝底白字蓝光晕 + 数字蓝光晕投影；删「本次计时」眉题与开始时刻注脚；情绪/诱因居中；看片开关删除（media 由「看了片」诱因推导）；「继续计时」按钮 + resumeTimer（summaryStartTime 恢复 running/localStorage/通知/计时视图，时长连续）；设计语言沉淀 DESIGN-LANGUAGE.md v2 + 知识库「观己设计语言v2」（53c9a107）；验证：浏览器全过（恢复连续/时长累计/media 推导）+ 真机魅族（汇总页 v23 完整、继续计时后通知恢复 ONGOING_EVENT+FOREGROUND_SERVICE）；资源 ?v=28/29；**后续用户要求回退 v5 视觉**（蓝渐变白色体系 + 文字次级操作 + 间距 vh 自适应 + 顶部三段 13/44/13px + chips gap 12 + 添加对话框 z-index 70 修复，真机验证）
+- 2026-08-08：新增第 64 条意见（记录模块两套风格并存——计时新风格 vs 面板旧风格），方案三选（A 推荐：场景分区——计时沉浸/日常轻量是模式差异 + 组件一致性补强（chips/按钮色彩逻辑统一、面板→全屏衔接动画、面板对齐 v2 设计语言）；B 全记录全屏化；C 统一浅色——用户已否决），2 个待确认，仅记录
+- 2026-08-08：**#64 实施完成（v3.4 补丁，方案 A 确认）**：timerScreen 入场动画（fadeIn 0→1 + scale 0.98→1，0.3s easeOutCubic 统一退场语言，prefers-reduced-motion 降级）——面板→全屏不再瞬切；组件一致性检查确认（chips/按钮双背景色彩逻辑一致：选中蓝系、三级层级）；面板 v2 对齐标记为渐进工程（DESIGN-LANGUAGE v2 锚点，逐屏推进）；真机验证计时正常（通知+前台服务）；资源 ?v 不变（仅 CSS 无引用变化）
+- 2026-08-08：新增第 65 条【Bug】（添加对话框键盘弹出顶高预览框 + 页面拉扯——面板与汇总两套风格共有），真机复现定位（WebView 压缩至 1452px）：①预览框顶高/重叠——输入时 addCount（n/6）与 addPreview（将添加）同时出现、CSS 间距不足（重叠约 3px）+ dialog 高度突变 flex 居中跳动；②页面拉扯——adjustResize 压缩视口、底部记录面板被顶起（top 200），#42 仅处理 tabbar 面板本身跟随视口；方案草案（预览区间距/合并、对话框稳定定位、拉扯处理评估），2 个待确认，仅记录
 - 2026-08-06：**v2.1 实施完成（4 条）**：#28 记录面板自适应 + 切换高度过渡动画（去 min-height，JS 测量过渡 0.35s 弹性，动画后清理内联）；#29 弹层小横杠拖拽关闭（Pointer Events 阈值 90px 回弹，sheet-grab 热区）+ 出场/退场动画（sheetUp 保持 + 退场下滑淡出 0.25s + backdrop 淡入淡出，关闭/拖拽/点空白统一走退场）；#30 AI 设置卡 label 统一 16px 上间距（组合选择器 + 删内联）；#31 提醒时间清空自动恢复 21:00（显示与存储一致）；versionCode 12 / versionName 2.1
 - 2026-08-06：新增第 32 条意见（小组件一键快速记录 + 信息增强：widget 点击只弹面板非快捷记录；方案草案——quick_record 意图由 WebView 自动存默认记录零数据风险 + 今日次数/连续天数同步展示 + 双按钮布局），仅记录
 - 2026-08-06：新增第 33 条意见（再增加一个独立 2x2 数据看板小组件：今日/本周/连续/环比展示，独立 provider 与快速记录 widget 并存，复用 stats 同步机制，点击打开首页），仅记录
@@ -1711,6 +1742,461 @@ Android WebView 的系统字体缩放（textZoom）只放大文本、不放大�
 
 ---
 
+## 56. 【Bug】编辑模式「就现在」选项冲突（历史记录不该有「现在」语义） ✅ 已修复（v3.3）
+
+### 现象（用户 2026-08-07 反馈）
+最近记录点「编辑」进入的是补记，但还有「就现在」的选项——既然补记可以选时间，「就现在」就没有意义了，有点冲突。
+
+### 根因（已定位）
+- #46 编辑直达详情时「保留时间 seg 可调」——seg（就现在/补记）在编辑页可见
+- 编辑的语义是修改**已存在的记录**，不存在「现在新建」概念；且切到「就现在」后 updateTimeDisplay 走 now 分支（显示当前时刻 + pickerRow 隐藏），保存会把**历史记录时间覆盖成当前时刻**——误操作风险
+- 默认激活补记态，但 seg 可切换造成语义冲突
+
+### 修复方案（草案）
+- **编辑模式隐藏 timeSegRow**（无「就现在/补记」概念），保留 pickerRow（时间可调 = 补记语义）
+- openSheet('edit') 分支：showClassicStep1 基础上额外隐藏 timeSegRow（或 edit 专用布局：pickerRow 显示 + seg 隐藏 + modeLink 隐藏）
+- 保存逻辑不变（edit 分支读 pickDate/pickTime）
+
+### 实施清单
+1. `app.js` openSheet：mode==='edit' 时 timeSegRow 隐藏、pickerRow 显示（改时间的入口保留）
+2. 验证：编辑记录 → 无 seg、日期时间可调、保存时间正确；「就现在」模式 seg 行为不受影响（#55 修复后）
+
+### 验收要点
+- 编辑页不再出现「就现在」选项，只有补记时间选择
+- 编辑保存时间正确（不会意外覆盖为当前时刻）
+- 新增记录（就现在/补记）的 seg 行为正常
+
+---
+
+## 57. 实况通知能力细化（双轨已验证，扩展交互闭环） ✅ 已实施（v3.4，A 部分）
+
+### 需求（用户 2026-08-07）
+已证明 App 使用安卓原生 Live Updates 与魅族实况通知均成功，基于现有基础细化功能，看还能实现什么。
+
+### 现状盘点（v3.1-v3.3 已验证）
+- 计时通知（ongoing + 系统级 chronometer 后台走秒）✓ 标准 Live Updates（Android 16+）✓ 魅族锁屏胶囊 ✓ 杀进程恢复 ✓ 权限降级链 ✓ 通知测试按钮 ✓ 划掉标记提示 ✓ 点击通知打开 App ✓
+
+### 细化方案（按价值排序，草案）
+
+**A. 通知栏快捷操作「结束并记录」/「取消」**（最高价值，运动 App 标准能力）
+- 通知 Action「结束并记录」→ 结束计时 + 移除通知 → 打开 App 直达详情页（时长已预填，可微调）→ 选情绪/诱因 → 保存
+- 通知 Action「取消」→ 取消计时 + 移除通知（温和提示在打开时补）
+- 技术：标准通知用 NotificationCompat.Action + PendingIntent（requestCode 4=结束/5=取消，extra 区分）；魅族胶囊展开 contentView 加按钮（RemoteViews.setOnClickPendingIntent，因胶囊折叠态无按钮、展开态有）；MainActivity runWhenReady 调 JS（window.__guanjiTimerFinish / __guanjiTimerCancel）
+- 权限/降级链不变；非原生忽略
+
+**B. 点击通知直达全屏计时页**
+- 计时中点击通知：打开 App 直接显示全屏计时页（而非首页）
+- 技术：contentIntent 加 extra（guanji_timer_open）→ MainActivity → runWhenReady(window.__guanjiOpenTimerScreen) → running 时 showTimerScreen()
+
+**C. 锁屏直接显示计时秒数**
+- baseBuilder 加 setVisibility(Notification.VISIBILITY_PUBLIC)（计时内容不敏感，锁屏可见）
+
+**D. 温和时长提醒（可选）**
+- 计时到 30/60 分钟：通知文本更新「已经 X 分钟了，想结束随时可以」（温和非评判；由系统 chronometer 驱动，App 侧无需计时器）
+
+### 明确不做（理由）
+- 进度条目标化（引入目标/督促，违背温和非评判定位）
+- 暂停/继续（#54 已拍板不加）
+- 提醒类实况通知（官方文档明确仅适配「进行中」场景）
+- 双计时/计时历史复用（语义不清，暂缓）
+
+### 实施清单（✅ A 已确认实施，2026-08-07 计划定稿；B/C/D 暂缓）
+
+**A. 通知栏快捷操作「结束并记录」/「取消」——实施计划**
+
+1. `android/app/src/main/java/com/guanji/app/TimerLiveUpdatePlugin.kt`：
+   - startTimer 通知加 2 个 Action（NotificationCompat.Builder.addAction，图标复用 ic_stat_timer）：
+     - 「结束并记录」→ PendingIntent.getActivity(requestCode=4, extra EXTRA_GUANJI_TIMER_FINISH=true, FLAG_UPDATE_CURRENT|FLAG_IMMUTABLE)
+     - 「取消」→ PendingIntent.getActivity(requestCode=5, extra EXTRA_GUANJI_TIMER_CANCEL=true, 同 flag)
+   - 魅族 contentView（flyme_live_content.xml）加两个按钮「结束并记录」「取消」，buildFlymeContentRv 里 RemoteViews.setOnClickPendingIntent 绑定同一对 PendingIntent（胶囊折叠态无按钮，展开态有；标准 Action 双端通用）
+2. `android/.../MainActivity.java`：
+   - 新增常量 EXTRA_GUANJI_TIMER_FINISH / EXTRA_GUANJI_TIMER_CANCEL
+   - onCreate/onNewIntent 统一处理（并入 handleWidgetIntent 或新增 handleTimerIntent）：
+     - finish → runWhenReady("window.__guanjiTimerFinish ? (window.__guanjiTimerFinish(), 'ok') : 'pending'")
+     - cancel → runWhenReady("window.__guanjiTimerCancel ? (window.__guanjiTimerCancel(), 'ok') : 'pending'")
+   - **冷启动衔接**：进程被杀后点通知按钮 → 冷启动 → JS 层 restoreTimer 先恢复计时（running + 全屏页）→ runWhenReady 等到 JS 就绪后触发 finish/cancel，与恢复流程自然衔接
+3. `www/app.js`：
+   - window.__guanjiTimerFinish = () => { if (timerState.running) finishTimedRecord(); return 'ok'; }（结束 → 全屏隐藏 → 详情预填 → 面板详情打开，用户可调时长后保存）
+   - window.__guanjiTimerCancel = () => { if (timerState.running) cancelFromTimerScreen(); return 'ok'; }（取消 + 关面板 + toast「已取消本次计时」）
+4. 版本：versionCode 25 / versionName 3.4 / about-ver v3.4（资源 ?v 如 Web 层改动则 +1）
+5. 验证：
+   - 浏览器：直接调用 __guanjiTimerFinish/__guanjiTimerCancel 验证（结束预填/取消清理/无记录）
+   - 真机（魅族）：开始计时 → 通知栏按钮「结束并记录」→ 打开 App 直达详情（时长预填）→ 保存正常；「取消」→ 计时终止 + 通知移除 + 温和提示；魅族胶囊展开态按钮；冷启动点按钮衔接恢复；权限拒绝/低版本无按钮（降级链不变）
+   - 回归：全屏计时页/补记/编辑/quick 模式不受影响
+
+### 待确认问题（✅ 2026-08-07 确认 A 实施）
+- **A「结束并记录」直达详情** ✅ 已确认实施（2026-08-07 用户指定「实现A」）：结束计时 → 移除通知 → 打开 App 直达详情页（时长已预填可微调）→ 选情绪/诱因 → 保存
+- B 点击通知直达全屏 vs 保持进首页（推荐：直达）——暂缓（未拍板）
+- D 温和时长提醒是否纳入（30/60 分钟两个节点）——暂缓（未拍板）
+- C 锁屏 VISIBILITY_PUBLIC——暂缓（未拍板）
+
+### 验收要点
+- 通知栏可直接结束/取消计时，结束直达详情可保存
+- 计时中点击通知直达全屏计时页
+- 锁屏显示计时秒数；魅族胶囊展开态按钮可用
+- 非计时场景无通知；权限拒绝/低版本降级链不变
+
+---
+
+## 59. 息屏（AOD）状态优化：动态 contentText 增加信息量 ✅ 已实施（v3.4 补丁）
+
+### 需求（用户 2026-08-08）
+优化息屏显示（AOD，Always-On Display）阶段观己实况通知的形态——**AOD 有内容显示但简陋**（系统示例：Google Maps 导航在 AOD 显示「2 km · 转向指令」卡片）。
+
+### 根因（已定位）
+- AOD 息屏卡片的内容 = 通知的 **contentText**（Maps 示例的「2 km · 转向指令」就是它的 contentText）
+- 之前按用户要求删除了 contentText（展开态副文本「回到 App 记录结束时刻即可」）→ **AOD 卡片只剩标题「观己 · 计时中」+ 图标 → 简陋**
+- 展开态不需要提示语，但 AOD/折叠态需要信息文本——同一 contentText 两处显示，用「核心信息」而非「提示语」解决
+
+### 方案（✅ 已定稿，用户确认）
+1. **恢复 contentText 为动态核心信息**：「已计时 X 分钟」——每 **60 秒** 定时更新（重新 notify 同 id）
+2. AOD 息屏卡片：`[icon] 观己 · 计时中 / 已计时 12 分钟`（接近 Maps 信息量）
+3. 通知栏折叠态同受益；**展开态 chronometer 大秒数下方多一行小字**「已计时 12 分钟」（用户已确认接受——核心信息非噪音）
+4. 系统 chronometer 秒数照常走（AOD 卡片右侧时间戳）
+
+### 实施清单
+1. `TimerLiveUpdatePlugin`：
+   - startTimer 后启动定时更新（Handler postDelayed 60s 循环）：contentText = `已计时 ${分钟} 分钟`，重新 notify(NOTIF_ID)
+   - stopTimer / 取消 / 结束路径清除定时器（含 JS 侧 finish/cancel 触发 stopTimer）
+   - testLiveUpdate 不启用定时（15s 自消）
+2. 构建 → 装 Android 16 新手机 → **AOD 息屏截图验证**（显示「已计时 X 分钟」）
+3. 魅族路径：contentText 同时生效（魅族 contentView 布局是否显示 contentText 取决于 Flyme 渲染——主通知文本区，验证）
+
+### 待确认问题（✅ 已确认）
+- ~~展开态多一行小字「已计时 12 分钟」~~ ✅ 接受（核心信息非噪音）
+- ~~更新频率~~ ✅ 每 60 秒（分钟级）
+
+### 验收要点
+- AOD 息屏：观己卡片显示「观己 · 计时中 + 已计时 X 分钟」（信息量达标）
+- 每 60s 分钟数自动更新；停止/取消计时后不再更新
+- 展开态/通知栏/状态栏 chip/魅族胶囊无回归
+
+---
+
+## 65. 【Bug】添加对话框：键盘弹出顶高预览框 + 页面拉扯（两套风格共有） ✅ 已实施（v3.4 补丁，2026-08-08）
+
+### 需求（用户 2026-08-08）
+情绪/诱因点「添加」时键盘弹出，把预览框顶高、页面被拉扯——**面板与汇总两套风格都触发**（共性）。
+
+### 根因（✅ 真机复现定位，魅族 461QYFDN226NF）
+UI 树实测（键盘弹出后 WebView 压缩至 1452px）：
+1. **预览框顶高/重叠**：输入时 addCount（n/6）与 addPreview（「将添加：xxx」）同时出现，CSS 间距不足（.dialog-hint margin-top 6px、.dialog-text 无独立上距）→ 两者重叠约 3px；出现瞬间 dialog 高度突变 → flex 居中重算 → dialog 在键盘上方跳动 =「顶高」感
+2. **页面拉扯**：adjustResize 压缩视口 → 底部记录面板被顶起（实测 top 200）、全页重排——键盘动画期间连续变化（#42 仅处理 tabbar，面板本身跟随视口）
+
+### 方案（草案）
+1. **预览区布局**：addCount 与 addPreview 间距/或合并为一行（「5/6 · 将添加：xxx」）——消除重叠与跳动
+2. **对话框稳定**：键盘弹出时 dialog 固定定位（max-height + overflow 或 transform 定位，不随内容高度变化重居中）
+3. **页面拉扯**：键盘弹出时对 backdrop 内容层做视觉稳定（或接受系统机制，先做 1+2 评估）
+
+### 实施清单
+1. `styles.css`：.dialog-hint/.dialog-text 间距处理（或合并显示）
+2. `app.js`/`styles.css`：对话框键盘态稳定定位
+3. 真机复现对比验证（面板 + 汇总两处添加）
+
+### 待确认问题
+- 预览与字数合并一行 vs 分行加间距
+
+### ✅ 第一轮实施（2026-08-08，用户确认「按推荐，实施」）——只修了重叠，顶起/拉扯仍在（用户复测反馈「根本没有修复」）
+- 合并一行：`addInput` input handler 单行预览——`addCount` 恒为空，`addPreview` 输出 `n/6 · 将添加：xxx`；`.dialog-text` 加 `margin-top: 6px`
+- **该轮验证有方法缺陷**：`openAddDialog` 的 JS focus 已召起键盘，「键盘前/后」两组数据都采自键盘弹起态（innerHeight 恒 528），对比失效 → 误判「无顶起无拉扯」、跳过方案 2/3
+- 用户复测确认问题仍在，重新定位
+
+### ✅ 根治实施（2026-08-08，二次定位）
+**真正的根因（真机 CDP 实锤）**：真机命中媒体查询 `@media (max-width: 420px) and (pointer: coarse)`（魅族 dpr 2.75 → CSS 宽 393px），其中 `.phone { height: 100vh }`——100vh 是布局视口高度，随 adjustResize 键盘压缩（851→528）→ `.phone` 从 844 缩到 528 → **整棵布局树全部重排**：sheet（absolute bottom:0）被顶起、backdrop 变矮 dialog 重新居中、汇总页 `clamp(vh)` 间距全变 =「预览框顶高 + 页面拉扯」的真实机制
+- **修复 1（app.js #42 区块改造）**：键盘弹出时把 `html/body` 冻结为弹出前高度（inline px），收起恢复——`.phone` 改 `height: 100%` 后继承冻结值，布局树不再随键盘变化。基线 `kbBase` 取历史最大值并随每次键盘收起自愈（实测 WebView 崩溃重载时基准被捕获成压缩态 792 < 851 的案例，动态校准后修复）
+- **修复 2（styles.css）**：媒体查询 `.phone { height: 100vh }` → `height: 100%` + `.stage { height: 100% }`（提供确定参照，否则百分比回退 auto 撑高内容——实测回归 1620px 后补上）
+- **修复 3（styles.css）**：`#addPreview { min-height: 1.8em }` 预留预览行——dialog 高度恒定，预览出现时不再 flex 居中跳动（±0px）
+- **修复 4（styles.css）**：汇总页 3 处 `clamp(4vh/4.5vh)` 间距固定化（28px/32px/32px）——vh 在键盘压缩时变化导致跳动，固定值在常见屏高安全
+- **真机验证（魅族 461QYFDN226NF，键盘前后分离采样）**：
+  - 面板风格：键盘前 sheet `y=170/h=681/bottom=851` → 键盘弹出后（innerHeight 528、html/body 冻结 851px）sheet **完全一致 y=170/bottom=851** ✓（修复前顶到 top:200）；输入 5 字 dialog `y=310/h=232` 与输入前一致（预留高度零跳动）；单行预览「5/6 · 将添加：abcde」无重叠；键盘收起解冻恢复 851 ✓
+  - 汇总页风格（真实点按路径）：键盘弹出冻结 851 ✓、dialog y=310 与面板风格一致 ✓、单行预览 ✓、summary-title margin-top=28px（vh 固定生效）✓
+  - 对话框两套风格共享 #addBackdrop，一处修复两处生效；z-index 70 与 timerScreen 无冲突（#63）
+- 截图存档 `debug/v65_keyboard_frozen.png`（面板）/`debug/v65_summary_frozen.png`（汇总）；资源版本 styles.css?v=31 / app.js?v=31；版本号不变（v3.4 内补丁）
+- 新增调试工具：`debug/cdp-eval.cjs`（WebView CDP 求值）、`debug/parse-ui.cjs`（UI 树解析）、`debug/v65-*.js`（几何采样脚本）
+
+### ✅ 第三轮修复（2026-08-08，用户反馈「键盘和窗口重合了」）
+**问题**：第二轮冻结让对话框居中于冻结画布（851px）→ dialog bottom 541 > 可见区 528 → 底部 13px 被键盘盖住（实测数据：dialog y=310/bottom=541 vs 可见区 0-528）
+**修复 3 处**：
+- app.js：冻结条件收窄为「对话框打开 + 键盘弹出」（addBackdrop/delBackdrop 可见性判断）——设置页/备注等输入保持原 adjustResize 行为；每帧更新 CSS 变量 `--kb-h = innerHeight`；`body.keyboard-up` 类供对话框层选择器使用
+- styles.css：`body.keyboard-up .backdrop.dialog-layer { bottom:auto; height: var(--kb-h) }`——对话框层只覆盖可见区域，dialog 居中于键盘上方（y≈149，完整露出）；`.toast { position: fixed }`（真机媒体查询内）——toast 跟随可见区底部不被键盘遮
+- **真机验证（魅族，两套风格真实点按）**：
+  - 面板风格：键盘弹出（innerHeight 528、冻结 851）dialog `y=149/h=231/bottom=379 < 528` **完整露出不重合**；输入 5 字 dialog `y=148/h=232` 不变、单行预览「5/6 · 将添加：abcde」、sheet 稳定 y=170
+  - 汇总页风格：同样全过（dialog bottom 379 < 528）
+  - 设置页 API 密钥输入（无对话框场景）：无冻结（html inline 空）、WebView 自动滚动内层 .screen（scrollTop 555）→ 输入框 y=241-287 键盘上方可见，无回归
+  - 键盘收起解冻恢复 851；kbBase 自愈保持
+- 截图存档 `debug/v65_kb_visible_panel.png` / `debug/v65_kb_visible_summary.png`；资源版本 styles.css?v=32 / app.js?v=32；版本号不变（v3.4 内补丁）
+
+### 验收要点
+- 键盘弹出 + 输入时：预览/字数不重叠、对话框不跳动
+- 面板与汇总两处添加行为一致；无回归
+
+---
+
+## 64. 记录模块两套风格并存——场景分区 + 组件一致性 ✅ 已实施（v3.4 补丁，方案 A）
+
+### 需求（用户 2026-08-08）
+更新「就现在」计时后，记录模块出现两套风格：新（全屏计时/汇总——蓝渐变白色体系 v5）vs 旧（记录面板/补记/编辑——浅色 Apple 面板），寻求解决方法。
+
+### 方案对比（三选）
+**方案 A（推荐）：场景分区 + 组件一致**
+- 承认差异为「模式差异」：计时 = 沉浸仪式（蓝渐变），日常记录/补记/编辑 = 轻量面板（浅色）——运动 App 同款（训练深色沉浸/设置浅色轻量）
+- 补强一致性：①chips/按钮两种背景下的色彩逻辑统一（选中蓝系、三级层级逻辑相同）；②面板→全屏计时衔接动画（降低瞬切跳变）；③面板逐步向 v2 设计语言对齐（三级层次/间距体系/悬浮），保留浅色背景
+**方案 B**：全记录流程统一全屏沉浸（补记/编辑全屏化）——统一但改动大、轻量操作过重
+**方案 C**：统一回浅色（计时也浅色）——用户此前已否决（v2/v4/v6/v7）
+
+### 待确认问题（✅ 已确认方案 A）
+- 方案 A / B / C → **A**（场景分区：计时沉浸蓝渐变 / 日常浅色面板，模式差异非风格混乱）
+- 三项补强 → ①衔接动画（本轮实施：timerScreen 入场 fadeIn+微 scale 0.3s easeOutCubic + reduced-motion 降级）②组件一致性（检查确认：chips/按钮双背景色彩逻辑已一致——选中蓝系、主/次/弱三级）③面板对齐 v2（**渐进工程**：DESIGN-LANGUAGE v2 为锚点，后续随各屏改造逐步对齐）
+
+### 验收要点
+- 计时路径沉浸感保留；日常记录路径轻量不变
+- 面板→全屏入场有统一过渡（0.3s 淡入+微缩放），不再瞬切
+- 补记/编辑/快速记录无回归
+
+---
+
+## 63. 汇总页支持「继续计时」（误触结束可反悔） ✅ 已实施（v3.4 补丁）
+
+### 需求（用户 2026-08-08）
+全屏汇总页效果挺好，但考虑用户误点击「结束记录」后想继续的情况——目前汇总页只有「存为记录」/「放弃」，误结束后想继续只能重开，**已计时长丢失**。
+
+### 方案（草案）
+1. 汇总页加**「继续计时」**入口（主按钮「存为记录」下方小字按钮，或「← 继续计时」链接）——温和文案「还想继续？」
+2. **恢复逻辑**（关键）：finishTimedRecord 清理状态前把 startTime 暂存到 summaryStartTime；「继续计时」用原 startTime 恢复：
+   - timerState.startTime = summaryStartTime / running = true / intervalId 重启
+   - localStorage 重新写入（杀进程恢复链不断）
+   - notifyStartTimer(summaryStartTime) → 通知恢复（chronometer 从原 startTime 起，**时长连续**）
+   - 视图切回计时视图（timerRunView 显示、timerSummaryView 隐藏）
+3. 时长连续性：继续计时期间 AOD/通知/全屏全部回到计时态，最终结束时长 = 完整时长
+
+### 实施清单（✅ 已完成，含 v23 设计定稿）
+1. ✅ index.html：汇总视图重写 v23（浅色背景 summary-view、数字/情绪/诱因/存为记录/继续计时/放弃；删看片开关）
+2. ✅ styles.css：v23 样式（三级层次 #007AFF>#3A3A3C>#8E8E93、间距 40/24/40、chips 无边框+阴影、蓝底白字主按钮+蓝光晕、数字蓝光晕投影）
+3. ✅ app.js：finishTimedRecord 暂存 summaryStartTime；resumeTimer()（原 startTime 恢复 running/localStorage/通知/计时视图，时长连续）；saveTimedSummary media = triggers.includes('看了片')（删开关后推导）；清理 summaryMediaSwitch
+4. ✅ 验证：浏览器（继续计时恢复 00:02 连续/再结束时长累计/media 推导 true/开关已删）+ 真机魅族（汇总页 v23 完整显示、点继续计时后通知恢复 ONGOING_EVENT+FOREGROUND_SERVICE）
+5. ✅ 设计语言沉淀：DESIGN-LANGUAGE.md（v2）+ 知识库「观己设计语言v2」
+
+### 验收要点
+- 汇总页可「继续计时」→ 回计时视图，秒数/通知连续（不丢已计时长）；最终结束时长 = 完整时长
+- 保存时 media 由「看了片」诱因推导；放弃清理；面板流程无回归
+
+---
+
+## 62. 体验优化：通知「结束并记录」→ 全屏汇总页（同容器无缝切换） ✅ 已实施（v3.4 补丁）
+
+### 需求（用户 2026-08-08）
+从通知操作结束计时，流程一定要「计时页 → 详情页」吗？寻求彻底解决（#61 已解决全屏闪现，但结束后强制停详情页、需再点保存仍显冗长）。**用户澄清：通知结束仍进详情页（补情绪），在此前提下彻底优化割裂感。**
+
+### 方案（✅ 已确认 D1：全屏汇总页，运动 App 标准）
+- 计时视图与汇总视图**同一全屏容器（timerScreen）内切换**——结束计时瞬间视图切换，零页面跳转
+- 汇总视图：本次计时（时长大字 40px）+ 情绪/诱因 chips（可多选，复用渲染逻辑）+ 看片开关 + 「存为记录」/「放弃本次计时」
+- 从通知结束（__guanjiTimerFinish）同样直接进汇总；冷启动意图在途 → 直接汇总（#61 延迟逻辑天然兼容）
+- 保存 → 记录落库（时长自动、情绪可补选）+ toast + 回首页；放弃 → 不保存关闭
+
+### 实施清单
+1. ✅ index.html：timerScreen 拆计时视图（timerRunView）+ 汇总视图（timerSummaryView：summaryDuration/summaryMoodChips/summaryTriggerChips/summaryMediaSwitch/summarySaveBtn/summaryAbandonBtn）
+2. ✅ styles.css：汇总视图样式（summary-card 半透明白卡片区 + 40px 时长大字）
+3. ✅ app.js：renderMoodChips/renderTriggerChips 参数化（容器可传）；openDeleteDialog group 判断兼容双容器（id includes Mood/Trigger）；finishTimedRecord → showTimerSummary；新增 showTimerSummary/saveTimedSummary/abandonSummary + summaryDuration；summaryMediaSwitch 绑定；showTimerScreen 先 hideTimerSummary
+4. ✅ 验证：浏览器全流程（计时→汇总同容器/保存落库/放弃无记录/通知结束→汇总/冷启动意图→直接汇总）；构建安装 Android 16
+
+### 验收要点
+- 结束计时：全屏内直接从计时视图切到汇总视图（无页面跳变、无底部面板）
+- 汇总可选情绪/诱因/看片后保存 → 记录落库 + 回首页；放弃不保存
+- 通知「结束并记录」→ 直接汇总；冷启动意图在途无计时视图闪现
+- 面板新增/补记/编辑流程无回归（chips 参数化默认值）
+
+---
+
+## 61. 体验优化：通知按钮回 App「先计时页再详情页」割裂 ✅ 已实施（v3.4 补丁）
+
+### 需求（用户 2026-08-08）
+从展开态卡片点击「结束并记录」/「取消」回到 App，步骤都是**先到计时页（全屏）再到登记页（详情）**——整体割裂。
+
+### 根因（已定位，代码时序）
+- 通知按钮 → MainActivity `runWhenReady` 轮询 JS 就绪（500ms 首轮 + 300ms 重试）
+- 但 **JS 加载时 restoreTimer（IIFE）立即恢复**：`openSheet('now')` + `showTimerScreen()`（全屏计时页显示）
+- 轮询命中后 `__guanjiTimerFinish` 才执行 → finishTimedRecord（hideTimerScreen + goToDetails）
+- **时序竞争**：全屏页必然先显示（冷启动恢复场景），用户先看到计时页再跳详情；热启动场景回前台先见全屏页再跳转（轮询第一轮命中，闪现较短）
+- cancel 路径同样受影响（cancelFromTimerScreen 依赖 hideTimerScreen + closeSheet）
+
+### 方案（草案）
+1. **restoreTimer 延迟 showTimerScreen**：`setTimeout(() => { if (timerState.running) showTimerScreen(); }, 400)`——期间 finish/cancel 意图到达（计时结束）→ 全屏从未显示 → 直接进详情/关闭，无闪现；纯恢复场景 400ms 后正常显示全屏
+2. 热启动：runWhenReady 首轮命中已最快（保持）
+3. 验证：冷启动点「结束并记录」→ 直接详情（无全屏闪现）；点「取消」→ 直接关闭；无意图恢复 → 400ms 后全屏正常
+
+### 实施清单
+1. `app.js` restoreTimer：showTimerScreen 延迟 + running 守卫
+2. 浏览器模拟（localStorage key + reload + 立即调 __guanjiTimerFinish → 不应见全屏）
+3. 真机：冷启动点通知按钮（finish/cancel 各一次）截图/观察无全屏闪现；纯恢复正常
+
+### 待确认问题
+- 延迟 400ms 是否合适（正常恢复时面板→全屏有 400ms 过渡，可接受？）vs 其他值
+
+### 验收要点
+- 冷启动点「结束并记录」：直接到详情页（时长预填），无全屏计时页闪现
+- 点「取消」：直接关闭面板，无全屏闪现
+- 纯杀进程恢复（无按钮意图）：全屏计时页正常显示
+
+---
+
+## 60. AOD 息屏计时不动态刷新（OEM 冻结 Handler）+ 显示滞后 🆕 实测结论已定（2026-08-08）
+
+### 需求（用户 2026-08-08 测试反馈）
+AOD 息屏卡片内容的计时**不会动态刷新**；解除息屏再息屏才会更新；且 App 内显示 7 分钟时 AOD 显示 4 分钟。
+
+### 根因（已定位 + 真机实测）
+- **#59 的动态 contentText 依赖 App 进程**——OEM（OPPO ColorOS）息屏冻结进程消息队列 → Handler 停摆 → contentText 停更
+- 「7 vs 4」= contentText 停更值 vs App 实时值（非时间戳错误）
+
+### 实测结论（2026-08-08，OPPO PLZ110 Android 16）
+| 方案 | 结果 |
+|---|---|
+| Handler 60s 更新（进程内） | ❌ 息屏冻结（进程消息队列停摆） |
+| **前台服务** TimerService 保活 | ⚠️ 进程/服务不被杀，但 **Handler 消息队列仍被冻结** |
+| **AlarmManager** setExactAndAllowWhileIdle 60s | ❌ 被 ColorOS 拦截（高频精确闹钟保护） |
+| 亮屏 | ✅ 立即纠正（积压 Runnable 恢复执行，分钟数正确） |
+
+**结论**：OPPO ColorOS 息屏持续刷新被系统硬限制，App 侧无法绕过（不 root）；生态标准解法 = **引导用户设置「允许后台运行」**（设置 → 应用 → 观己 → 耗电管理 → 允许后台运行），设置后息屏持续刷新。当前行为：亮屏即纠正（可用）。
+
+### 方案（定稿）
+1. 保留 **Handler + AlarmManager 双保险**（前台场景/部分设备可用；OPPO 亮屏纠正兜底）
+2. 新增**设置页引导**：「实况通知」卡加提示——息屏实时刷新需在系统设置允许观己后台运行（附操作路径）
+3. 前台服务保留（进程保活收益：服务不被杀、亮屏立即恢复、通知常驻）
+
+### 实施清单
+1. ✅ TimerService（前台服务 + Handler 60s + AlarmManager 兜底 + 停止清理）——已实施
+2. ✅ TimerAlarmReceiver + Manifest（service/receiver/权限）——已实施
+3. ⏳ 设置页引导文案（#61 或并入本条目，待用户确认）
+
+### 验收要点
+- 前台/亮屏：分钟数实时刷新；息屏：OPPO 上受系统限制（引导设置后解决），其他厂商视冻结策略而定
+- 亮屏即纠正（分钟数正确）；停止/取消计时服务停止、通知消失
+- 魅族/快捷操作/杀进程恢复无回归
+
+---
+
+## 58. Android 16 状态条状标签（chip）优化：大横条 + 信息少 ✅ 已实施（v3.4 补丁）
+
+### 需求（用户 2026-08-08 反馈）
+Android 16 实况通知的**未展开状态（状态条状标签 chip）**有点丑——一个大横条，但显示的有用信息很少。
+
+### 根因（已定位，对照官方规范）
+- 状态条状标签规范：**最大宽度 96dp**；图标必有、文本可选；**文本 <7 字符显示全部，显示不足一半时只显示图标**
+- 我们的通知标题「观己 · 计时中」= 6 字符（<7）→ 系统把整个标题塞进 chip → **96dp 大横条**
+- chip 空间有限，秒数/进度放不进去 → 「有用信息少」
+
+### 方案（草案）
+1. **用 `setShortCriticalText("计时中")`**（官方推荐的状态传达 API）→ chip 显示 3 字符 → 横条缩短约一半
+   - 备选 A1：chip 文本留空（只图标）——最窄但无状态文字
+   - 备选 A2：尝试动态秒数（如「00:12」4 字符）——需定期 notify 更新，与系统 chronometer 重复，不推荐
+2. 标题保持「观己 · 计时中」（展开态/锁屏胶囊使用）
+3. 真机验证 chip 实际显示（用户新手机 Android 16：PLZ110）
+
+### 实施清单
+1. `TimerLiveUpdatePlugin.baseBuilder`：setShortCriticalText("计时中")（startTimer 与 testLiveUpdate 共用）
+2. 构建 → 装 Android 16 新手机 → 截图对比 chip 宽度
+3. 魅族路径不受影响（魅族胶囊不读 setShortCriticalText）
+
+### 待确认问题
+- chip 文本：「计时中」（推荐，3 字符）vs 只图标（最窄）vs 其他文案
+
+### 验收要点
+- 状态栏 chip 明显变窄（不再是 96dp 大横条），显示「计时中」或图标
+- 展开态/锁屏胶囊不受影响；魅族路径无回归
+
+---
+
+## 55. 【Bug】计时模式下「补记」入口消失（seg 隐藏副作用） ✅ 已修复（v3.3）
+
+### 现象（用户 2026-08-07 反馈）
+更新后点击「记录」，面板只剩「开始记录」和「不想计时？直接填写」，原来的「补记」功能不见了。
+
+### 根因（已定位）
+- #51 实施时按「计时态隐藏『就现在/补记』seg」决策（为简化计时器态 UI）——但副作用：默认「计时记录」模式下，记录面板步骤一不再有 seg 切换，**补记入口从主面板消失**（只剩日历「补记这一天」）
+- quick 模式不受影响（该模式 seg 仍显示）——用户默认 timer 模式，所以看不到
+
+### 修复方案（草案）
+- **未计时时恢复显示 seg**（与 v2.x 行为一致）：
+  - 「就现在」选中 = 计时器态（timerBox + 开始记录 + 「不想计时？直接填写」）
+  - 切「补记」= 经典补记流程（seg + pickerRow 日期时间 + 下一步）
+  - 切回「就现在」= 恢复计时器态
+- **计时开始后隐藏 seg**（计时中不可切换模式，只能结束/取消）——现有 setupNowStep running 分支已隐藏，保留
+- 与 quick 模式的 seg 逻辑统一（quick 模式 seg 行为不变）
+
+### 实施清单
+1. `app.js` setupNowStep：timer 模式未计时时不再隐藏 timeSegRow（显示 seg，nowSeg 选中）
+2. seg 切换逻辑：customSeg 点击 → timerBox 隐藏 + pickerRow 显示 + nextBtn「下一步」+ modeLink 隐藏；nowSeg 点击 → 恢复计时器态（timerBox + 开始记录 + modeLink）
+3. 计时运行中 setupNowStep running 分支保持隐藏 seg（不变）
+4. 验证：timer 模式打开面板可见 seg；切补记可正常选日期时间；切回就现在计时器态；计时开始后 seg 隐藏；quick 模式无回归
+
+### 验收要点
+- 默认计时模式打开记录面板：seg（就现在/补记）可见，补记流程完整可用
+- 计时开始后 seg 隐藏；计时中无法切换模式
+- quick 模式行为不变；编辑/日历补记入口不受影响
+
+---
+
+## 54. 「就现在」计时升级为全屏沉浸式计时页（运动 App 风格） ✅ 已实施（v3.3）
+
+### 需求（用户原话，2026-08-07 已补充细化）
+点击开始记录后还是在小卡片（记录面板）里面，希望像运动 App 一样：点「开始记录」后变成**一整页都是时间**的沉浸式计时页。
+
+### 补充后的完整需求（代理补充细化）
+**现状**：v3.1 点「开始记录」后，计时数字显示在记录面板（底部小卡片）内，切后台靠实况通知。
+
+**目标形态**（运动 App 进行中页，如 Keep/悦跑圈）：
+```
+┌─────────────────────────┐
+│      ● 进行中            │ ← 状态徽标（脉冲圆点动画）
+│                          │
+│      00:12:34            │ ← 超大等宽时间（约 96-120px tabular-nums）
+│                          │
+│    开始于 21:47           │ ← 小字（ink-2/白 次级）
+│                          │
+│                          │
+│      [ 结束记录 ]         │ ← 底部大圆按钮（主题色/红色系）
+└─────────────────────────┘
+```
+
+**交互流**：
+1. 面板步骤一点「开始记录」→ 面板收起 + **全屏计时页淡入**（0.3s easeOutCubic，沿用退场语言）
+2. 全屏页大时间走秒（纯时间戳差值）；切后台通知栏 chronometer 照常，切回 visibilitychange 校正
+3. 点「结束记录」→ 全屏页退出 → **回面板详情页**（时长已预填）→ 选情绪/诱因 → 保存（现有流程不变）
+4. 全屏页下滑/点退出 = 取消计时不保存 + 温和提示（与「计时中关闭面板」行为一致）
+5. 杀进程恢复：重启**直接进全屏计时页**（timerState 持久化机制不变）
+
+**技术方案（草案）**：
+- 新增全屏覆盖层 `#timerScreen`（fixed 全屏，z-index 高于 sheet 30 与 dialog 40，约 60）
+- 背景：主题蓝渐变（`--accent` 系渐变，深浅色变量化）+ 状态徽标脉冲动画（呼吸圆点）
+- 大时间复用 `renderTimerTick()`（fmtElapsed），样式 96-120px tabular-nums
+- `startTimedRecord` 改为：启动 timerState（不变）→ `showTimerScreen()`（隐藏面板层）
+- `finishTimedRecord`：`hideTimerScreen()` → 显示面板 stepDetails（时长预填，现有逻辑）
+- `cancelTimer`：全屏页退出按钮/下滑 → 取消 + 回首页（toast）
+- 返回键处理：全屏页下 Android 返回 = 取消计时 + 温和提示（或退出 App 由杀进程恢复兜底，待确认）
+- 通知/权限/持久化/deleteIntent 全部复用（#51/#52 不动）
+- 面板步骤一未计时时保留现有计时器态 UI（开始按钮 + 提示），开始后才切全屏
+
+### 待确认问题（✅ 2026-08-07 全部确认按推荐）
+- ~~是否需要「暂停 / 继续」~~ ✅ 已确认：**首版不加**，保持开始→结束两态（避免暂停期通知栏语义复杂度）
+- ~~全屏页退出方式~~ ✅ 已确认：下滑/退出按钮 = **直接取消**（不弹确认，与「计时中关闭面板」行为一致）
+- ~~背景风格~~ ✅ 已确认：**主题蓝渐变**（运动感，深浅色变量化）
+- ~~返回键处理~~ ✅ 已确认：**拦截为「取消计时 + 温和提示」**（与全屏退出按钮行为一致，避免按返回直接退出 App 且无提示）
+
+### 实施清单
+1. `index.html`：新增 `#timerScreen` 覆盖层（徽标/大时间/开始时间小字/结束按钮/退出按钮）
+2. `styles.css`：全屏层样式（渐变背景变量化、96-120px tabular-nums、脉冲动画、深浅色）
+3. `app.js`：showTimerScreen/hideTimerScreen；startTimedRecord/finishTimedRecord/cancelTimer 衔接全屏层；恢复机制改直接进全屏页；返回键处理（如确认）
+4. 验证：开始→全屏→走秒→结束回详情预填→保存；全屏取消无记录；杀进程恢复直进全屏；通知联动不变；深色模式
+
+### 验收要点
+- 点「开始记录」面板收起、全屏计时页淡入（不再是小卡片内计时）
+- 全屏页大时间后台走秒（通知栏同步）、切回校正
+- 结束记录 → 回面板详情时长正确预填 → 保存正常
+- 全屏页退出取消不产生记录 + 温和提示；杀进程恢复直进全屏
+- 深色模式正常；补记/quick 模式不受影响
+
+---
+
 ## 51. 「就现在」改造成运动记录式计时（时长精准化） ✅ 已实施（v3.1）
 
 ### 需求（用户原话）
@@ -1864,6 +2350,77 @@ Android WebView 的系统字体缩放（textZoom）只放大文本、不放大�
 
 ---
 
+## 53. 排版设计规范（标题字体/字号/间距统一文档化） 🆕 待应用
+
+### 需求（用户 2026-08-07）
+统计项目中不同等级标题的字体、大小和间距，整理成设计规范，应用到整个项目。
+
+### 统计结果（styles.css 全量核对，2026-08-07）
+
+#### 字号阶梯（px）
+| 字号 | 用途（权重） |
+|---|---|
+| 9 | 日历角标 cal-badge（700） |
+| 10 | 环图中心标签 ring-label（ink-2，0.08em） |
+| 11 | 眉题 eyebrow（600/0.06em）、统计标签 stat-label（600/0.04em）、版本 about-ver、免责 disclaimer（行高1.8）、对话框提示 dialog-hint、报告小节眉题 report-tag（600/0.14em） |
+| 12 | 卡片副题 card-sub（0.02em）、环图列表值 ring-val、最近记录副文 recent-sub、焦点副文 focus-sub、计时提示 timer-hint（行高1.6）、月度汇总 month-summary |
+| 13 | 字段标签 field-label（600/0.02em）、页头副文 header-sub（行高1.6）、条形图标签 bar-label、追问问句 ask-q（700）、对话框正文 dialog-text（行高1.8）、日历明细 cal-detail（行高1.9）、最近记录时间 recent-time（600） |
+| 14 | 正文/列表 pattern-row（行高1.7）、空态 empty-text（行高1.9）、开关行 switch-row、追问正文 ask-answer（行高1.85）、日历详情标题 cal-detail-title（700） |
+| 14.5 | 报告正文 report-body（行高1.85） |
+| 15 | 按钮文字（btn-primary/btn-ghost/record-btn，600） |
+| 16 | 卡片标题 card-title（700/0.01em）、报告标题 report-title（700/0.01em）、对话框标题 dialog-title（800/0.01em）、日历标题 cal-title（700/0.01em）、关于名称 about-name（700/0.06em） |
+| 17 | 弹层主标题 sheet-title（800，居中，mb 20px） |
+| 22 | 时间大字 time-display（800，mt 16px） |
+| 24 | 环图中心数字 ring-num（800，行高1） |
+| 26 | 页面主标题 screen-title（700/-0.02em/行高1.15，line-clamp 2）、统计数字 stat-num（800/行高1.1） |
+| 40 | 报告大数字 overview-num（800/-0.01em/行高1.05） |
+| 44 | 首页焦点大数字 focus-num（800/-0.01em/行高1.0） |
+| 52 | 计时器 timer-display（800/0.02em/行高1.1，tabular-nums） |
+
+#### 权重体系
+- **400/500**：正文、次要元素（chip-add 500）
+- **600**：小标签、按钮、选中项、次级强调（stat-label/eyebrow/field-label/ask-q/recent-time）
+- **700**：各类标题（screen/card/report/cal/dialog-title）
+- **800**：大数字（focus/stat/ring/overview/time/timer）、弹层标题（sheet/dialog）
+
+#### 字距规范
+- **大数字/页面主标题：-0.01 ~ -0.02em**（收紧，视觉聚焦）
+- **卡片/报告/日历标题：0.01em**
+- **次级文字/正文：0.02em**
+- **小标签：0.04 ~ 0.06em**（stat-label 0.04 / eyebrow 0.06 / about-name 0.06）
+- **眉题/报告小节 tag：0.06 ~ 0.14em**（report-tag 0.14 最放开）
+
+#### 行高规范
+- 大数字：1.0 ~ 1.15
+- 标题：1.15
+- 次级说明（header-sub/timer-hint）：1.6
+- 正文/列表/空态：1.7 ~ 1.9
+
+#### 间距规范
+- 页面标题区：padding 16px 0 20px
+- 卡片头（标题+副题）：mb 16px；卡片内大标题 mb 14px（设置页）
+- 字段标签：卡片内 mb 8px、块间距 16px；sheet 内 18px 0 10px（首个 4px）
+- 弹层标题：sheet-title mb 20px / dialog-title mb 10px
+- 报告卡：padding 22px、卡间 mb 16px、title mb 10px、小节 tag mb 12px
+- 大数字下方元信息：mt 4px（focus-sub/stat-label/ring-label）
+
+### 应用结论（全量核对后）
+- 体系**已高度自洽**：report-title 与 card-title 同参数、sheet/dialog 标题同为 800、13px 次级强调统一（ask-q/recent-time 等）、无同一语义字号漂移——本轮应用 = 规范文档化 + 标注两处**有意差异**：
+  1. `about-name` 字距 0.06em（品牌标识感，保留）
+  2. `timer-display` 字距 +0.02em（tabular-nums 数字对齐需要，保留）
+- 规范落点：本文档即规范；未来新增标题样式按阶梯取值
+
+### 实施清单
+1. 本条目即规范文档（统计/阶梯/权重/字距/行高/间距）
+2. 新增样式时对照字号阶梯取值，不引入阶梯外新字号（除非设计评审）
+3. 可选：将规范提炼为 styles.css 头部注释（/* 排版规范：字号阶梯 9-52px… */）
+
+### 验收要点
+- 全项目标题字号/权重/字距/间距与规范一一对应
+- 新增界面元素沿用阶梯取值
+
+---
+
 ## 52. 魅族实况通知适配（Flyme 私有胶囊 API） ✅ 已实施（v3.2）
 
 ### 需求（用户 2026-08-07 提供）
@@ -2014,6 +2571,103 @@ Android WebView 的系统字体缩放（textZoom）只放大文本、不放大�
 ## 42. 【Bug】配置 AI 时软键盘把底部 tab 栏顶起来 ✅ 已修复（v2.5）
 
 
+---
+
+## 66. 【Bug】步骤切换动画「弹出一部分 → 卡一下 → 显示完整」 ✅ 已实施（v3.4 补丁，方案 A）
+
+### 需求（用户 2026-08-08 原话）
+> 点击记录默认就现在，点击下面小字直接记录，卡片弹出时，会弹出一部分，卡一下显示完整，补记也是同样的情况，但是编辑就不会出现这个问题。
+
+### 用户澄清后的准确复现路径（关键——问题不在弹出，在步骤切换）
+1. 点击记录 → 选「补记」→ 点「下一步」→ 到记录页（stepDetails）：**动画问题在「点击下一步到记录页」**
+2. 点击记录 → 点「不想计时？直接填写」→ 到记录页：**同样在切换动作**
+- 编辑（openEditRecord）直达详情、不走步骤切换 → **无此问题**
+
+### 根因（✅ 真机实测定位，魅族 461QYFDN226NF + rAF 逐帧采样 + CDP Profiler）
+**`goToDetails()` 的 `transitionSheetHeight('stepDetails')` 目标高度算错 + 双向动画 + 清理定时器竞态，三重叠加：**
+
+1. **目标高度错误（核心）**：sheet 结构 = grab 条 + 标题「记录」+ step 内容 + 按钮区 + padding（≈188px chrome）。`transitionSheetHeight` 把目标设为 `stepDetails` **自身**高度：实测 `from = sheet 681.1px`，`to = stepDetails 493.3px` → **高度过渡方向反了（收缩而非展开）**
+2. **动画过程（rAF 逐帧实测）**：点下一步 → stepDetails 瞬间显示（sheet 681）→ `style.height=from` 无过渡生效（681）→ 装上 transition 后 rAF 设 `to` → **681→493 反向收缩动画**（~350ms，内容被 overflow:hidden 裁切，sheet 顶边下滑）
+3. **400ms 清理竞态**：`setTimeout(400)` 在动画尾段触发 → inline 高度清空 → **瞬间弹回自然高度 681**（实测 970934 停在 493 约 216ms 后 971159 跳回 681——「卡一下显示完整」的实锤帧数据）
+4. 方向切换（上一步 `goToTime` → `transitionSheetHeight('stepTime')`）同 bug；编辑直达详情从不调用该函数 → 平滑 ✓（与用户观察一致）
+5. 补充排除：JS 侧非阻塞（Profiler 95% idle）、弹出动画 sheetUp 本身平滑（y 单调 851→381 无停顿）——问题仅在步骤切换
+
+### 方案（✅ 已确认 A，2026-08-08）
+- **A（推荐）：修复 transitionSheetHeight 使其正确**
+  - 目标高度 = step 高度 + chrome 偏移（grab/标题/按钮区/padding ≈ 188px），或改测「切到目标 step 后 sheet 的自然高度」（先切 class 再测 rect）
+  - 两段式必须正确：`transition='none'` → 设 from → 强制 reflow → 恢复 transition → rAF 设 to（当前「先设 height 后装 transition」顺序恰好避免了一次错误动画，但目标值错仍收缩）
+  - 清理用 `transitionend` 事件替代固定 400ms 定时器（消除竞态；400ms < 动画实际总时长 700ms 是跳变的直接原因）
+  - 时长可缩短（0.35s→0.22s easeOutCubic）与退场/入场语言一致
+- **B：移除高度过渡，步骤瞬间切换**——与编辑路径一致（编辑当前即瞬间且用户无异议）；实现最简，但 470→681 高度突变可能显突兀
+- **C：transform: scaleY / clip-path 替代 height 动画**——合成器驱动不触发布局重排（含 backdrop-filter 每帧重绘问题），但内容缩放变形，需配 overflow 裁切，实现复杂
+
+### ✅ 实施记录（2026-08-08，方案 A）
+- **app.js**：`transitionSheetHeight(targetId)` → `transitionSheetHeight(from)`——签名改为接收「切换前高度」；`to` 改为调用时 sheet 的自然全高（步骤已切换完，含 chrome）；清理改 `transitionend`（`e.target===sheet && propertyName==='height'` 才清理，防子元素冒泡）+ 600ms 兜底定时器（display:none 场景 transitionend 不触发）；时长 0.35s→0.22s easeOutCubic(0.33,1,0.68,1) 与退场语言一致
+- **app.js**：`goToDetails()`/`goToTime()` 各在步骤切换前测 `from = sheet.getBoundingClientRect().height` 传入
+- **真机验证（魅族 461QYFDN226NF，rAF 逐帧采样对比修复前后）**：
+  - 补记→下一步：修复前 y 序列「170→358 收缩→停 493 约 216ms→跳回 170」；修复后「478→444→413→384→358→221→173→170」**单调展开** 373→681，无反向/无停顿/无跳变，216ms 后 transitionend 清理
+  - 小字直达：单调展开 470→681 ✓（y 381→…→170 无反向）
+  - 上一步：单调收缩 681→470 ✓（y 170→…→381 无反向）
+  - 编辑路径：inlineSeen=0（不触发高度过渡）、直接全高打开 ✓ 无回归
+  - 浏览器回归 4 项 PASS（记录打开/补记下一步/上一步返回/小字直达）+ console 零错误
+- 资源版本 ?v=33/33；版本号不变（v3.4 内补丁，用户控制版本）；截图 `debug/v66_step_transition_fixed.png`
+
+### 实施清单（按方案 A）
+1. `app.js` `transitionSheetHeight`：chrome 偏移补偿或「先切 step 后测 sheet 自然高度」；两段式（transition:none → from → reflow → transition → to）
+2. 清理改为 `transitionend`（或与动画时长严格同步的定时器）
+3. 真机验证：补记下一步 / 小字直达 / 上一步 / 编辑四路径对比采样（帧序列应单调无停顿、无反向动画、无 400ms 后跳变）
+
+### 待确认问题
+- 方案 A（修复过渡）vs B（移除过渡瞬间切换）——用户拍板
+
+### 验收要点
+- 补记/小字进记录页：sheet 高度单调变化（或瞬间），无「弹一部分卡一下显示完整」
+- 上一步返回时间步骤同样平滑
+- 编辑路径无回归
+
+
+---
+
+## 67. 我的页：隐私说明移至数据管理下方 ✅ 已实施（v3.5）
+
+### 需求（用户 2026-08-08）
+> 把我的页的隐私说明，移动到数据管理下面，并且更新版本号 3.5。
+
+### 实施记录
+- **index.html**：隐私说明卡从「我的」页顶部（header 之后）移至「数据管理」卡之后、「关于」卡之前——新顺序：外观 → AI 设置 → 记录提醒 → 正向反馈 → 记录方式 → 实况通知 → **数据管理 → 隐私说明** → 关于（logo/版本）；文案与结构不变（privacy-list 2 条）
+- **版本升级 v3.5**（用户指定）：`android/app/build.gradle` versionCode 25→26 / versionName "3.4"→"3.5"；`index.html` about-ver「v3.4 · 数据仅存本地」→「v3.5 · 数据仅存本地」；资源 styles.css?v=34 / app.js?v=34
+- **真机验证（魅族 461QYFDN226NF）**：dumpsys versionCode=26 / versionName=3.5；CDP DOM 顺序 dataBeforePrivacy=true（数据管理 index 6 < 隐私说明 index 7）；about-ver 显示 v3.5；清除确认弹窗回归正常（privacyItems=2 文案完整）
+- 浏览器回归同结果（顺序一致 + v3.5）；截图 `debug/v35_me_page.png`
+
+
+---
+
+## 68. 我的页：隐私说明并入关于卡 ✅ 已实施（v3.5 内补丁，版本号不变）
+
+### 需求（用户 2026-08-08）
+> 把隐私说明和下面的关于结合到一起吧，版本号不变。
+
+### 实施记录
+- **index.html**：删除独立「隐私说明」卡，并入 about-card——品牌区（logo/观己/版本）上方，新增 `.about-privacy` 分区（标题「隐私说明」+ 原 2 条 privacy-list）置于下方；我的页卡片数 9→8
+- **styles.css**：`.about-card .about-privacy`——`align-self:stretch` + `border-top: 1px solid var(--line)` 分隔线与上部品牌区分 + `text-align:left`（关于区居中、隐私长句左对齐可读）
+- **版本号不变**（用户指定）：versionCode 26 / versionName 3.5 / about-ver 保持 v3.5；仅资源 ?v=35/35
+- **真机验证（魅族 461QYFDN226NF）**：cardCount=8；about-card 内含 logo/观己/v3.5 + 隐私区（brandY=460 → privY=528，分隔线 `0.73px solid rgb(229,229,234)`=--line）；左对齐；2 条文案完整；数据管理仍在其上（dataBeforePrivacy=true）；清除确认弹窗回归正常
+- 浏览器回归一致（cardCount=8、分隔线、2 条）；截图 `debug/v35_about_merged.png`
+
+
+---
+
+## 69. 关于卡继续优化：去分割线与隐私说明标题 ✅ 已实施（v3.5 内补丁，版本号不变）
+
+### 需求（用户 2026-08-08）
+> 继续优化一下关于卡片，其实可以不用分割线和隐私说明标题的，依旧不更新版本号。
+
+### 实施记录
+- **index.html**：移除 `.about-privacy` 内的「隐私说明」标题；`.about-privacy` 从 div 包装简化为直接挂在 about-card 下的 `ul.privacy-list`——品牌区（logo/观己/版本）之后直接跟 2 条隐私条目（苹果页脚风格）
+- **styles.css**：`.about-card .about-privacy` 去掉 `border-top` 与 `padding-top`，`margin-top` 22px→18px（与版本行衔接），保留 `align-self:stretch` + `text-align:left`
+- **版本号不变**（用户指定）：26/3.5/about-ver v3.5；资源 ?v=36/36
+- **真机验证（魅族 461QYFDN226NF）**：`privBorderTop = 0px none`（无分割线）✓；about-card 无 card-title（无标题）✓；brandY=2077 → privY=2141（间距 64px 含品牌块）✓；2 条文案完整、左对齐；v3.5 显示正常；卡片数 8
+- 浏览器回归一致（无 border/无 title/v3.5/2 条）；截图 `debug/v35_about_clean.png`
 
 
 

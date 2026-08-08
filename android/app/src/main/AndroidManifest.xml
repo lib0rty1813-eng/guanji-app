@@ -97,6 +97,21 @@
         <receiver
             android:name=".TimerDeleteReceiver"
             android:exported="false" />
+
+        <!-- #60：计时前台服务（保活动态 contentText，OEM 息屏冻结根治） -->
+        <service
+            android:name=".TimerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="timer_recording" />
+        </service>
+
+        <!-- #60：计时更新闹钟接收器（息屏兜底，系统级触发） -->
+        <receiver
+            android:name=".TimerAlarmReceiver"
+            android:exported="false" />
     </application>
 
     <!-- Permissions -->
@@ -106,4 +121,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- #51：实况通知提升（Android 16+ 非运行时权限，低版本系统自动忽略） -->
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <!-- #60：计时前台服务（Android 14+ specialUse 类型要求） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 </manifest>

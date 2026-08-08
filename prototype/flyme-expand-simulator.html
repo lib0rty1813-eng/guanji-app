@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观己 · Flyme 展开态最终版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0D0D0F; padding: 32px 20px 60px; color: #fff;
+  }
+  h1 { text-align: center; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .sub { text-align: center; font-size: 12px; color: #8E8E93; margin-bottom: 28px; }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
+  .col { width: 320px; }
+  .col-label { text-align: center; font-size: 13px; font-weight: 700; color: #AEAEB2; letter-spacing: 0.04em; margin-bottom: 10px; }
+  .desk {
+    width: 320px; height: 340px; margin: 0 auto;
+    background: #F2F2F7; border-radius: 30px; position: relative; overflow: hidden;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+    display: flex; align-items: flex-start; justify-content: center; padding-top: 60px;
+  }
+  .shell {
+    width: 292px;
+    background: rgba(255, 255, 255, 0.78);
+    border-radius: 22px;
+    padding: 2px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  }
+  .content { padding: 10px 16px 8px; }
+
+  .row1 { display: flex; align-items: center; }
+  .f-title { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #000; }
+  .f-logo { width: 16px; height: 16px; border-radius: 4px; background: linear-gradient(135deg, #0A84FF, #0040A8); display: flex; align-items: center; justify-content: center; }
+  .f-logo svg { display: block; }
+
+  .row2 { display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px; }
+  .g-chrono { font-size: 23px; font-weight: 800; color: #007AFF; font-variant-numeric: tabular-nums; }
+  .g-status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #8E8E93; font-weight: 600; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #34C759; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .c-btnrow { display: flex; gap: 10px; margin-top: 10px; }
+  .c-btn { flex: 1; text-align: center; padding: 7px 0; border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .c-btn.primary { background: #007AFF; color: #fff; }
+  .c-btn.secondary { background: #E5E5EA; color: #000; }
+
+  .note { text-align: center; font-size: 10px; color: #6E6E73; margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Flyme 展开态 · 定稿版</h1>
+<p class="sub">G 方案：删除「开始于」· 保留「● 进行中」状态</p>
+
+<div class="row">
+  <div class="col">
+    <p class="col-label">最终版</p>
+    <div class="desk">
+      <div class="shell">
+        <div class="content">
+          <div class="row1">
+            <span class="f-title">
+              <span class="f-logo">
+                <svg width="10" height="10" viewBox="0 0 46 46"><path d="M23 12c-6 0-10 4.2-10 9.8 0 6.5 7.5 11.8 9.4 13.1a1.2 1.2 0 0 0 1.2 0c1.9-1.3 9.4-6.6 9.4-13.1C33 16.2 29 12 23 12Zm0 13.3a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" fill="#fff"/></svg>
+              </span>
+              观己 · 计时中
+            </span>
+          </div>
+          <div class="row2">
+            <span class="g-chrono">已计时 00:12</span>
+            <span class="g-status"><span class="dot"></span>进行中</span>
+          </div>
+          <div class="c-btnrow">
+            <div class="c-btn primary">结束并记录</div>
+            <div class="c-btn secondary">取消</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note">标题行：logo + 标题 ｜ 秒数行：23px 蓝字 + 右侧绿点「进行中」｜ 胶囊按钮</p>
+  </div>
+</div>
+</body>
+</html>

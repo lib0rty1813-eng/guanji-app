@@ -53,6 +53,10 @@
 
   /* tab 滑块 */
   --slide-bg: rgba(0, 122, 255, 0.12);
+
+  /* #54：全屏计时页渐变背景（主题蓝，运动感） */
+  --timer-bg-1: #0A84FF;
+  --timer-bg-2: #0040A8;
 }
 
 /* ============ 深色模式（Material #121212 标准） ============ */
@@ -675,6 +679,12 @@ body {
 .about-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 28px 18px; }
 .about-name { font-size: 16px; font-weight: 700; margin-top: 12px; letter-spacing: 0.06em; }
 .about-ver { font-size: 11px; color: var(--ink-3); margin-top: 5px; letter-spacing: 0.04em; }
+/* #69：隐私条目直接跟随品牌区（无分割线/无标题）——左对齐保证长句可读，间距与版本行衔接 */
+.about-card .about-privacy {
+  align-self: stretch;
+  margin-top: 18px;
+  text-align: left;
+}
 
 /* ============ 底部弹层 ============ */
 
@@ -696,7 +706,15 @@ body {
 
 /* #47：对话框类弹层（添加/删除）置于 sheet（z-index 30）之上、toast（50）之下；
    键盘弹出不手动上移——adjustResize 已压缩视口并自动居中（-24% 上移会导致窗口整体偏上） */
-.backdrop.dialog-layer { z-index: 40; }
+.backdrop.dialog-layer { z-index: 70; }   /* #63：> timerScreen(60)，汇总页内添加对话框不被遮 */
+
+/* #65：键盘弹出时对话框层只覆盖可见区域（--kb-h = 压缩后视口高，JS 每帧更新）——
+   冻结画布（851px）下 dialog 若居中于全高会与键盘重合（实测 bottom 541 > 可见区 528），
+   改为跟随可见区后 dialog 居中于键盘上方，完整露出 */
+body.keyboard-up .backdrop.dialog-layer {
+  bottom: auto;
+  height: var(--kb-h, 100%);
+}
 
 .sheet {
   position: absolute;
@@ -824,6 +842,158 @@ body {
 .mode-link:hover { color: var(--accent); }
 .mode-link:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 1px; }
 .mode-link:active { opacity: 0.7; }
+
+/* #54：全屏沉浸式计时页（运动 App 风格） */
+.timer-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;   /* 高于 sheet(30) 与 dialog(40→70) */
+  background: linear-gradient(180deg, var(--timer-bg-1) 0%, var(--timer-bg-2) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* #64：面板→全屏入场过渡（统一 easeOutCubic，消除瞬切跳变） */
+  animation: timerEnter 0.3s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+@keyframes timerEnter {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .timer-screen { animation: none; }
+}
+.timer-screen.hidden { display: none; }
+.timer-screen-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: calc(56px + var(--safe-top)) 24px calc(32px + var(--safe-bottom));
+}
+.timer-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #FFF;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.timer-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFF;
+  animation: timerPulse 1.6s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+.timer-big {
+  font-size: 96px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: #FFF;
+  margin-top: 24px;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+}
+.timer-started { color: rgba(255, 255, 255, 0.78); font-size: 14px; margin-top: 16px; letter-spacing: 0.02em; }
+.timer-screen-spacer { flex: 1; }
+.timer-finish-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 340px;
+  padding: 18px 0;
+  border: none;
+  border-radius: 999px;
+  background: #FFF;
+  color: var(--accent-deep);
+  font-family: var(--font);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.timer-finish-btn:active { transform: scale(0.97); }
+.timer-finish-btn:focus-visible { outline: 3px solid rgba(255, 255, 255, 0.6); outline-offset: 3px; }
+.timer-quit-btn {
+  margin-top: 14px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: var(--font);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.timer-quit-btn:active { opacity: 0.7; }
+
+/* #62/#63：全屏汇总视图（回退 v5：蓝渐变白色体系，同容器切换零割裂） */
+.summary-title { color: rgba(255, 255, 255, 0.7); font-size: 13px; font-weight: 600; letter-spacing: 0.12em; margin-top: 28px; }   /* #65：vh 间距固定化——键盘弹出压缩视口会改 vh 值导致布局跳动 */
+.summary-duration {
+  font-size: clamp(34px, 10vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #FFF;
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;          /* 眉题贴紧数字（标签→主体） */
+  white-space: nowrap;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+}
+.summary-meta { font-size: 13px; color: rgba(255, 255, 255, 0.6); margin-top: 16px; margin-bottom: 32px; letter-spacing: 0.02em; }   /* #65：vh 固定化，见 summary-title */
+.summary-section { width: 100%; max-width: 320px; }
+.summary-section + .summary-section { margin-top: 26px; }
+.summary-label { font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, 0.85); letter-spacing: 0.02em; margin-bottom: 10px; }
+.summary-section .chips { gap: 12px; }
+.summary-section .chip {
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFF;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+}
+.summary-section .chip.active {
+  background: #FFF;
+  color: #0040A8;
+  border-color: transparent;
+  box-shadow: none;
+}
+.summary-section .chip-add {
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.75);
+  box-shadow: none;
+}
+.summary-actions { width: 100%; max-width: 320px; margin-top: 32px; }   /* #65：vh 固定化，见 summary-title */
+.summary-sub { display: flex; justify-content: center; gap: 26px; margin-top: 16px; }
+.summary-resume, .summary-abandon {
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.75);   /* 两个次级文字颜色统一 */
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.summary-resume:active, .summary-abandon:active { opacity: 0.6; }
+.summary-resume:focus-visible, .summary-abandon:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.6); outline-offset: 2px; }
 
 .picker-row { display: flex; gap: 10px; margin-top: 12px; }
 .picker-row input {
@@ -993,8 +1163,9 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   animation: fadeUp 0.28s ease both;
 }
 .dialog-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.01em; }
-.dialog-text { font-size: 13px; color: var(--ink-2); line-height: 1.8; letter-spacing: 0.02em; }
-.dialog-hint { font-size: 11px; color: var(--ink-2); margin-top: 6px; letter-spacing: 0.04em; }   /* #47：字数提示 */
+.dialog-text { font-size: 13px; color: var(--ink-2); line-height: 1.8; letter-spacing: 0.02em; margin-top: 6px; }   /* #65：单行预览与输入框间距 */
+#addPreview { min-height: 1.8em; }   /* #65：预留预览行高度——dialog 高度恒定，预览出现时不再触发 flex 居中跳动 */
+.dialog-hint { font-size: 11px; color: var(--ink-2); margin-top: 6px; letter-spacing: 0.04em; }   /* #47：字数提示（已并入预览行） */
 .dialog-actions { display: flex; gap: 10px; margin-top: 22px; }
 .dialog-actions .btn-ghost, .dialog-actions .btn-danger { flex: 1; }
 
@@ -1262,17 +1433,23 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
     background: var(--bg);
     min-height: 100vh;
   }
-  .stage { padding: 0; }
+  .stage {
+    padding: 0;
+    height: 100%;   /* #65：给 .phone height:100% 提供确定参照（否则回退 auto 撑高内容） */
+  }
 
   /* 画布铺满视口，去掉手机壳样式 */
   .phone {
     width: 100vw;
-    height: 100vh;
+    height: 100%;   /* #65：100vh 会随键盘 adjustResize 压缩→整页重排；100% 跟随 body（键盘弹出时被 JS 冻结为固定高度） */
     max-width: 100vw;
     border-radius: 0;
     border: none;
     box-shadow: none;
   }
+
+  /* #65：toast 跟随可见区底部——冻结画布（851px）下原 absolute bottom 会被键盘遮住 */
+  .toast { position: fixed; }
 
   /* 隐藏模拟状态栏，避免与真实状态栏重叠 */
   .statusbar { display: none; }

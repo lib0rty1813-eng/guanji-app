@@ -13,11 +13,16 @@ public class MainActivity extends BridgeActivity {
     public static final String EXTRA_GUANJI_RECORD = "guanji_record";
     /** 桌面小组件点击标记：打开 App 后自动保存一条「就现在」默认记录 */
     public static final String EXTRA_GUANJI_QUICK_RECORD = "guanji_quick_record";
+    /** #57：实况通知「结束并记录」按钮（结束计时 → 直达详情） */
+    public static final String EXTRA_GUANJI_TIMER_FINISH = "guanji_timer_finish";
+    /** #57：实况通知「取消」按钮（取消计时） */
+    public static final String EXTRA_GUANJI_TIMER_CANCEL = "guanji_timer_cancel";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         handleWidgetIntent(getIntent());
+        handleTimerIntent(getIntent());
         handleTimerDismissFlag();
     }
 
@@ -33,7 +38,21 @@ public class MainActivity extends BridgeActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         handleWidgetIntent(intent);
+        handleTimerIntent(intent);
         handleTimerDismissFlag();
+    }
+
+    /* #57：实况通知操作按钮（冷启动/热启动均可，runWhenReady 等到 JS 就绪；
+       冷启动场景 JS 层 restoreTimer 先恢复计时，随后 finish/cancel 自然衔接） */
+    private void handleTimerIntent(Intent intent) {
+        if (intent == null) return;
+        if (intent.getBooleanExtra(EXTRA_GUANJI_TIMER_FINISH, false)) {
+            intent.removeExtra(EXTRA_GUANJI_TIMER_FINISH);
+            runWhenReady("window.__guanjiTimerFinish ? (window.__guanjiTimerFinish(), 'ok') : 'pending'");
+        } else if (intent.getBooleanExtra(EXTRA_GUANJI_TIMER_CANCEL, false)) {
+            intent.removeExtra(EXTRA_GUANJI_TIMER_CANCEL);
+            runWhenReady("window.__guanjiTimerCancel ? (window.__guanjiTimerCancel(), 'ok') : 'pending'");
+        }
     }
 
     /* #51：计时通知被划掉 → 读标记后清掉，通知 JS 温和提示一次 */

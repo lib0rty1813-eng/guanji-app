@@ -691,6 +691,7 @@ function openSheet(mode, presetDate) {
     $('customSeg').classList.add('active');
     $('pickerRow').classList.remove('hidden');
     showClassicStep1();   // #51：补记/编辑为经典步骤一（无计时器）
+    if (mode === 'edit') $('timeSegRow').classList.add('hidden');   // #56：编辑=改已存在记录的时间，无「就现在/补记」概念
   } else {
     $('customSeg').classList.remove('active');
     $('nowSeg').classList.add('active');
@@ -1516,6 +1517,13 @@ $('nowSeg').addEventListener('click', () => {
   $('customSeg').classList.remove('active');
   $('pickerRow').classList.add('hidden');
   moveSegSlide($('timeSegRow'), $('timeSegSlide'), $('nowSeg'));   // #22：滑块跟随
+  // #55：timer 模式「就现在」= 计时器态
+  if (loadRecordMode() === 'timer' && !timerState.running) {
+    $('timerBox').classList.remove('hidden');
+    $('nextBtn').textContent = '开始记录';
+    $('modeLink').textContent = '不想计时？直接填写';
+    $('modeLink').classList.remove('hidden');
+  }
   updateTimeDisplay();
 });
 $('customSeg').addEventListener('click', () => {
@@ -1524,6 +1532,10 @@ $('customSeg').addEventListener('click', () => {
   $('nowSeg').classList.remove('active');
   $('pickerRow').classList.remove('hidden');
   moveSegSlide($('timeSegRow'), $('timeSegSlide'), $('customSeg'));   // #22：滑块跟随
+  // #55：切到「补记」= 经典流程（计时器态让位）
+  $('timerBox').classList.add('hidden');
+  $('nextBtn').textContent = '下一步';
+  $('modeLink').classList.add('hidden');
   updateTimeDisplay();
 });
 $('pickDate').addEventListener('change', () => {
@@ -1544,41 +1556,51 @@ $('pickTime').addEventListener('change', () => {
 
 let sheetHeightTimer = null;
 
-function transitionSheetHeight(targetId) {
+/* #66：步骤切换高度过渡（from = 切换前高度，调用方先测）。
+   修复前：to 误取 step 自身高度（不含 grab/标题/按钮区 chrome ≈188px）→
+   过渡反向收缩 + 400ms 固定定时器在动画尾段清 inline →「弹一部分卡一下显示完整」；
+   修复后：目标 = 切换后 sheet 自然全高，清理改 transitionend（兜底定时器防 display:none 场景） */
+function transitionSheetHeight(from) {
   const sheet = $('recordSheet');
   clearTimeout(sheetHeightTimer);
-  const from = sheet.getBoundingClientRect().height;
-  const to = $(targetId).getBoundingClientRect().height;
+  const to = sheet.getBoundingClientRect().height;   // 步骤已切换完，此为自然全高（含 chrome）
   if (Math.abs(from - to) < 1) return;
-  sheet.style.height = from + 'px';
-  sheet.style.transition = 'height 0.35s cubic-bezier(0.22, 1, 0.36, 1)';
+  sheet.style.height = from + 'px';   // 先设高度再装过渡——before-change 样式无过渡，此赋值不触发动画
+  sheet.style.transition = 'height 0.22s cubic-bezier(0.33, 1, 0.68, 1)';
   sheet.style.overflow = 'hidden';
   requestAnimationFrame(() => { sheet.style.height = to + 'px'; });
-  sheetHeightTimer = setTimeout(() => {
+  const cleanup = () => {
+    clearTimeout(sheetHeightTimer);
     sheet.style.height = '';
     sheet.style.transition = '';
     sheet.style.overflow = '';
-  }, 400);
+    sheet.removeEventListener('transitionend', onEnd);
+  };
+  const onEnd = (e) => { if (e.target === sheet && e.propertyName === 'height') cleanup(); };
+  sheet.addEventListener('transitionend', onEnd);
+  sheetHeightTimer = setTimeout(cleanup, 600);   // 兜底（关闭面板/display:none 时 transitionend 不触发）
 }
 
 /* #51：步骤切换（计时态下「下一步」= 开始/结束计时） */
 function goToDetails() {
+  const from = $('recordSheet').getBoundingClientRect().height;   // #66：切换前高度（过渡起点）
   $('stepTime').classList.add('hidden');
   $('stepDetails').classList.remove('hidden');
   $('nextBtn').classList.add('hidden');
   $('prevBtn').classList.remove('hidden');
   $('saveBtn').classList.remove('hidden');
-  transitionSheetHeight('stepDetails');
+  transitionSheetHeight(from);
 }
 
 function goToTime() {
+  const from = $('recordSheet').getBoundingClientRect().height;   // #66：切换前高度（过渡起点）
   $('stepDetails').classList.add('hidden');
   $('stepTime').classList.remove('hidden');
   $('saveBtn').classList.add('hidden');
   $('prevBtn').classList.add('hidden');
   $('nextBtn').classList.remove('hidden');
   if (sheetMode === 'now') setupNowStep();   // 回到步骤一：恢复计时器态/经典流程
-  transitionSheetHeight('stepTime');
+  transitionSheetHeight(from);
 }
 
 $('nextBtn').addEventListener('click', () => {
@@ -1639,7 +1661,8 @@ let delTarget = null;
 let delGroup = 'mood';
 
 function openDeleteDialog(chip) {
-  delGroup = chip.closest('.chips').id === 'moodChips' ? 'mood' : 'trigger';
+  // #62：面板与汇总两个 chips 容器（id 含 Mood/Trigger 区分）
+  delGroup = chip.closest('.chips').id.includes('Mood') ? 'mood' : 'trigger';
   delTarget = chip.dataset.text || chip.textContent;   // #47：用 dataset 文本（排除 × 子元素）
   $('delDialogText').textContent = `「${delTarget}」将从选项列表中移除，已保存的记录不受影响。`;
   $('delBackdrop').classList.remove('hidden');
@@ -1654,13 +1677,13 @@ $('delConfirm').addEventListener('click', () => {
   const key = delGroup === 'mood' ? CUSTOM_MOODS_KEY : CUSTOM_TRIGGERS_KEY;
   saveCustomList(key, loadCustomList(key).filter((t) => t !== delTarget));
   closeDeleteDialog();
-  if (delGroup === 'mood') renderMoodChips(); else renderTriggerChips();
+  if (delGroup === 'mood') { renderMoodChips(); renderMoodChips(null, $('summaryMoodChips')); }
+  else { renderTriggerChips(); renderTriggerChips(null, $('summaryTriggerChips')); }
   toast('已删除：' + delTarget);
 });
 $('delBackdrop').addEventListener('click', (e) => { if (e.target === $('delBackdrop')) closeDeleteDialog(); });
 
-function renderMoodChips(selectText) {
-  const box = $('moodChips');
+function renderMoodChips(selectText, box = $('moodChips')) {
   box.innerHTML = '';
   [...MOODS, ...loadCustomList(CUSTOM_MOODS_KEY)].forEach((t) => {
     const b = makeChip(t);
@@ -1671,8 +1694,7 @@ function renderMoodChips(selectText) {
   box.appendChild(makeAddChip('mood'));
 }
 
-function renderTriggerChips(selectText) {
-  const box = $('triggerChips');
+function renderTriggerChips(selectText, box = $('triggerChips')) {
   box.innerHTML = '';
   [...TRIGGERS, ...loadCustomList(CUSTOM_TRIGGERS_KEY)].forEach((t) => {
     const b = makeChip(t);
@@ -1696,12 +1718,12 @@ function openAddDialog(group) {
   setTimeout(() => $('addInput').focus(), 120);
 }
 
-/* #47：输入时实时字数提示（n/6）+ 「将添加：xxx」预览 */
+/* #47/#65：输入时实时字数提示 + 「将添加」预览——合并单行（消除重叠与跳动） */
 $('addInput').addEventListener('input', () => {
   const text = $('addInput').value.trim();
   const n = text.length;
-  $('addCount').textContent = n ? `${n}/6` : '';
-  $('addPreview').textContent = n ? `将添加：${text}` : '';
+  $('addCount').textContent = '';
+  $('addPreview').textContent = n ? `${n}/6 · 将添加：${text}` : '';
 });
 
 function closeAddDialog() {
@@ -2000,7 +2022,111 @@ function fmtElapsed(ms) {
 /* 纯时间戳差值渲染：后台 JS 挂起不影响数值，切回前台由 visibilitychange 校正 */
 function renderTimerTick() {
   if (!timerState.running) return;
-  $('timerDisplay').textContent = fmtElapsed(Date.now() - timerState.startTime);
+  const t = fmtElapsed(Date.now() - timerState.startTime);
+  const td = $('timerDisplay');
+  if (td) td.textContent = t;
+  const tb = $('timerBigDisplay');
+  if (tb) tb.textContent = t;
+}
+
+/* ---------- #54：全屏沉浸式计时页（运动 App 风格） ---------- */
+
+let timerBackHandler = null;   // 全屏页返回键拦截（popstate）
+
+function showTimerScreen() {
+  hideTimerSummary();   // #62：计时开始确保汇总视图隐藏
+  $('timerScreen').classList.remove('hidden');
+  $('timerStartedLabel').textContent = `开始于 ${fmtTime(new Date(timerState.startTime))}`;
+  renderTimerTick();
+  // 返回键：全屏页按返回 = 取消计时 + 温和提示（#54 已确认）
+  history.pushState({ timerScreen: true }, '');
+  timerBackHandler = () => {
+    if (timerState.running) cancelFromTimerScreen();
+  };
+  window.addEventListener('popstate', timerBackHandler);
+}
+
+/* ---------- #62/#63：全屏汇总视图（计时结束同容器切换，运动 App 风格） ---------- */
+
+let summaryDuration = 0;
+let summaryStartTime = null;   // #63：误触结束时可「继续计时」恢复
+
+function showTimerSummary(duration) {
+  summaryDuration = duration;
+  $('timerScreen').classList.remove('hidden');
+  $('timerRunView').classList.add('hidden');
+  $('timerSummaryView').classList.remove('hidden');
+  $('summaryDuration').textContent = `已计时 ${duration} 分钟`;
+  $('summaryMeta').textContent = summaryStartTime ? `开始于 ${fmtTime(new Date(summaryStartTime))}` : '';
+  renderMoodChips(null, $('summaryMoodChips'));
+  renderTriggerChips(null, $('summaryTriggerChips'));
+}
+
+function hideTimerSummary() {
+  $('timerSummaryView').classList.add('hidden');
+  $('timerRunView').classList.remove('hidden');
+}
+
+/* #63：误触结束后继续计时——用原 startTime 恢复（秒数/通知/AOD 时长连续） */
+function resumeTimer() {
+  if (!summaryStartTime) return;
+  timerState.startTime = summaryStartTime;
+  timerState.running = true;
+  timerState.intervalId = setInterval(renderTimerTick, 1000);
+  renderTimerTick();
+  try { localStorage.setItem(TIMER_STORE_KEY, String(timerState.startTime)); } catch (e) {}
+  notifyStartTimer(timerState.startTime);   // 通知恢复（chronometer 从原 startTime 起）
+  summaryStartTime = null;
+  hideTimerSummary();
+  showTimerScreen();
+}
+
+/* 保存汇总（时长自动落库，情绪/诱因可补选；media 由「看了片」诱因推导——#63 删看片开关） */
+function saveTimedSummary() {
+  if (!summaryDuration) return;
+  const moods = [...$('summaryMoodChips').querySelectorAll('.chip.active')].map((c) => c.textContent);
+  const triggers = [...$('summaryTriggerChips').querySelectorAll('.chip.active')].map((c) => c.textContent);
+  const media = triggers.includes('看了片');   // 看片语义由诱因承担（与面板开关二选一，汇总页删开关）
+  records.push({
+    id: newRecordId('rec'),
+    offset: 0,
+    time: fmtTime(new Date()),
+    duration: summaryDuration,
+    moods, triggers, media, note: '',
+  });
+  Storage.saveRecords(records);
+  afterRecordsChanged();
+  summaryStartTime = null;
+  hideTimerScreen();
+  closeSheet();
+  toast('已记录 ✓');
+  renderHome();
+}
+
+/* 放弃本次计时结果（不保存） */
+function abandonSummary() {
+  summaryStartTime = null;
+  hideTimerScreen();
+  closeSheet();
+  toast('已放弃本次计时');
+}
+
+function hideTimerScreen() {
+  if (timerBackHandler) {
+    window.removeEventListener('popstate', timerBackHandler);
+    timerBackHandler = null;
+    // 弹出 pushState 的历史项（监听已移除，不触发取消）
+    if (history.state && history.state.timerScreen) history.back();
+  }
+  $('timerScreen').classList.add('hidden');
+}
+
+/* 全屏页取消：取消计时 + 关面板 + 温和提示（与「计时中关闭面板」一致） */
+function cancelFromTimerScreen() {
+  cancelTimer();
+  hideTimerScreen();
+  closeSheet();
+  toast('已取消本次计时');
 }
 
 /* 原生实况通知（非原生环境静默跳过，模式同 syncWidgetStats） */
@@ -2026,19 +2152,21 @@ function startTimedRecord() {
   $('nextBtn').textContent = '结束记录';
   $('modeLink').classList.add('hidden');   // 计时中不可跳过
   notifyStartTimer(timerState.startTime);
+  showTimerScreen();   // #54：开始计时 → 全屏沉浸式计时页
 }
 
 function finishTimedRecord() {
   clearInterval(timerState.intervalId);
   const elapsed = Date.now() - timerState.startTime;
   const duration = Math.max(1, Math.floor(elapsed / 60000));   // 分钟取整，不足 1 分钟按 1
+  summaryStartTime = timerState.startTime;   // #63：暂存原开始时刻（误触结束可继续计时）
   timerState.running = false;
   timerState.startTime = null;
   try { localStorage.removeItem(TIMER_STORE_KEY); } catch (e) {}
   notifyStopTimer();
   $('durLabel').textContent = `${duration} 分钟`;
   $('durSlider').value = Math.min(duration, 60);
-  goToDetails();
+  showTimerSummary(duration);   // #62：全屏同容器切换到汇总视图（无页面跳变，替代 hideTimerScreen + goToDetails）
 }
 
 function cancelTimer() {
@@ -2054,7 +2182,9 @@ function cancelTimer() {
 /* 步骤一布局：计时器态（timer 模式 / 计时中）vs 经典流程（quick 模式） */
 function setupNowStep() {
   if (timerState.running) {
+    // #55：计时中隐藏 seg（不可切换模式，只能结束/取消）
     $('timeSegRow').classList.add('hidden');
+    $('pickerRow').classList.add('hidden');
     $('timerBox').classList.remove('hidden');
     $('nextBtn').textContent = '结束记录';
     $('modeLink').classList.add('hidden');
@@ -2068,7 +2198,11 @@ function setupNowStep() {
     $('modeLink').textContent = '想要精准计时？开始计时';
     $('modeLink').classList.remove('hidden');
   } else {
-    $('timeSegRow').classList.add('hidden');
+    // #55：未计时时恢复 seg 显示——「就现在」= 计时器态，「补记」= 经典流程（补记入口回归）
+    $('timeSegRow').classList.remove('hidden');
+    $('nowSeg').classList.add('active');
+    $('customSeg').classList.remove('active');
+    $('pickerRow').classList.add('hidden');
     $('timerBox').classList.remove('hidden');
     $('nextBtn').textContent = '开始记录';
     $('modeLink').textContent = '不想计时？直接填写';
@@ -2089,7 +2223,7 @@ function showClassicStep1() {
 $('modeLink').addEventListener('click', () => {
   if (sheetMode !== 'now' || timerState.running) return;
   if (loadRecordMode() === 'quick') {
-    $('timeSegRow').classList.add('hidden');
+    $('timeSegRow').classList.remove('hidden');
     $('timerBox').classList.remove('hidden');
     $('nextBtn').textContent = '开始记录';
     $('modeLink').textContent = '不想计时？直接填写';
@@ -2098,6 +2232,15 @@ $('modeLink').addEventListener('click', () => {
     goToDetails();   // 「不想计时？直接填写」→ 直接进详情（时长滑块照旧）
   }
 });
+
+/* #54/#62/#63：全屏计时页按钮 */
+$('timerFinishBtn').addEventListener('click', () => {
+  if (timerState.running) finishTimedRecord();
+});
+$('timerQuitBtn').addEventListener('click', cancelFromTimerScreen);
+$('summarySaveBtn').addEventListener('click', saveTimedSummary);
+$('summaryResumeBtn').addEventListener('click', resumeTimer);
+$('summaryAbandonBtn').addEventListener('click', abandonSummary);
 
 /* 后台挂起校正：切回前台立即重渲染（数值由时间戳保证） */
 document.addEventListener('visibilitychange', () => {
@@ -2151,6 +2294,18 @@ $('liveTestBtn').addEventListener('click', testLiveUpdate);
 /* 通知被划掉（原生 deleteIntent 广播标记）→ 温和提示一次，不强行拉起 App */
 window.__guanjiTimerDismissed = () => { toast('计时已从通知移除，计时仍在继续'); return 'ok'; };
 
+/* #57：实况通知操作按钮（原生 Action / 魅族胶囊展开按钮触发） */
+window.__guanjiTimerFinish = () => {
+  // 「结束并记录」→ 结束计时 → 全屏退出 → 详情预填（用户可调时长后保存）
+  if (timerState.running) finishTimedRecord();
+  return 'ok';
+};
+window.__guanjiTimerCancel = () => {
+  // 「取消」→ 取消计时 + 关面板 + 温和提示（与全屏页取消一致）
+  if (timerState.running) cancelFromTimerScreen();
+  return 'ok';
+};
+
 /* 杀进程恢复：ongoing 通知不随进程消亡，启动检测未完成计时 → 恢复并打开面板收尾 */
 (function restoreTimer() {
   let raw = null;
@@ -2167,6 +2322,10 @@ window.__guanjiTimerDismissed = () => { toast('计时已从通知移除，计时
   renderTimerTick();
   notifyStartTimer(startTime);   // 幂等重建（通知可能已被系统移除）
   openSheet('now');
+  // #61：延迟显示全屏——通知按钮（finish/cancel）意图在途时，全屏从未显示直接进详情/关闭，避免「先计时页再详情页」割裂
+  setTimeout(() => {
+    if (timerState.running) showTimerScreen();
+  }, 400);
   toast('上次的计时仍在继续');
 })();
 
@@ -2225,24 +2384,48 @@ function afterRecordsChanged() {
   scheduleReportRefresh();
 }
 
-/* ---------- #42：软键盘弹出时隐藏底部 tab 栏 ---------- */
+/* ---------- #42/#65：软键盘处理（隐藏 tab 栏 + 冻结布局视口高度） ---------- */
 
 /* Android adjustResize 下键盘弹出会把布局视口高度压缩（innerHeight 变小），
    而 visualViewport 与 innerHeight 同步缩小（差值恒为 0，不能作为检测依据），
-   因此用「启动时基准高度 vs 当前 innerHeight」检测键盘 */
-const BASE_VIEWPORT_H = window.innerHeight;
+   因此用「全高基准 vs 当前 innerHeight」检测键盘。
+   kbBase 取历史最大值并随每次键盘收起校准——避免 WebView 崩溃重载/中途加载
+   时基准被捕获成压缩后高度（实测重载瞬间内层 792 < 851 的案例） */
+let kbBase = window.innerHeight;
 
 function isKeyboardUp() {
-  return BASE_VIEWPORT_H - window.innerHeight > 150;
+  return kbBase - window.innerHeight > 150;
 }
 
-function syncTabbarKeyboard() {
-  $('tabbar').classList.toggle('keyboard-up', isKeyboardUp());
+/* #65：键盘弹出时把 html/body 冻结为弹出前高度——真机媒体查询 .phone height:100vh
+   会随视口压缩导致整页重排（面板被顶起/对话框跳动/汇总页 vh 间距全变=「拉扯」），
+   冻结后 .phone 继承 body 固定高度，布局树不再随键盘变化；收起后恢复。
+   仅「对话框打开 + 键盘弹出」时冻结（这正是用户抱怨的场景）；
+   设置页/备注等输入保持原 adjustResize 行为。 */
+function syncKbLayout() {
+  const h = window.innerHeight;
+  if (h > kbBase) kbBase = h;   // 视口变大（键盘收起/重载后）→ 更新全高基准
+  const up = kbBase - h > 150;
+  document.documentElement.style.setProperty('--kb-h', h + 'px');   // 可见高度，供对话框层跟随
+  $('tabbar').classList.toggle('keyboard-up', up);
+  document.body.classList.toggle('keyboard-up', up);   // 对话框层 CSS 选择器用
+  const dialogOpen = ['addBackdrop', 'delBackdrop'].some((id) => {
+    const el = document.getElementById(id);
+    return el && !el.classList.contains('hidden');
+  });
+  const root = document.documentElement;
+  if (up && dialogOpen) {
+    root.style.height = kbBase + 'px';
+    document.body.style.height = kbBase + 'px';
+  } else {
+    root.style.height = '';
+    document.body.style.height = '';
+  }
 }
 
-window.addEventListener('resize', syncTabbarKeyboard);
+window.addEventListener('resize', syncKbLayout);
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', syncTabbarKeyboard);   // 兜底（视觉视口单独变化场景）
+  window.visualViewport.addEventListener('resize', syncKbLayout);   // 兜底（视觉视口单独变化场景）
 }
 
 /* ---------- 启动 ---------- */
