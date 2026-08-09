@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观己 · 液态玻璃原型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #007AFF;
+    --ink: #3A3A3C;
+    --ink-2: #8E8E93;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    /* 液态玻璃配方（v6，彻底无磨砂——通透感完全来自饱和度 + 边缘高光/折射） */
+    --lg-blur: 0px;                          /* v6：blur 归零——彻底无磨砂（iOS 26 液态玻璃本就近乎无磨砂） */
+    --lg-saturate: 200%;
+    --lg-tint: rgba(255, 255, 255, 0);       /* v6：完全透明底 */
+    --lg-border: rgba(255, 255, 255, 0.8);   /* 边缘亮边 */
+    --lg-highlight: rgba(255, 255, 255, 1);  /* 上缘高光（无磨砂后更关键） */
+    --lg-shadow: 0 18px 44px rgba(28, 42, 68, 0.16), 0 4px 14px rgba(28, 42, 68, 0.08);
+    /* 原毛玻璃配方（对照组：经典白雾磨砂，突出对比） */
+    --glass-blur: 30px;
+    --glass-tint: rgba(255, 255, 255, 0.72);
+  }
+  body {
+    font-family: var(--font);
+    background: #10141C;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 30px 20px;
+    gap: 44px;
+  }
+
+  /* ============ 手机框 ============ */
+  .phone {
+    width: 390px; height: 800px;
+    border-radius: 48px;
+    background: #000;
+    padding: 14px;
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 36px; overflow: hidden; position: relative;
+    background: linear-gradient(165deg, #7FB2FF 0%, #4E8BFF 34%, #8A6BFF 68%, #B26BFF 100%);
+  }
+  /* 彩色光斑：让玻璃有东西可折射 */
+  .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+  .blob-1 { width: 200px; height: 200px; background: radial-gradient(circle, #FFD6A5, transparent 70%); top: 60px; left: -40px; }
+  .blob-2 { width: 260px; height: 260px; background: radial-gradient(circle, #6EFFC1, transparent 70%); top: 230px; right: -90px; }
+  .blob-3 { width: 180px; height: 180px; background: radial-gradient(circle, #FF9EC7, transparent 70%); bottom: 130px; left: 20px; }
+  .blob-4 { width: 230px; height: 230px; background: radial-gradient(circle, #FFE27A, transparent 70%); bottom: -60px; right: -40px; }
+
+  /* 背景内容（被玻璃模糊的底层） */
+  .bg-content {
+    position: absolute; inset: 0;
+    padding: 96px 26px 0;
+    color: #fff;
+  }
+  .bg-greet { font-size: 22px; font-weight: 800; }
+  .bg-sub { font-size: 13px; opacity: 0.75; margin-top: 8px; }
+  .bg-card {
+    margin-top: 26px; border-radius: 22px;
+    background: rgba(255, 255, 255, 0.28);
+    padding: 18px 20px;
+  }
+  .bg-card b { font-size: 30px; font-weight: 800; }
+  .bg-card p { font-size: 12px; opacity: 0.8; margin-top: 6px; }
+  .bg-row { display: flex; gap: 12px; margin-top: 14px; }
+  .bg-mini { flex: 1; border-radius: 14px; background: rgba(255,255,255,0.22); height: 52px; }
+
+  /* ============ 液态玻璃组件（切换 .glass 类） ============ */
+  /* 悬浮 tab 栏 */
+  .tabbar {
+    position: absolute; left: 18px; right: 18px; bottom: 26px;
+    height: 66px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 5;
+  }
+  .tabbar .tab { font-size: 13px; font-weight: 600; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tabbar .tab.on { color: var(--blue); }
+  .tabbar .tab i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.9; }
+
+  /* 记录面板 sheet（初始收起由 JS 内联 transform 控制——CSS 不设 transform，
+     否则 anime 清理 inline 后会回落到 CSS 值导致面板收回） */
+  .sheet {
+    position: absolute; left: 10px; right: 10px; bottom: 10px;
+    border-radius: 30px;
+    padding: 20px 22px 26px;
+    z-index: 6;
+  }
+  .sheet .grab { width: 40px; height: 5px; border-radius: 999px; background: rgba(60,60,67,0.25); margin: 0 auto 16px; }
+  .sheet .title { font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 16px; color: var(--ink); }
+  .sheet .seg {
+    display: flex; background: rgba(120,120,128,0.14); border-radius: 999px; padding: 4px; margin-bottom: 18px;
+  }
+  .sheet .seg span {
+    flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 600;
+    color: var(--ink-2); border-radius: 999px;
+  }
+  .sheet .seg span.on { background: #fff; color: var(--blue); box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+  .sheet .big { text-align: center; font-size: 52px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .sheet .hint { text-align: center; font-size: 12px; color: var(--ink-2); margin-top: 8px; }
+  .sheet .btn {
+    margin-top: 22px; height: 54px; border-radius: 999px;
+    background: var(--blue); color: #fff; font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* 数据卡（液态玻璃版 vs 原版） */
+  .glass-card {
+    position: absolute; left: 26px; right: 26px; top: 200px;
+    border-radius: 24px;
+    padding: 18px 20px;
+    z-index: 4;
+  }
+  .glass-card b { font-size: 26px; font-weight: 800; color: var(--ink); }
+  .glass-card p { font-size: 12px; color: var(--ink-2); margin-top: 6px; }
+  .glass-card .bars { display: flex; gap: 6px; align-items: flex-end; height: 44px; margin-top: 14px; }
+  .glass-card .bars i { flex: 1; border-radius: 5px 5px 2px 2px; background: var(--blue); opacity: 0.85; }
+
+  /* ---------- 原毛玻璃（对照组，.glass 未启用时的默认） ---------- */
+  .tabbar, .sheet, .glass-card {
+    background: var(--glass-tint);
+    backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    border: none;
+  }
+
+  /* ---------- 液态玻璃（.glass 启用） ---------- */
+  .glass .tabbar, .glass .sheet, .glass .glass-card {
+    background: var(--lg-tint);   /* v8：主体恢复纯透明背景（v7 的双层背景中透明 padding-box 遮不住 border-box
+                                     白渐变，导致白纱盖满主体、通透感丢失） */
+    backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-saturate));
+    border: none;
+    box-shadow:
+      0 0 0 0.5px rgba(0, 0, 0, 0.08),                          /* 外侧发丝暗线：玻璃与背景分离 */
+      inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),              /* 内侧白亮环：玻璃内缘受光 */
+      inset 0 1px 0 var(--lg-highlight),                        /* 上缘细高光（1px 实线） */
+      inset 0 -1px 1px rgba(255, 255, 255, 0.2),                /* 下缘微光 */
+      inset 0 0 8px rgba(255, 255, 255, 0.08),                  /* 内缘柔和光晕（弱） */
+      0 18px 44px rgba(28, 42, 68, 0.16), 0 4px 14px rgba(28, 42, 68, 0.08);   /* 外投影 */
+    /* 注意：不改 position——absolute 元素自身即是伪元素的定位上下文 */
+  }
+
+  /* 渐变边框环（::after 独立绘制，默认开启）——上亮下暗受光感；
+     环形 mask（content-box xor）确保渐变只画在 1px 边框环上，不碰主体 */
+  .glass .tabbar::after, .glass .sheet::after, .glass .glass-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    border: 1px solid transparent;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.55) 45%, rgba(255,255,255,0.28)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* 按压反馈（无磨砂后：饱和度/高光增强 + 微缩放）——玻璃「活」起来 */
+  .glass .glass-card:active, .glass .tabbar:active {
+    --lg-saturate: 220%;
+    --lg-highlight: rgba(255, 255, 255, 1);
+    transition: backdrop-filter 0.15s ease, box-shadow 0.15s ease;
+  }
+  .glass .glass-card:active { transform: scale(0.985); }
+  .glass .tabbar .tab:active { transform: scale(0.94); }
+  .glass .tabbar .tab { transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1.05); }
+  /* 内部折射高光（顶部转角亮斑 + 斜向光带）——v7 顶部受光增强 */
+  .glass .tabbar::before, .glass .sheet::before, .glass .glass-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(130% 70% at 15% 0%, rgba(255,255,255,0.55), transparent 50%),
+      linear-gradient(105deg, rgba(255,255,255,0.22), transparent 40%);
+    pointer-events: none;
+  }
+  .glass .tabbar::before { border-radius: 999px; }
+
+  /* ============ 右侧控制台 ============ */
+  .console {
+    width: 360px; color: #D8DCE6;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .console h1 { font-size: 24px; font-weight: 800; color: #fff; }
+  .console h1 small { display: block; font-size: 13px; font-weight: 400; color: #8A93A6; margin-top: 8px; line-height: 1.6; }
+  .switch-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1B212C; border-radius: 16px; padding: 16px 18px;
+  }
+  .switch-row .label { font-size: 14px; font-weight: 600; }
+  .switch-row .label small { display: block; font-size: 11px; color: #8A93A6; margin-top: 4px; font-weight: 400; }
+  .switch {
+    width: 52px; height: 30px; border-radius: 999px;
+    background: #2A3242; position: relative; cursor: pointer; transition: background 0.25s;
+    flex: 0 0 52px;
+  }
+  .switch .knob {
+    position: absolute; top: 3px; left: 3px;
+    width: 24px; height: 24px; border-radius: 50%; background: #fff;
+    transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1.05);
+  }
+  .switch.on { background: var(--blue); }
+  .switch.on .knob { transform: translateX(22px); }
+
+  .recipe {
+    background: #1B212C; border-radius: 16px; padding: 18px;
+    font-size: 12.5px; line-height: 2;
+  }
+  .recipe b { color: #fff; }
+  .recipe code { color: #6EC1FF; font-family: ui-monospace, Consolas, monospace; }
+  .actions { display: flex; gap: 10px; }
+  .actions button {
+    flex: 1; border: none; border-radius: 14px; padding: 14px 0;
+    font-size: 14px; font-weight: 700; font-family: var(--font); cursor: pointer;
+    background: #2A3242; color: #fff;
+  }
+  .actions button.primary { background: var(--blue); }
+
+  .note { font-size: 12px; color: #8A93A6; line-height: 1.8; }
+  .note b { color: #FFD6A5; }
+
+  /* 弹簧打开（anime 接管；缺失时 CSS 兜底） */
+  .sheet.css-open { animation: sheetUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  @keyframes sheetUp {
+    from { transform: translateY(120%); }
+    to { transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="blob blob-4"></div>
+
+      <div class="bg-content">
+        <div class="bg-greet">晚上好，今天感觉如何？</div>
+        <div class="bg-sub">记录本身就是觉察</div>
+        <div class="bg-card">
+          <b>9 次</b>
+          <p>今日记录 · 深夜时段占比最高（44%）</p>
+          <div class="bg-row"><div class="bg-mini"></div><div class="bg-mini"></div><div class="bg-mini"></div></div>
+        </div>
+      </div>
+
+      <!-- 液态玻璃数据卡 -->
+      <div class="glass-card" id="glassCard">
+        <b>16</b>
+        <p>本周次数 · 较上周 +78%</p>
+        <div class="bars">
+          <i style="height:40%"></i><i style="height:65%"></i><i style="height:50%"></i>
+          <i style="height:85%"></i><i style="height:60%"></i><i style="height:100%"></i>
+          <i style="height:75%"></i>
+        </div>
+      </div>
+
+      <!-- 悬浮 tab 栏 -->
+      <div class="tabbar">
+        <span class="tab on"><i></i>首页</span>
+        <span class="tab"><i></i>分析</span>
+        <span class="tab"><i></i>我的</span>
+      </div>
+
+      <!-- 记录面板 -->
+      <div class="sheet" id="sheet">
+        <div class="grab"></div>
+        <p class="title">记录</p>
+        <div class="seg"><span class="on">就现在</span><span>补记</span></div>
+        <div class="big">00:00</div>
+        <p class="hint">切到后台也没关系，通知栏会继续计时</p>
+        <div class="btn">开始记录</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="console">
+    <h1>液态玻璃原型<small>观己 · 动效与视觉试点（#72）<br>tab 栏 / 记录面板 / 数据卡 三组件对比</small></h1>
+
+    <div class="switch-row">
+      <div class="label">液态玻璃
+        <small>强磨砂 + 饱和度 + 边缘高光 + 折射光带</small>
+      </div>
+      <div class="switch" id="lgSwitch"></div>
+    </div>
+
+    <div class="actions">
+      <button id="openSheetBtn">打开面板（弹簧）</button>
+      <button id="closeSheetBtn">收起</button>
+    </div>
+
+    <div class="recipe">
+      <b>配方（CSS，定稿 v8）</b><br>
+      <code>主体：纯透明背景 + saturate(200%)</code><br>
+      <code>渐变边框环（::after 环形 mask 独立绘制）</code><br>
+      <code>外侧发丝暗线 + 内侧白亮环 + 上缘高光</code><br>
+      <code>+ 顶部转角亮斑 + 斜向光带 ::before</code><br>
+      <code>+ 按压反馈 + 弹簧</code>
+    </div>
+
+    <div class="note">
+      <b>性能提示：</b>定稿无磨砂——backdrop-filter 仅 saturate，无 blur 重绘，
+      WebView 渲染成本大幅下降（#44 前科主要来自 blur）。已应用到 App（tab 栏 + 记录面板）。
+    </div>
+  </div>
+
+<script src="../www/vendor/anime.min.js"></script>
+<script>
+  const phone = document.querySelector('.phone');
+  const sheet = document.getElementById('sheet');
+  const lgSwitch = document.getElementById('lgSwitch');
+  let sheetAnim = null;
+
+  /* 液态玻璃开关 */
+  lgSwitch.addEventListener('click', () => {
+    const on = lgSwitch.classList.toggle('on');
+    phone.classList.toggle('glass', on);
+  });
+
+  /* 面板弹簧打开（anime easeOutBack；vendor 缺失走 CSS 兜底） */
+  function openSheetDemo() {
+    if (sheetAnim) { sheetAnim.pause(); sheetAnim = null; }
+    sheet.style.animation = 'none';
+    sheet.style.transform = 'translateY(120%)';
+    if (window.anime && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      sheetAnim = anime({
+        targets: sheet,
+        translateY: ['120%', '0%'],
+        easing: 'easeOutBack(1.4)',
+        duration: 550,
+        changeComplete: () => { sheetAnim = null; sheet.style.transform = ''; }
+      });
+    } else {
+      sheet.style.animation = '';
+      sheet.classList.add('css-open');
+      setTimeout(() => sheet.classList.remove('css-open'), 600);
+    }
+  }
+  function closeSheetDemo() {
+    if (sheetAnim) { sheetAnim.pause(); sheetAnim = null; }
+    sheet.style.transition = 'transform 0.3s cubic-bezier(0.33, 1, 0.68, 1)';
+    sheet.style.transform = 'translateY(120%)';
+    setTimeout(() => { sheet.style.transition = ''; sheet.style.transform = ''; }, 320);
+  }
+  document.getElementById('openSheetBtn').addEventListener('click', openSheetDemo);
+  document.getElementById('closeSheetBtn').addEventListener('click', closeSheetDemo);
+
+  /* 初始态：液态玻璃开启 + 面板收起（内联 transform）；扰动默认关闭 */
+  lgSwitch.classList.add('on');
+  phone.classList.add('glass');
+  sheet.style.transform = 'translateY(120%)';
+</script>
+</body>
+</html>

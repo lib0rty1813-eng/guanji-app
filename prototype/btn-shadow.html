@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观己 · 按钮光晕发散原型 v3（#83）</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(1200px 800px at 20% -10%, #dce8ff, #f4f7fd 55%, #e8eef8);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 44px; padding: 40px; flex-wrap: wrap;
+  }
+  .phone {
+    width: 390px; height: 780px; border-radius: 48px; overflow: hidden; position: relative; flex-shrink: 0;
+    background: linear-gradient(165deg, #dfe9fb 0%, #f6f9fe 40%, #eef3fc 100%);
+    box-shadow: 0 40px 90px rgba(60, 90, 160, 0.28), inset 0 0 0 1px rgba(255,255,255,0.9), inset 0 0 0 6px rgba(0,0,0,0.02);
+    display: flex; flex-direction: column;
+  }
+  .status { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; font-size: 15px; font-weight: 700; color: #111; }
+  .status .notch { width: 110px; height: 26px; border-radius: 14px; background: #111; position: absolute; left: 50%; transform: translateX(-50%); top: 14px; }
+  .screen { flex: 1; margin: 0 12px 12px; border-radius: 28px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+  .bg { position: absolute; inset: 0; overflow: hidden; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(30px); opacity: 0.75; }
+  .blob.b1 { width: 200px; height: 200px; background: #ffd3a8; left: -40px; top: -30px; }
+  .blob.b2 { width: 240px; height: 240px; background: #a8d4ff; right: -60px; top: 140px; }
+  .blob.b3 { width: 180px; height: 180px; background: #ffb8d0; left: 20px; bottom: -60px; }
+  .texture { position: absolute; inset: 0; font-size: 11px; line-height: 1.9; color: rgba(60, 80, 130, 0.35); letter-spacing: 0.5px; padding: 14px 16px; }
+  .content { position: relative; z-index: 1; padding: 24px 18px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .content h1 { font-size: 20px; font-weight: 800; color: #111; }
+  .content .sub { font-size: 12.5px; color: #5f6b85; line-height: 1.5; }
+  /* 对照行：卡片底色透明（不压光晕），四档并排同时可见 */
+  .row { display: flex; align-items: center; gap: 12px; padding: 16px 10px; border-radius: 18px; background: rgba(255,255,255,0.30); cursor: pointer; transition: outline 0.15s, background 0.15s; }
+  .row.on { outline: 2px solid #0b6bd8; background: rgba(255,255,255,0.55); }
+  .row .meta { width: 96px; flex-shrink: 0; }
+  .row .meta .name { font-size: 12.5px; font-weight: 800; color: #222; }
+  .row .meta .spec { font-size: 10px; color: #8590a5; line-height: 1.5; }
+  .row .preview { flex: 1; display: flex; justify-content: center; padding: 12px 0; }
+  /* 按钮基底 */
+  .btn-blue {
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: #0b6bd8; color: #fff; border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 999px; padding: 13px 30px; font-size: 14px; font-weight: 600; font-family: inherit;
+    box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.15);
+  }
+  /* 径向光晕元素：从按钮边缘向外衰减，无形状边界 */
+  .btn-blue::after {
+    content: ""; position: absolute; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(0,122,255,var(--glow, 0.40)), transparent 75%);
+    pointer-events: none;
+  }
+  /* 四档并排：每行自己的形态（行内 data-d 驱动） */
+  .row[data-d="now"] .btn-blue { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.15), 0 3px 14px rgba(0,122,255,0.30); }
+  .row[data-d="now"] .btn-blue::after { display: none; }
+  .row[data-d="multi"] .btn-blue { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.15), 0 6px 14px rgba(0,122,255,0.16), 0 16px 30px rgba(0,122,255,0.10), 0 30px 58px rgba(0,122,255,0.06); }
+  .row[data-d="multi"] .btn-blue::after { display: none; }
+  .row[data-d="radial"] .btn-blue { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.15), 0 3px 10px rgba(0,122,255,0.16); }
+  .row[data-d="radial"] .btn-blue::after { inset: -32px; }
+  .row[data-d="combo"] .btn-blue { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.15), 0 3px 10px rgba(0,122,255,0.18); }
+  .row[data-d="combo"] .btn-blue::after { inset: -38px; }
+  /* 档位 5：经典大 blur（用户贴的 glassmorphism demo 同款——单层中性黑 0 8px 32px 0.37） */
+  .row[data-d="classic"] .btn-blue { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -1px 1px rgba(255,255,255,0.15), 0 8px 32px rgba(0,0,0,0.30); }
+  .row[data-d="classic"] .btn-blue::after { display: none; }
+  /* 悬浮钮：跟随选中行 */
+  .fab-wrap { position: relative; z-index: 1; display: flex; justify-content: flex-end; padding: 0 18px 18px; gap: 10px; align-items: center; }
+  .fab-wrap .note { font-size: 10.5px; color: #8590a5; }
+  .fab { position: relative; width: 56px; height: 56px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.6); background: #0b6bd8; color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5); }
+  .fab::after { content: ""; position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,122,255,var(--glow, 0.40)), transparent 75%); pointer-events: none; inset: -30px; }
+  .phone[data-sel="now"] .fab { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 14px rgba(0,122,255,0.30); }
+  .phone[data-sel="now"] .fab::after { display: none; }
+  .phone[data-sel="multi"] .fab { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), 0 6px 14px rgba(0,122,255,0.16), 0 16px 30px rgba(0,122,255,0.10), 0 30px 58px rgba(0,122,255,0.06); }
+  .phone[data-sel="multi"] .fab::after { display: none; }
+  .phone[data-sel="radial"] .fab { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,122,255,0.16); }
+  .phone[data-sel="combo"] .fab { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,122,255,0.18); }
+  .phone[data-sel="classic"] .fab { box-shadow: 0 0 0 0.5px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5), 0 8px 32px rgba(0,0,0,0.30); }
+  .phone[data-sel="classic"] .fab::after { display: none; }
+  .panel { width: 300px; background: rgba(255,255,255,0.85); border-radius: 22px; padding: 24px; box-shadow: 0 20px 60px rgba(40,70,140,0.18); backdrop-filter: blur(20px); }
+  .panel h2 { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+  .panel .rec { font-size: 11.5px; background: #eaf2ff; color: #0b6bd8; padding: 10px 12px; border-radius: 12px; line-height: 1.7; font-weight: 600; }
+  .panel .hint { font-size: 11px; color: #8b94a8; line-height: 1.7; margin-top: 14px; }
+  .panel label { display: block; font-size: 12px; font-weight: 700; color: #4a5570; margin: 16px 0 6px; }
+  .panel input[type=range] { width: 100%; accent-color: #0b6bd8; }
+</style>
+</head>
+<body>
+
+<div class="phone" data-sel="combo" id="phone">
+  <div class="status"><span>9:41</span><div class="notch"></div><span></span></div>
+  <div class="screen">
+    <div class="bg">
+      <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+      <div class="texture">情绪记录 · 每日一瞥 · 平静 · 工作 · 25 分钟 · 清晨 2 次 · 上午 1 次 · 傍晚 3 次 · 数据只保存在这台设备上 · 无需评判 · 一切如常</div>
+    </div>
+    <div class="content">
+      <h1>光晕形态 · 五档并排</h1>
+      <div class="sub">五个按钮同时展示五种形态，一眼对比；点行→悬浮钮同步</div>
+      <div class="row" data-d="now"><div class="meta"><div class="name">现状</div><div class="spec">单层=色卡</div></div><div class="preview"><button class="btn-blue">记录</button></div></div>
+      <div class="row" data-d="multi"><div class="meta"><div class="name">多层淡影</div><div class="spec">6/16/30px 三层</div></div><div class="preview"><button class="btn-blue">记录</button></div></div>
+      <div class="row" data-d="radial"><div class="meta"><div class="name">径向光晕</div><div class="spec">渐变环无边界</div></div><div class="preview"><button class="btn-blue">记录</button></div></div>
+      <div class="row on" data-d="combo"><div class="meta"><div class="name">组合</div><div class="spec">近层+光晕</div></div><div class="preview"><button class="btn-blue">记录</button></div></div>
+      <div class="row" data-d="classic"><div class="meta"><div class="name">经典大blur</div><div class="spec">demo 同款 8/32</div></div><div class="preview"><button class="btn-blue">记录</button></div></div>
+    </div>
+    <div class="fab-wrap">
+      <span class="note">悬浮钮同步</span>
+      <button class="fab" id="fab">+</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>#83 · 光晕形态 v3</h2>
+  <div class="rec">v2 问题：全场预览同一时间只见一种形态 + 光晕太淡（0.30）看不出效果。<br>v3：四档<b>并排同时可见</b>，光晕增强（峰值 0.40、扩散 -32/-38px）。</div>
+  <label>光晕强度（径向渐变 alpha）<span id="glowVal">0.40</span></label>
+  <input type="range" id="glowRange" min="0.10" max="0.60" step="0.02" value="0.40">
+  <div class="hint">现状：单层阴影（按钮形色卡）；多层淡影：3 层递降 alpha 模拟衰减（仍是色卡但更柔）；径向光晕：渐变环从边缘衰减无边界（真光晕）；组合：近层收边 + 径向光晕。滑杆调峰值强度实时预览。</div>
+</div>
+
+<script>
+(() => {
+  const phone = document.getElementById('phone');
+  const rows = [...document.querySelectorAll('.row')];
+  const glowRange = document.getElementById('glowRange');
+  const glowVal = document.getElementById('glowVal');
+
+  rows.forEach((row) => {
+    row.addEventListener('click', () => {
+      rows.forEach((r) => r.classList.remove('on'));
+      row.classList.add('on');
+      phone.dataset.sel = row.dataset.d;
+    });
+  });
+  glowRange.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--glow', glowRange.value);
+    glowVal.textContent = glowRange.value;
+  });
+})();
+</script>
+</body>
+</html>

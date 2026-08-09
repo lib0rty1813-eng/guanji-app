@@ -97,6 +97,40 @@
 - 所有颜色走变量（--blue-live/--gray-strong/--gray-weak）
 - 数字 nowrap 单行 + clamp 响应式
 
+## 9. 液态玻璃 Material 分层（#72，实验性，可开关）
+
+> 玻璃材质统一由 `html.liquid-glass` 类控制（我的页开关，localStorage `guanji_liquid_glass`），
+> 默认开启；关闭即回退经典样式。全部走 CSS 变量，禁止硬编码。
+
+### 9.1 Material 分层（透明度 = 层级）
+
+| 层级 | 组件 | tint（浅/深） | 说明 |
+|---|---|---|---|
+| L0 无玻璃 | 计时全屏页/汇总页 | — | 沉浸蓝渐变，不参与玻璃体系 |
+| L1 通透玻璃 | tab 栏 / 记录面板 / 日历弹层 | 0 / 0.05 | 最高通透，边缘结构承担玻璃感 |
+| L2 遮罩玻璃 | 对话框 | 0.85 / 0.85 | 0.4 黑遮罩上需可读性 |
+| L3 内容玻璃 | card / report-card / ask-answer | 0.60 / 0.08 | 半透明透出背景蓝晕，保持阅读 |
+| L4 实色玻璃 | 按钮 / chips 选中 | 实色 accent | 原色保留 + 玻璃边缘（亮边/高光/光晕） |
+
+### 9.2 玻璃边缘结构（共享）
+
+- **渐变边框环**：`::after` + 环形 mask（content-box xor）——上亮 0.95 → 下暗 0.28，不碰主体
+- **顶部受光 + 斜向光带**：`::before` radial + linear 叠加
+- **阴影栈**：外侧发丝暗线 0.5px + 内侧白亮环 + 上缘 1px 高光 + 色相光晕
+- **无磨砂**：backdrop-filter 仅 `saturate(2)`，禁 blur（#44 性能前科）
+
+### 9.3 流动性（内容感知）
+
+- tab 栏滚动收缩：任意 screen 滚动 >60px → `.scrolled`（58→50px + 玻璃变实 `--lg-tint-scroll`）
+- 按压反馈：tab 栏 saturate 增强、按钮 scale
+- 色散近似：大数字极轻 RGB 双色 text-shadow（0.18 alpha，克制防假）
+
+### 9.4 降级
+
+- `prefers-reduced-transparency`：玻璃组件回退实底 var(--card)
+- `prefers-reduced-motion`：动画禁用
+- 开关可随时关闭（我的 → 外观 → 液态玻璃（实验性））
+
 **❌ Don't**
 - 不用黑色作层次区分（黑字/黑底）——用深灰
 - 不用白色文字体系在浅色背景上（不可读）

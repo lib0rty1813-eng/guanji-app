@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观己 · 液态 tab 方案 C 原型（SVG 变形）</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(1200px 800px at 20% -10%, #dce8ff, #f4f7fd 55%, #e8eef8);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 48px; padding: 40px;
+  }
+  /* ---------- 手机框 ---------- */
+  .phone {
+    width: 390px; height: 760px; border-radius: 48px; overflow: hidden; position: relative; flex-shrink: 0;
+    background: linear-gradient(165deg, #dfe9fb 0%, #f6f9fe 40%, #eef3fc 100%);
+    box-shadow: 0 40px 90px rgba(60, 90, 160, 0.28), inset 0 0 0 1px rgba(255,255,255,0.9), inset 0 0 0 6px rgba(0,0,0,0.02);
+    display: flex; flex-direction: column;
+  }
+  .status { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; font-size: 15px; font-weight: 700; color: #111; }
+  .status .notch { width: 110px; height: 26px; border-radius: 14px; background: #111; position: absolute; left: 50%; transform: translateX(-50%); top: 14px; }
+  .screen { flex: 1; margin: 0 12px 12px; border-radius: 28px; overflow: hidden; position: relative; background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(235,242,253,0.9)); display: flex; flex-direction: column; }
+  /* 背景色块（透过玻璃看得到的东西） */
+  .bg-blobs { position: absolute; inset: 0; overflow: hidden; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(30px); opacity: 0.75; }
+  .blob.b1 { width: 200px; height: 200px; background: #ffd3a8; left: -40px; top: -30px; }
+  .blob.b2 { width: 240px; height: 240px; background: #a8d4ff; right: -60px; top: 120px; }
+  .blob.b3 { width: 180px; height: 180px; background: #ffb8d0; left: 20px; bottom: -50px; }
+  /* 页面内容 */
+  .content { position: relative; z-index: 1; padding: 28px 22px; flex: 1; }
+  .content h1 { font-size: 22px; font-weight: 800; color: #111; margin-bottom: 4px; }
+  .content .sub { font-size: 13px; color: #6b7280; margin-bottom: 22px; }
+  .card { background: rgba(255,255,255,0.72); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 18px rgba(40,70,140,0.08), inset 0 0 0 0.5px rgba(255,255,255,0.9); }
+  .card .t { font-size: 13px; font-weight: 700; color: #222; margin-bottom: 6px; }
+  .card .d { font-size: 12px; color: #7a8293; line-height: 1.6; }
+  .card .bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #3b82f6, #7db4ff); margin-top: 10px; width: 72%; }
+  .card .bar.b2 { width: 48%; opacity: 0.55; }
+  .card .bar.b3 { width: 88%; opacity: 0.8; }
+  .screen-label { position: absolute; top: 10px; right: 14px; font-size: 10px; color: #9aa3b5; z-index: 2; }
+
+  /* ---------- tab 栏（#76 液态玻璃材质 + 方案 C 变形） ---------- */
+  .tabbar {
+    position: relative; z-index: 3; margin: 0 12px 12px; height: 62px; border-radius: 26px;
+    display: flex; align-items: stretch; padding: 0 6px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.68), rgba(255,255,255,0.30));
+    box-shadow:
+      0 0 0 0.5px rgba(0,0,0,0.08),
+      inset 0 0 0 0.5px rgba(255,255,255,0.65),
+      inset 0 1px 0 rgba(255,255,255,1),
+      0 18px 45px rgba(30,60,130,0.18), 0 4px 12px rgba(30,60,130,0.10);
+  }
+  .tabbar::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none; z-index: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.28));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .tabbar::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+    background: radial-gradient(130% 70% at 15% 0%, rgba(255,255,255,0.5), transparent 50%),
+                linear-gradient(105deg, rgba(255,255,255,0.18), transparent 40%);
+  }
+  .tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    border: none; background: none; cursor: pointer; font-family: inherit; position: relative; z-index: 2;
+    color: #7a8293; transition: color 0.25s ease;
+  }
+  .tab svg { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.7; fill: none; stroke-linecap: round; stroke-linejoin: round; transition: stroke-width 0.25s ease; }
+  .tab span { font-size: 11.5px; font-weight: 600; }
+  .tab.on { color: #0b6bd8; }
+  .tab.on svg { stroke-width: 2.2; }
+  /* 滑块胶囊：#76 定稿材质，方案 A 骨架（单一元素滑动） */
+  .tab-slide {
+    position: absolute; top: 5px; bottom: 5px; left: 10px; width: 104px;
+    border-radius: 22px; z-index: 1; pointer-events: none;
+    background: radial-gradient(120% 100% at 30% 0%, rgba(255,255,255,0.60), rgba(0,122,255,0.16) 75%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.75),
+      inset 0 -1px 1px rgba(255,255,255,0.2),
+      0 1px 5px rgba(0,122,255,0.20);
+  }
+  /* 模式：现状（无过渡） */
+  .phone.mode-now .tab-slide { transition: none; }
+  /* 模式：滑动弹性（方案 A） */
+  .phone.mode-slide .tab-slide { transition: left 0.55s cubic-bezier(0.23, 1, 0.32, 1.05), width 0.55s cubic-bezier(0.23, 1, 0.32, 1.05); }
+  /* 模式：液体变形（方案 C：滑动 + 切换时 SVG 变形脉冲） */
+  .phone.mode-liquid .tab-slide { transition: left 0.55s cubic-bezier(0.23, 1, 0.32, 1.05), width 0.55s cubic-bezier(0.23, 1, 0.32, 1.05); filter: url(#lg-distort); }
+
+  /* ---------- 控制面板 ---------- */
+  .panel { width: 320px; background: rgba(255,255,255,0.85); border-radius: 22px; padding: 24px; box-shadow: 0 20px 60px rgba(40,70,140,0.18); backdrop-filter: blur(20px); }
+  .panel h2 { font-size: 16px; font-weight: 800; margin-bottom: 16px; }
+  .panel .mode-group { display: flex; gap: 8px; margin-bottom: 18px; }
+  .panel .mode-btn { flex: 1; padding: 10px 4px; border-radius: 12px; border: 1.5px solid #d7deec; background: #fff; font-size: 12px; font-weight: 700; color: #4a5570; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+  .panel .mode-btn.on { border-color: #0b6bd8; background: #eaf2ff; color: #0b6bd8; }
+  .panel label { display: block; font-size: 12px; font-weight: 700; color: #4a5570; margin: 14px 0 6px; }
+  .panel input[type=range] { width: 100%; accent-color: #0b6bd8; }
+  .panel .hint { font-size: 11px; color: #8b94a8; line-height: 1.7; margin-top: 14px; padding-top: 14px; border-top: 1px dashed #d7deec; }
+  .panel .switch-row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
+  .panel .switch { position: relative; width: 44px; height: 26px; background: #d7deec; border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+  .panel .switch.on { background: #0b6bd8; }
+  .panel .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .panel .switch.on::after { left: 21px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+  .badge.ok { background: #e6f7ec; color: #1a8f4c; }
+  .badge.no { background: #fdeaea; color: #c33; }
+</style>
+</head>
+<body>
+
+<!-- SVG 变形滤镜（方案 C 核心）：feTurbulence 噪声 + feDisplacementMap 位移 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="lg-distort" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feTurbulence id="lg-turb" type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap id="lg-disp" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <!-- shuding 原版思路：背景折射（backdrop-filter url() 引用，Chromium 大概率不支持） -->
+    <filter id="lg-bg-distort" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="3" seed="3" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="14" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="phone mode-liquid" id="phone">
+  <div class="status"><span>9:41</span><div class="notch"></div><span></span></div>
+  <div class="screen">
+    <div class="bg-blobs"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+    <div class="screen-label" id="screenLabel">首页</div>
+    <div class="content">
+      <h1>首页</h1>
+      <div class="sub">点下方 tab 切换，观察胶囊动效</div>
+      <div class="card"><div class="t">今日概览</div><div class="d">情绪平稳，一切如常，无需评判。</div><div class="bar"></div></div>
+      <div class="card"><div class="t">时段分布</div><div class="d">清晨 2 次 · 上午 1 次 · 傍晚 3 次</div><div class="bar b2"></div></div>
+      <div class="card"><div class="t">最近记录</div><div class="d">平静 · 工作 · 25 分钟</div><div class="bar b3"></div></div>
+    </div>
+    <div class="tabbar" id="tabbar">
+      <button class="tab on" data-idx="0">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></svg>
+        <span>首页</span>
+      </button>
+      <button class="tab" data-idx="1">
+        <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+        <span>分析</span>
+      </button>
+      <button class="tab" data-idx="2">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+        <span>我的</span>
+      </button>
+      <div class="tab-slide" id="slide"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>方案 C · SVG 变形原型</h2>
+  <div class="mode-group">
+    <button class="mode-btn" data-mode="now">现状<br>（生硬）</button>
+    <button class="mode-btn" data-mode="slide">A 滑动<br>弹性</button>
+    <button class="mode-btn on" data-mode="liquid">C 液体<br>变形</button>
+  </div>
+  <label>变形强度（feDisplacementMap scale）<span id="scaleVal" style="float:right">18</span></label>
+  <input type="range" id="scaleRange" min="0" max="40" value="18">
+  <div class="switch-row">
+    <span style="font-size:12px;font-weight:700;color:#4a5570">切换时液体波动</span>
+    <div class="switch on" id="pulseSwitch"></div>
+  </div>
+  <div class="switch-row">
+    <span style="font-size:12px;font-weight:700;color:#4a5570">背景折射（shuding 原版）<span class="badge no" id="bgSupport">不支持</span></span>
+    <div class="switch" id="bgSwitch"></div>
+  </div>
+  <div class="hint" id="hint">
+    模式说明：<br>
+    <b>现状</b>：胶囊无过渡，瞬间出现/消失（#76 当前状态，生硬）。<br>
+    <b>A 滑动</b>：胶囊弹性滑动（0.55s 回弹曲线）。<br>
+    <b>C 液体变形</b>：滑动 + 切换瞬间胶囊挂 SVG 位移滤镜（0→强度→0 脉冲），像液体被拨动。<br>
+    拖动「变形强度」可调节脉冲幅度。
+  </div>
+</div>
+
+<script>
+(() => {
+  const phone = document.getElementById('phone');
+  const slide = document.getElementById('slide');
+  const tabs = [...document.querySelectorAll('.tab')];
+  const dispMap = document.getElementById('lg-disp');
+  const turb = document.getElementById('lg-turb');
+  const scaleRange = document.getElementById('scaleRange');
+  const scaleVal = document.getElementById('scaleVal');
+  const pulseSwitch = document.getElementById('pulseSwitch');
+  const bgSwitch = document.getElementById('bgSwitch');
+  const bgSupport = document.getElementById('bgSupport');
+  const screenLabel = document.getElementById('screenLabel');
+  const titles = ['首页', '分析', '我的'];
+
+  let mode = 'liquid';
+  let activeIdx = 0;
+
+  // ---------- 胶囊定位（moveTabSlide 同逻辑） ----------
+  function layoutSlide() {
+    const tab = tabs[activeIdx];
+    const tr = tab.getBoundingClientRect();
+    const br = tabbar.getBoundingClientRect();
+    const bar = slide.parentElement;
+    slide.style.left = (tab.offsetLeft + (tab.offsetWidth - tr.width) / 2 + 4) + 'px';
+    slide.style.width = (tab.offsetWidth - 8) + 'px';
+  }
+
+  // ---------- 液体波动脉冲：scale 0→N→0（sin 曲线）+ seed 随机换形 ----------
+  function liquidPulse() {
+    if (mode !== 'liquid' || !pulseSwitch.classList.contains('on')) return;
+    const peak = parseFloat(scaleRange.value);
+    if (peak <= 0) return;
+    turb.setAttribute('seed', Math.floor(Math.random() * 999));
+    const t0 = performance.now();
+    const dur = 650;
+    function frame(t) {
+      const p = Math.min((t - t0) / dur, 1);
+      const s = Math.sin(p * Math.PI) * peak;
+      dispMap.setAttribute('scale', s);
+      if (p < 1) requestAnimationFrame(frame);
+      else dispMap.setAttribute('scale', 0);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- 切换 ----------
+  function switchTab(idx) {
+    if (idx === activeIdx) return;
+    activeIdx = idx;
+    tabs.forEach((t, i) => t.classList.toggle('on', i === idx));
+    screenLabel.textContent = titles[idx];
+    layoutSlide();
+    liquidPulse();
+  }
+
+  tabs.forEach((t, i) => t.addEventListener('click', () => switchTab(i)));
+  window.addEventListener('resize', layoutSlide);
+
+  // ---------- 模式切换 ----------
+  document.querySelectorAll('.mode-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach((x) => x.classList.remove('on'));
+      b.classList.add('on');
+      mode = b.dataset.mode;
+      phone.classList.remove('mode-now', 'mode-slide', 'mode-liquid');
+      phone.classList.add('mode-' + mode);
+      dispMap.setAttribute('scale', 0);
+      slide.style.filter = '';
+      if (mode !== 'liquid') {
+        pulseSwitch.classList.remove('on');
+        hint.innerHTML = '模式说明：<br><b>现状</b>：胶囊无过渡，瞬间出现/消失（#76 当前状态，生硬）。<br><b>A 滑动</b>：胶囊弹性滑动（0.55s 回弹曲线）。<br><b>C 液体变形</b>：滑动 + 切换瞬间胶囊挂 SVG 位移滤镜脉冲。<br>当前：<b>' + (mode === 'now' ? '现状（无过渡）' : 'A 滑动弹性') + '</b> —— C 模式才有变形脉冲。';
+      } else {
+        hint.innerHTML = '模式说明：<br><b>现状</b>：胶囊无过渡，瞬间出现/消失。<br><b>A 滑动</b>：胶囊弹性滑动（0.55s 回弹曲线）。<br><b>C 液体变形</b>：滑动 + 切换瞬间胶囊挂 SVG 位移滤镜（0→强度→0 脉冲），像液体被拨动。<br>拖动「变形强度」可调节脉冲幅度。';
+      }
+    });
+  });
+
+  scaleRange.addEventListener('input', () => { scaleVal.textContent = scaleRange.value; });
+  pulseSwitch.addEventListener('click', () => pulseSwitch.classList.toggle('on'));
+  bgSwitch.addEventListener('click', () => {
+    const on = bgSwitch.classList.toggle('on');
+    // shuding 原版：backdrop-filter: url(#svg) —— Chromium 不支持 url() 引用，仅 Firefox 支持
+    if (on) {
+      tabbar.style.backdropFilter = 'url(#lg-bg-distort) blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)';
+      tabbar.style.webkitBackdropFilter = 'url(#lg-bg-distort) blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)';
+    } else {
+      tabbar.style.backdropFilter = '';
+      tabbar.style.webkitBackdropFilter = '';
+    }
+  });
+
+  // ---------- 支持性检测 ----------
+  const supports = CSS.supports('backdrop-filter', 'url(#lg-bg-distort) blur(1px)');
+  if (supports) { bgSupport.textContent = '支持'; bgSupport.className = 'badge ok'; }
+
+  layoutSlide();
+})();
+</script>
+</body>
+</html>

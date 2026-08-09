@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观己 · 日历玻璃模糊对比原型</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #007AFF;
+    --ink: #3A3A3C;
+    --ink-2: #8E8E93;
+    --ink-3: #B9B9BE;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    --cal-blur: 0px;   /* 当前对比档位（JS 控制） */
+  }
+  body { font-family: var(--font); background: #DFE2EA; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; gap: 44px; padding: 30px 20px; }
+
+  .phone {
+    width: 390px; height: 800px;
+    border-radius: 48px;
+    background: #000; padding: 14px;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.5);
+    position: relative; flex: 0 0 auto;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 36px; overflow: hidden; position: relative;
+    /* 背景：彩色内容（玻璃可透） */
+    background:
+      radial-gradient(120% 80% at 85% -10%, rgba(0,122,255,0.18), transparent 60%),
+      radial-gradient(100% 70% at 0% 100%, rgba(10,132,255,0.14), transparent 55%),
+      linear-gradient(165deg, #7FB2FF 0%, #4E8BFF 40%, #B26BFF 100%);
+  }
+  .blob { position: absolute; border-radius: 50%; }
+  .blob-1 { width: 200px; height: 200px; background: radial-gradient(circle, #FFD6A5, transparent 70%); top: 60px; left: -40px; }
+  .blob-2 { width: 240px; height: 240px; background: radial-gradient(circle, #6EFFC1, transparent 70%); top: 300px; right: -80px; }
+  .blob-3 { width: 180px; height: 180px; background: radial-gradient(circle, #FF9EC7, transparent 70%); bottom: 60px; left: 30px; }
+  /* 细节纹理：模糊差异是否可见的关键（细字/细线被磨掉） */
+  .bg-texture {
+    position: absolute; inset: 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px; line-height: 1.9;
+    padding: 30px 24px;
+    overflow: hidden;
+    display: flex; flex-direction: column; flex-wrap: wrap;
+    gap: 0;
+  }
+  .bg-texture span { white-space: nowrap; letter-spacing: 0.2em; }
+  .bg-note {
+    position: absolute; top: 40px; left: 26px; right: 26px;
+    color: #fff; font-size: 15px; line-height: 1.8; opacity: 0.9;
+  }
+  .bg-note b { font-size: 17px; }
+  .bg-stats { position: absolute; top: 190px; left: 26px; right: 26px; display: flex; gap: 12px; }
+  .bg-stats div { flex: 1; background: rgba(255,255,255,0.25); border-radius: 14px; padding: 14px; color: #fff; }
+  .bg-stats div b { font-size: 22px; display: block; }
+  .bg-stats div span { font-size: 11px; opacity: 0.8; }
+
+  /* ============ 日历弹层（玻璃材质，blur 由 --cal-blur 控制） ============ */
+  .calendar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0);          /* 通透 tint */
+    backdrop-filter: blur(var(--cal-blur)) saturate(2);
+    -webkit-backdrop-filter: blur(var(--cal-blur)) saturate(2);
+    border-radius: 22px 22px 0 0;
+    padding: 16px 22px 24px;
+    box-shadow:
+      0 0 0 0.5px rgba(0,0,0,0.08),
+      inset 0 0 0 0.5px rgba(255,255,255,0.55),
+      inset 0 1px 0 rgba(255,255,255,1),
+      inset 0 -1px 1px rgba(255,255,255,0.2),
+      0 -18px 44px rgba(0,0,0,0.16);
+  }
+  /* 渐变边框环 */
+  .calendar::after {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit;
+    border: 1px solid transparent;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.55) 45%, rgba(255,255,255,0.28)) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; }
+  .cal-head button { border: none; background: none; font-size: 22px; color: var(--blue); width: 38px; height: 38px; cursor: pointer; }
+  .cal-head b { font-size: 16px; font-weight: 800; color: var(--ink); }
+  .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: var(--ink-2); margin-top: 10px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 4px; text-align: center; }
+  .cal-grid span {
+    height: 36px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500; color: var(--ink);
+    border-radius: 10px; position: relative;
+  }
+  .cal-grid span.has::after { content: ""; position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--blue); }
+  .cal-grid span.sel { background: var(--blue); color: #fff; font-weight: 700; }
+  .cal-grid span.sel::after { background: #fff; }
+  .cal-detail { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.06); }
+  .cd-date { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .cd-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink); padding: 4px 0; }
+  .cd-row b { color: var(--blue); }
+  .cd-note { font-size: 11px; color: var(--ink-2); margin-top: 4px; }
+
+  /* 四段并排对比条：同背景、四档模糊直接对比（模糊磨掉细节的差异一眼可见） */
+  .compare {
+    margin-top: 20px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .compare .seg {
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(165deg, #7FB2FF 0%, #4E8BFF 40%, #B26BFF 100%);
+    position: relative;
+    height: 110px;
+  }
+  .compare .seg::after {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 7px);
+    backdrop-filter: blur(var(--seg-blur, 0px));
+    -webkit-backdrop-filter: blur(var(--seg-blur, 0px));
+  }
+  .compare .seg span {
+    position: absolute; left: 0; right: 0; bottom: 4px;
+    text-align: center; font-size: 11px; font-weight: 700; color: #fff;
+    z-index: 2;
+  }
+  .compare .seg.b0 { --seg-blur: 0px; }
+  .compare .seg.b2 { --seg-blur: 2px; }
+  .compare .seg.b3 { --seg-blur: 3px; }
+  .compare .seg.b4 { --seg-blur: 4px; }
+  .compare .seg.active { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  /* ============ 控制台 ============ */
+  .console { width: 380px; color: #D8DCE6; }
+  .console h1 { font-size: 22px; font-weight: 800; color: #fff; }
+  .console h1 small { display: block; font-size: 12px; font-weight: 400; color: #8A93A6; margin-top: 8px; line-height: 1.7; }
+  .options { display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
+  .opt {
+    display: flex; align-items: center; gap: 14px;
+    background: #1B212C; border-radius: 16px; padding: 16px 18px; cursor: pointer;
+    border: 2px solid transparent; transition: border-color 0.2s;
+  }
+  .opt.active { border-color: var(--blue); }
+  .opt .pill { width: 44px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.1); backdrop-filter: blur(0px); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex: 0 0 44px; }
+  .opt .pill.b2 { backdrop-filter: blur(2px); }
+  .opt .pill.b3 { backdrop-filter: blur(3px); }
+  .opt .pill.b4 { backdrop-filter: blur(4px); }
+  .opt .info b { display: block; font-size: 14px; color: #fff; }
+  .opt .info span { font-size: 11.5px; color: #8A93A6; margin-top: 3px; display: block; line-height: 1.5; }
+  .note { margin-top: 20px; font-size: 12px; color: #8A93A6; line-height: 1.8; }
+  .note b { color: #FFD6A5; }
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="bg-texture" id="bgTexture">
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+        <span>觉察 · 记录 · 温和 · 不评判 · 8月记录 16 次 · 深夜 44% · 连续 4 天 · 趋势 +78% · 看片 2 次 · 睡前习惯 · 平静 · 放松 · 愉悦 · 压力 · 无聊 · 焦虑 · 频率 2.3/日 · 节奏 · 模式 · 复盘 · 觉察</span>
+      </div>
+      <div class="bg-note"><b>8月 · 深夜时段占比最高（44%）</b><br>本周 16 次 · 连续 4 天 · 环比 +78%</div>
+      <div class="bg-stats"><div><b>16</b><span>本周次数</span></div><div><b>+78%</b><span>较上周</span></div></div>
+
+      <!-- 日历弹层（玻璃，blur 实时切换） -->
+      <div class="calendar" id="calendar">
+        <div class="cal-head"><button>‹</button><b>2026年8月</b><button>›</button></div>
+        <div class="cal-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+        <div class="cal-grid">
+          <span></span><span></span><span></span><span></span><span></span><span class="has">1</span><span class="has">2</span>
+          <span class="has">3</span><span class="has">4</span><span class="has">5</span><span class="has">6</span><span class="has">7</span><span class="sel">8</span><span class="has">9</span>
+          <span class="has">10</span><span class="has">11</span><span class="has">12</span><span>13</span><span>14</span><span>15</span><span>16</span>
+          <span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span>
+          <span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span>
+          <span>31</span>
+        </div>
+        <div class="cal-detail">
+          <p class="cd-date">8月8日 · 周六</p>
+          <p class="cd-row"><span>深夜</span><b>2 次</b></p>
+          <p class="cd-row"><span>傍晚</span><b>1 次</b></p>
+          <p class="cd-note">选天查看明细，可补记历史日期</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="console">
+    <h1>日历玻璃模糊对比<small>观己 · #78 可读性优化<br>先看下方「四段对比条」——同一背景四档模糊并排，细节被磨掉的程度一目了然<br>再点档位看日历弹层实时效果</small></h1>
+
+    <div class="compare" id="compare">
+      <div class="seg b0" data-blur="0"><span>0px 现状</span></div>
+      <div class="seg b2" data-blur="2"><span>2px 轻</span></div>
+      <div class="seg b3" data-blur="3"><span>3px 推荐</span></div>
+      <div class="seg b4" data-blur="4"><span>4px 略重</span></div>
+    </div>
+
+    <div class="options" id="options">
+      <div class="opt" data-blur="0">
+        <span class="pill">0</span>
+        <span class="info"><b>无磨砂（现状）</b><span>完全通透——网格与文字对比最弱</span></span>
+      </div>
+      <div class="opt" data-blur="2">
+        <span class="pill b2">2</span>
+        <span class="info"><b>轻磨砂 2px</b><span>极轻——细节略磨，通透感几乎不变</span></span>
+      </div>
+      <div class="opt" data-blur="3">
+        <span class="pill b3">3</span>
+        <span class="info"><b>轻磨砂 3px（推荐）</b><span>推荐——磨掉背景细节，通透感损失最小</span></span>
+      </div>
+      <div class="opt" data-blur="4">
+        <span class="pill b4">4</span>
+        <span class="info"><b>轻磨砂 4px</b><span>略重——更清晰，通透感略降</span></span>
+      </div>
+    </div>
+    <p class="note"><b>切换档位实时生效：</b>关注日历网格线、日期数字、选中日蓝色的清晰度，以及底部背景色块的「透过感」——选择可读性与通透感平衡最好的一档。</p>
+  </div>
+
+<script>
+  const cal = document.getElementById('calendar');
+  const options = document.getElementById('options');
+  const compare = document.getElementById('compare');
+  function applyBlur(px) {
+    document.documentElement.style.setProperty('--cal-blur', px + 'px');
+    options.querySelectorAll('.opt').forEach((o) => o.classList.toggle('active', o.dataset.blur === String(px)));
+    compare.querySelectorAll('.seg').forEach((s) => s.classList.toggle('active', s.dataset.blur === String(px)));
+  }
+  options.addEventListener('click', (e) => {
+    const opt = e.target.closest('.opt');
+    if (opt) applyBlur(parseInt(opt.dataset.blur, 10));
+  });
+  compare.addEventListener('click', (e) => {
+    const seg = e.target.closest('.seg');
+    if (seg) applyBlur(parseInt(seg.dataset.blur, 10));
+  });
+  applyBlur(3);   // 默认推荐档
+</script>
+</body>
+</html>

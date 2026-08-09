@@ -259,7 +259,48 @@ renderHome();
 - 2026-08-07：#52 样式强化补丁（用户反馈「胶囊展开态所有样式都没生效」）——真机实测定位：魅族渲染 contentView 只尊重代码显式 set 的属性（XML 样式声明被系统卡片模板覆盖，浅色卡片黑字）；修复：flyme_live_content.xml 重写（content_root 加 flyme_live_bg 渐变 drawable 背景 + 白字）+ buildFlymeContentRv 全部显式 set（setBackgroundResource/setTextColor/setTextViewTextSize：标题 14sp 白 bold、秒数 30sp 白 bold、按钮 13sp 白/白 75%）；真机验证样式生效（蓝色渐变卡片 + 白色标题/大秒数/按钮，与系统浅色通知区分明显，层次协调）；版本号不变（v3.4 内补丁）；截图存档 v34_styled_expand.png
 - 2026-08-07：新增第 55 条【Bug】（计时模式下「补记」入口消失——用户反馈「更新后点击记录只剩直接记录和不想计时了，补录功能怎么没有了」），根因已定位：#51「计时态隐藏 seg」决策副作用——默认 timer 模式步骤一不再有「就现在/补记」切换，补记入口从主面板消失（只剩日历入口）；quick 模式不受影响；修复方案（未计时时恢复 seg 显示：就现在=计时器态/补记=经典流程，计时开始后 seg 隐藏保留），仅记录
 - 2026-08-07：新增第 56 条【Bug】（编辑模式「就现在」选项冲突——用户反馈「编辑进入的是补记但还有就现在选项，既然补记可以选时间，就现在就没意义了」），根因已定位：#46 编辑直达详情保留 seg 可切换——编辑=修改已存在记录，无「现在新建」语义，且切到就现在会把历史记录时间覆盖为当前时刻（误操作风险）；修复方案（编辑模式隐藏 timeSegRow，保留 pickerRow 时间可调=纯补记语义），仅记录
+- 2026-08-09：新增第 83 条意见（液态玻璃蓝色按钮阴影太实——用户「阴影有点太实的感觉，发散一点更好看」）：根因已定位（.btn-primary/.record-btn 玻璃态外投影仅单层 0 3px 14px rgba(0,122,255,0.3)——偏移小 blur 小单层，紧贴按钮显「描边感」；对照玻璃卡双层发散阴影栈先散后收）；方案草案（A 纯蓝光晕双层：远层 0 14px 34px 0.22 + 近层 0 4px 14px 0.25 / B 蓝光晕+中性柔影 iOS 风格）；3 个待确认（A/B/发散档位/发丝线是否微降），仅记录
+- 2026-08-09：**#82 实施完成（v3.5 内补丁，用户「tab栏增加日历页同款的背景模糊」）**：玻璃态 tabbar 加轻磨砂 blur(3px) saturate(var(--lg-saturate))——与 #78 日历同款配方（内容密集提升可读性）；其他浮层 sheet/dialog/card 保持 blur(0px) 不变；浏览器+真机验证（tabbar 3px ✓ sheet/calendar 不变 ✓ 非玻璃态旧毛玻璃不变 ✓）；资源 ?v=59/59；截图 v82_tabbar_blur3.png
+- 2026-08-09：**#81 实施完成（v3.5 内补丁，用户拍板「C，20，背景折射不要」）**：玻璃态滑块回归单一元素（材质=#76 渐变玻璃胶囊迁移，::before 底座删除）+ `filter: url(#lg-distort)`（feTurbulence 0.012/0.018 + feDisplacementMap）+ 切换时 liquidTabPulse 脉冲 scale 0→20→0（sin 650ms + seed 随机，仅玻璃态）；非玻璃态完全不变（浅蓝实底/26px/0.55s 弹性）；浏览器+真机（魅族 21/Android 16）验证全过（峰值 20 归零、材质/滤镜 computed、非玻璃态回归）；资源 ?v=58/58；截图 v81_device_pulse20/tab_clean
+- 2026-08-09：**#81 方案 C 原型已出（用户「尝试一下可选项C」）**：`prototype/liquid-tab-c.html` 三模式对照（现状/A 滑动/C 液体变形）+ SVG feTurbulence+feDisplacementMap 胶囊变形脉冲（650ms sin + seed 随机）+ shuding 原版背景折射（backdrop-filter url()）；浏览器验证：滤镜真实渲染（ui_diff_check 证实 scale200 波纹扭曲）+ 脉冲采样平滑；真机 CDP 实测 Android 16 WebView 支持 backdrop-filter url()（-webkit- 前缀不支持）——方案 C 可落地；截图 v81_proto_main/pulse18/bg_refract_scale200/off；待用户看原型定夺
+- 2026-08-09：新增第 81 条意见（液态玻璃 tab 切换动效丢失——用户「切换动效没了，显得特别生硬」，参考 shuding/liquid-glass + 火山引擎文章）：根因已定位（#76 玻璃态隐藏 .tab-slide 滑块 → 选中指示改由 .tab.active::before 承担，::before 随类瞬时有无无过渡 → 生硬；旧版滑块 transition left/width 0.55s 弹性滑动 + moveTabSlide 仍存活）；方案草案（A 推荐：玻璃胶囊材质迁回单一滑块 + 恢复 moveTabSlide 滑动弹性合体；B 渐隐保底；C SVG 变形实验）；3 个待确认（动效形态/时长/是否做 SVG 变形），仅记录
+- 2026-08-09：**#76/#77/#79/#80 实施完成（v3.5 内补丁）**：#76 定稿全宽渐变玻璃胶囊（tab-slide 隐藏 + ::before 放大 top/bottom 5px + left/right 4px + 圆角 22px 与旧版滑块同域 + 径向渐变/高光/单层投影）；#77 移除 P1 滚动收缩（删 syncTabbarScroll/监听/常量/孤儿注释 + .scrolled 规则与 --lg-tint-scroll，tab 栏恒 58px）；#79 日历明细提权（recent-tags --ink/500 + 分钟 .dur accent-deep/700）；#80 未来日期双保险（cell 灰显 disabled + saveRecord offset>0 温和拦截「未来的日期还没到哦」）；浏览器回归四项全过 + 构建安装真机；资源 ?v=57/57
 - 2026-08-08：新增第 58 条意见（Android 16 状态条状标签 chip 优化——用户反馈「未展开状态有点丑，一个大横条，有用信息少」），根因已定位（对照官方规范：chip 最大 96dp、<7 字符全显示——标题「观己 · 计时中」6 字符被系统整段塞进 chip 成 96dp 横条，秒数又放不进）；方案（setShortCriticalText("计时中") 3 字符缩短横条 + 标题保持展开态使用 + 真机验证）；1 个待确认（chip 文本：计时中/只图标/其他），仅记录
+- 2026-08-08：新增第 80 条【Bug】（日历可补记未发生的未来日期——用户「为什么可以补记没发生的日期」）：根因已定位（renderCalendar 未来 cell 可选 + calAddBtn 无限制 + saveRecord 补记分支只校验非空无 offset>0 拦截，未来记录可直接保存）；方案草案双保险（日历未来 cell 灰显禁用 + saveRecord offset>0 温和拦截「未来的日期还没到哦」）；仅记录
+- 2026-08-08：新增第 79 条【Bug】（日历页每日细项「分钟」灰色看不清——用户「分钟因为字体的灰色的所有显示不清楚」）：根因已定位（.recent-tags 12px 浅灰 #8E8E93，液态玻璃透明底上对比不足；时长与情绪/诱因同级无区分）；方案草案（#calDayDetail .recent-tags 颜色提权 + 分钟 accent-deep 加粗强调）；仅记录
+- 2026-08-08：**#78 实施完成（v3.5 内补丁，用户原型选 3px）**：日历弹层玻璃态单独加 blur(3px) saturate(2)（内容密集可读性提升，通透保留）；tab 栏/记录面板/对话框/卡片保持无磨砂；原型先行四档对比（calendar-glass.html：细节纹理+四段对比条）；浏览器五组件对照 + 真机验证通过；资源 ?v=56/56；截图 v78_calendar_blur3.png / v78_cal_compare_v2.png
+- 2026-08-08：新增第 78 条（日历页液态玻璃可读性差——用户「在玻璃材质加上一点点的模糊，但通透感还要保留」）：现状（calendar-sheet 与其他浮层同配方 blur 0 无磨砂，日历内容密集可读性差；对照 iOS Material 分层密集内容应用更厚材质）；方案草案（仅日历弹层加轻磨砂 blur 2-3px + saturate 2，其余浮层不变；tint/边缘结构保留；可选网格线微调）；2 个待确认（blur 强度 2/3px、是否配合网格线微调），仅记录
+- 2026-08-08：**#77 决策确认（用户「不保留，记录在案」）**：移除 P1 滚动收缩——tab 栏恒 58px（同时消除切换残留）；移除范围已列（app.js syncTabbarScroll+监听 / styles.css .scrolled 规则+--lg-tint-scroll）；备注：未来流动感可用「仅背景变实不收缩」形式；待实施
+- 2026-08-08：新增第 77 条【Bug】（切换 tab 时 tab 栏高度变低——用户「tab栏移动高度会变低是什么问题」）：根因已定位（代码 + 浏览器/真机对照）——`syncTabbarScroll` 的 max 统计包含隐藏 screen，浏览器 display:none 重置 scrollTop 未复现但真机 WebView 保留 → 切换后收缩态残留（58→50）；方案草案（只统计可见 screen 一行修复 + 待确认滚动收缩 P1 保留 or 移除）；1 个待确认，仅记录
+- 2026-08-08：**#76 方案 C 复测反馈已确认（用户「先记录选择」）**：质感保留「渐变玻璃胶囊」✅——全宽选中胶囊（top/bottom 5px + left/right 4px + 圆角 22px 与旧版滑块同域）+ 玻璃渐变/高光/单层投影；待实施
+- 2026-08-08：**#76 方案 C 复测反馈（用户「图标玻璃底座一小块覆盖不了选中区域，覆盖范围可不可以和旧版一样大」）**：36px 底座太小——调整方向为全宽选中胶囊（top/bottom 5px + left/right 4px + 圆角 22px 与旧版滑块同域，玻璃质感保留：渐变+高光+单层投影）；1 个待确认（质感保留 vs 回归滑块浅蓝实底），仅记录
+- 2026-08-08：**#76 实施完成（v3.5 内补丁，方案 C）**：玻璃态隐藏 .tab-slide（选中指示由图标底座承担，消除两层阴影叠加）+ 底座强化为 36px/圆角 12px/渐变 0.65→0.18/高光 0.75/单层外阴影 0.25；双态验证（玻璃：滑块 none+底座单层；旧版：滑块恢复+底座不渲染）；浏览器 computed 全过 + 构建安装真机；资源 ?v=55/55；截图 v76_tab_base_selected.png
+- 2026-08-08：新增第 76 条【Bug】（液态玻璃 tab 栏选中状态「阴影两层」观感——用户「选中状态的阴影好像有两层的样子」）：根因已定位（代码实锤）——`.tab-slide` 选中滑块（浅蓝 0.12 胶囊）与 #72-P2 `.tab.active::before` 图标玻璃底座（含蓝色外阴影 0 1px 5px 0.22 + 白高光）在选中项同区叠加，三重蓝色层次显脏；方案草案（A 推荐：玻璃态移除底座（tabbar 本身即玻璃，底座重复）/ B 底座去外阴影 / C 底座替代滑块）；1 个待确认，仅记录
+- 2026-08-08：**#75 抖动消除（v3.5 内补丁，用户「两态切换还有高度抖动」）**：CDP 区块测量定位（真机差 ~4px = 字体行高渲染差，补记 timeDisplay/pickerRow vs 就现在 timerBox/modeLink）；timeDisplay mt 11→8 以真机为准调平——真机 347/347/347 diff 0 零抖动；浏览器 333/330（跨环境渲染差，真机权威）；截图 v75_no_jitter_now/backfill.png；资源 ?v=54/54
+- 2026-08-08：**#75 高度回调（v3.5 内补丁，用户「再提高一点，核心原则不要忘记」）**：两态对称回调（公共 +19/计时 +12/补记 +13：padding 10/24、grab 10、title 18、label 12/9、actions 20、timer-display 34、timerBox 10、timeDisplay 11、pickerRow 6、input 9）；核心原则保持——浏览器两态 333/333 diff 0、真机 345/349 容差 ±4；截图 v75_sheet_adjusted_now/backfill.png；资源 ?v=52/53
+- 2026-08-08：**#75 实施完成（v3.5 内补丁，用户「两态严格一致 + 就现在不要日期时间」）**：卡片紧凑化（公共：padding/grab/title/field-label/actions/input；计时态：timeDisplay 隐藏 + timer-display 52→28 + 间距收敛；补记态：timeDisplay mt 3 + pickerRow mt 2 均衡）；JS 五处同步 timeDisplay 显隐（setupNowStep/showClassicStep1/nowSeg/customSeg/modeLink）；迭代测量：浏览器 304/305 → 真机 317/317 diff 0 严格一致；截图 v75_sheet_compact_now/backfill.png；资源 ?v=51/52
+- 2026-08-08：新增第 75 条（记录卡片整体太大需紧凑缩小——用户「卡面最好可以和补记卡片大小一致」）：实测就现在 452px vs 补记 357px（差 95px，主要来自 timerBox 84px 大数字与计时态间距）；方案草案（面板内 timer-display 字号压缩 + 间距压缩：timerBox margin/seg 下/title 下/modeLink/actions/grab/padding）；2 个待确认（严格一致 vs ±10px/面板内数字字号），仅记录
+- 2026-08-08：**#74 实施完成（v3.5 内补丁，用户「日历不悬浮」）**：记录面板悬浮化——.sheet left/right/bottom 12px + 全圆角 22px + 增强悬浮阴影（0 22px 55px）；玻璃态 sheet 悬浮投影/日历保持贴底投影（规则拆开）；真机 media query bottom +safe-bottom（实测 38px = 12+26 手势条，与 tabbar 同体系）；sheetUp/拖拽/键盘/高度过渡兼容；浏览器+真机全过；资源 ?v=47/47；截图 v74_floating_sheet.png
+- 2026-08-08：新增第 74 条（记录卡片改悬浮形式——用户反馈「记录卡片底部连着一起的，想做成悬浮形式」）：现状（.sheet/.calendar-sheet 贴底 left/right/bottom:0 + 仅顶部圆角，与悬浮 tab 栏风格不统一）；方案草案（left/right 12px + bottom 12px（真机 +safe-bottom）+ 全圆角 22px + 增强悬浮阴影；sheetUp/拖拽/键盘/高度过渡兼容；液态玻璃边缘自动适配）；3 个待确认（边距 12px/日历弹层是否一并/圆角），仅记录
+- 2026-08-08：**#73 实施完成（v3.5 内补丁，用户「按草案，液态玻璃独立成卡」）**：我的页重排——外观（主题）→ 液态玻璃独立卡（实验性标注）→ 记录方式 → 记录提醒 → 正向反馈 → 实况通知 → AI 设置下移 → 数据管理 → 关于；液态玻璃开关从外观卡独立；app.js 按 id 绑定无副作用；浏览器+真机全过（cardOrder 正确/开关切换/清除弹窗回归）；资源 ?v=46/46；截图 v73_me_page_reordered.png
+- 2026-08-08：新增第 73 条（我的页设置项顺序调整——用户反馈「设置顺序有点杂乱了」）：现状盘点 7 张卡（外观/AI 设置/记录提醒/正向反馈/记录方式/实况通知/数据管理+关于），杂乱点（四类混合无分组、AI 长卡居中挡高频项、液态玻璃实验开关混在主题下）；方案草案按使用频率+分组重排（外观→液态玻璃独立成卡→记录方式→记录提醒→正向反馈→实况通知→AI 设置下移→数据管理→关于）+ 2 个待确认（排序方案/视觉分组），仅记录
+- 2026-08-08：**#72 液态玻璃 P1+P2 优化（v3.5 内补丁，基于三篇液态玻璃文章分析）**：P1 流动性——tab 栏滚动收缩（>60px → 58→50px + 玻璃变实 --lg-tint-scroll 0.4/0.1 + 阴影加深，0.25s 过渡，双态）；P2 材质——Vibrancy 近似（tint-card 0.60/0.08）+ 选中 tab 图标玻璃底座（32px 径向渐变+高光+光晕）+ 色散近似实验（大数字 RGB 双色 text-shadow 0.18）；DESIGN-LANGUAGE.md 新增第 9 章 Material 分层（L0-L4 五级）；浏览器+真机全过（滚动收缩 h=50 变实 0.4/底座/色散）；资源 ?v=44/45；截图 v72_liquid_glass_p12.png
+- 2026-08-08：**#72 液态玻璃双态化 + 按钮实色玻璃（v3.5 内补丁，用户「按钮太浅保留原色 + 我的页加模式切换」）**：按钮改实色+玻璃边缘（accent 实底/亮边/高光/光晕，弃半透明 tint）；CSS 玻璃规则全部挂 html.liquid-glass 前缀覆盖层（默认旧版：毛玻璃/白底/实色/纯色背景）；我的页外观卡加「液态玻璃（实验性）」开关（guanji_liquid_glass 默认 on + 防闪烁应用 + initLiquidGlass 同步）；浏览器双态全过 + 真机默认玻璃态+开关切换生效；资源 ?v=43/43；截图 v72_liquid_glass_switch.png
+- 2026-08-08：**#72 按钮着色玻璃（v3.5 内补丁，用户「按钮也可以做成带颜色的玻璃」）**：tinted glass 配方（半透明色底 0.55 + saturate(2) + 亮边 + inset 高光 + 色相光晕）；--lg-tint-blue/gray/red（+hi hover）浅深双套；改造 btn-primary（蓝）/btn-ghost（灰）/btn-danger（红）/record-btn（蓝 CTA）/chip（灰）+chip.active（蓝玻璃白字）；浏览器全过 + 构建安装真机；资源 ?v=42/42；截图 v72_liquid_glass_buttons.png
+- 2026-08-08：**#72 液态玻璃全 App 铺开（v3.5 内补丁，用户「直接全 App 铺开」）**：背景增强（.phone 双层蓝晕 radial，浅 0.06/0.05 深 0.09/0.06——玻璃有内容可透）+ 内容卡玻璃化（.card/.report-card/.ask-answer：--lg-tint-card 浅 0.55/深 0.06 + relative + 玻璃阴影栈 + 共享边框环/光带扩展七组件）+ 交互控件保持实底（可读性/可点击暗示）；reduced-transparency 扩展；浏览器全过（含深色）+ 真机配方生效+面板落位 381；资源 ?v=41/41；截图 v72_liquid_glass_full_app.png
+- 2026-08-08：**#72 液态玻璃全 App 扩展（v3.5 内补丁，用户「应用到整个app看看」）**：.calendar-sheet（日历弹层）+ .dialog（添加/删除对话框）液态玻璃化——共享边框环/光带选择器扩展四组件；dialog 用 --lg-tint-strong（浅/深 0.85）保遮罩上可读性；.card 内容卡保持白底（纯色背景无可透内容，玻璃化无收益）；reduced-transparency 查询扩展；浏览器全过（含深色）+ 真机配方生效+面板落位 381；资源 ?v=40/40；截图 v72_liquid_glass_app_full.png
+- 2026-08-08：**#72 液态玻璃定稿应用（v3.5 内补丁，用户「其他可以，定稿实施」，微摆移除）**：.tabbar/.sheet 应用定稿配方（无磨砂 blur(0px) saturate(2) + 阴影栈 + ::after 渐变边框环环形 mask + ::before 光带 + tabbar 按压增强；深色 tint 0.05 适配；reduced-transparency/#44 退场逻辑兼容）；浏览器浅色/深色全过 + 真机 CDP 配方生效 + 面板弹簧落位 381 无残留；原型同步清理微摆；资源 ?v=39/39；截图 v72_liquid_glass_app.png
+- 2026-08-08：**#72 液态玻璃 v8 修复（用户反馈「边框改动影响主体、通透感没了」，待定稿）**：v7 双层背景 bug（透明 padding-box 遮不住 border-box 白渐变 → 白纱盖满主体）→ 主体恢复纯透明背景 + 渐变边框改 ::after 环形 mask（content-box xor/exclude）独立绘制，液体微摆改为环带加宽 6px+扰动；验证主体 rgba(255,255,255,0) + mask exclude 生效 + 阴影层/光带全在；截图 v72_liquid_glass_v8.png；待用户定稿
+- 2026-08-08：**#72 液态玻璃 v7（用户反馈「边框轮廓不够玻璃」，待定稿）**：边缘重构——渐变边框（上亮 0.95→下暗 0.28，background-clip 双层不破坏圆角）替代均匀白描边 + 外侧发丝暗线 0.5px 分离背景 + 内侧白亮环 + 上缘 1px 实线高光 + 内缘 12px 柔光 + 顶部转角亮斑增强；验证全生效（渐变边框/发丝线/亮环/高光/柔光/转角光 + 圆角保留 + 无磨砂保持）；截图 v72_liquid_glass_v7_edge.png；待用户定稿
+- 2026-08-08：**#72 液态玻璃 v6（用户要求「彻底无磨砂」，待定稿）**：blur 8px→0、tint 0.12→0（完全透明）——backdrop-filter 仅 saturate(200%)，通透感完全来自饱和度+边缘高光/折射光带/边缘层；按压反馈去 blur 项（保留 saturate 220%/高光/亮边）；性能红利：无 blur 重绘，#44 渲染成本基本解除；验证 blur(0px) saturate(2)+透明底+高光/光带/边缘层全生效；截图 v72_liquid_glass_v6_noblur.png；待用户定稿
+- 2026-08-08：**#72 液态玻璃 v5（参照 AndroidLiquidGlass 原生量级，待定稿）**：读取 kyant0/backdrop 库源码后按推荐推进——blur 20px→8px（原生示例 blur(8dp) 轻磨砂量级）；边缘层修正（v4 透明边框空元素挂滤镜无可位移内容实际不可见 → 半透明环带 0.16 + 小位移，产生液体微摆）；新增按压反馈（:active 时 saturate 220%/高光 1.0/blur 12px/亮边 0.9 + 微缩放，参照原生按压驱动模型）；原生算法（SDF 圆角矩形+circleMap 边缘衰减+法线折射+色差）确认边缘折射模型并留作鸿蒙 ArkUI shader 算法底稿（AGSL/GLSL 兼容）；验证 blur(8px) saturate(2) 生效 + 边缘层有内容 + 主体无滤镜；截图 v72_liquid_glass_v5_default/edge_on.png；待用户定稿
+- 2026-08-08：**#72 液态玻璃 v4 修复（用户实测「整个画面都扭曲变形」）**：v3 整面 SVG 滤镜挂玻璃主体 + 0×0 SVG + scale 22 → 位移映射捕获整屏全局扭曲（验证只查 computed 未查视觉，方法失误）；v4：主体移除整面滤镜、扰动重做为 6px 边缘折射层 ::after（#lg-edge-distort）、SVG 给真实尺寸+显式滤镜区域、参数 scale 22→8/freq 0.12→0.02、扰动独立开关默认关闭；验证默认态无滤镜+v2 配方完整、扰动开启仅边缘层生效；截图 v72_liquid_glass_v4_default/on.png；待用户定稿
+- 2026-08-08：**#72 液态玻璃 v3 增强（待定稿）**：按推荐借鉴 cult-ui distorted-glass——SVG feTurbulence+feDisplacementMap 折射扰动（scale 22）挂到 .glass 三组件（filter:url(#lg-distort)），玻璃表面获得折射扭曲细节；cult-ui 深度阅读结论（157 registry 项=78 动效组件+79 demo，MIT；真折射需 Three.js shader 移动端成本高，SVG 扰动是可行近似；edge-blur/morph-surface 配方与现有原型同思路）；验证滤镜生效+弹簧落位正常；截图 v72_liquid_glass_v3.png；性能提示升级（扰动滤镜作可选项，低端机降级无扰动）；待用户定稿
+- 2026-08-08：**#72 液态玻璃原型交付（待定稿）**：prototype/liquid-glass.html 桌面交互原型——三组件（tab 栏/记录面板/数据卡）液态玻璃 vs 原毛玻璃一键切换对比 + 面板弹簧打开（复用 anime vendor）+ 配方说明；配方 blur(26px) saturate(180%) + 亮边 + inset 上缘高光 + ::before 折射光带；验证全过（配方生效/切换/弹簧落位/position）；修复 2 个原型 bug（.glass 规则 position:relative 覆盖 absolute 致 sheet 掉流；CSS 初始 transform 与 anime 清理冲突致面板收回）；截图 v72_liquid_glass_on/off.png；应用需真机性能验证（#44 前科）+ reduced-motion 降级，待用户定稿
+- 2026-08-08：**#72 anime 试点实施完成（v3.5 内补丁）**：vendor 引入 animejs v3.2.2（v4 无 UMD 单文件改 v3）；面板弹出改回弹动画——playSheetOpen（animation:'none' 防 CSS 双动画 + anime translateY easeOutBack(1.4) 550ms + changeComplete 清 transform、animation 保持 none 防 sheetUp 重播 + animateSheetClose 先 pause + vendor 缺失/reduced-motion 回退 CSS 零风险）；spring easing 弃用（v3 固定 1s 不可调，实测 1003ms 太拖沓）；环图已有 CSS 交错入场不替换；浏览器验证回弹 -6.48% overshoot + 清理/落位/退场全过（CDP evaluate 期间 rAF 节流为测试干扰）；真机逐帧验证 y 851→381→overshoot 319→衰减振荡→381 稳定，~550ms 无停顿；资源 ?v=38/38
+- 2026-08-08：新增第 72 条（动效与视觉增强候选——用户调研三个 GitHub 库：liquid-glass-react 液态玻璃组件 / cult-ui React 组件库 / anime.js 轻量动画库），调研结论：两个 React 库直接不可用（观己零构建 vanilla 架构，反证无需为动效库改 React——动效库均框架无关）；liquid-glass 视觉配方可纯 CSS 模拟（注意 WebView 性能降级，#44 前科）；anime.js 唯一可落地（v4 单文件无构建，补 CSS 短板：真实弹簧/stagger/时间线/SVG/数字滚动）；落地候选 anime 试点两处（面板弹簧弹出 + 环图分段入场）+ 液态玻璃 CSS 原型；2 个待拍板，仅记录
+- 2026-08-08：新增第 71 条（观己宣传海报系列 HTML 交付物——参考「桌面/原型」7 张手机界面截图，无生图模型改为 HTML 输出）：交付 7 张竖版海报（1080×1920 设计稿 + JS 等比缩放）到 `C:\Users\43124\Desktop\观己海报\`（01 全屏计时/02 实况通知/03 首页看板/04 AI分析/05 桌面小组件/06 历史日历/07 数据安全），统一 Apple 风格设计系统 + 按功能还原手机 mockup（计时蓝渐变/锁屏胶囊+通知/AI 报告卡/小组件网格/月历/盾牌隐私卡）+ 卖点 chips + 隐私 footer；生成脚本 debug/poster-gen.cjs 可复用；Playwright 抽查 01/05/07 布局全过
+- 2026-08-08：**#70 实施完成（v3.5 内补丁）**：网页原型矮视口状态栏显示不完全——根因 `.phone` 固定 844px + body flex 居中，桌面窗口 <890px 时顶部被裁（实测 800 高视口状态栏 y=-21）；修复 `@media (max-height:920px) and (pointer:fine)` 手机高度 calc(100vh-28px) 跟随视口（.screen flex:1 吸收高度差，状态栏 46px 恒完整），min-height 640 兜底；fine/coarse 与真机规则互斥零影响；验证状态栏 y=-21→y=15 完整可见；资源 ?v=37；已构建安装
 - 2026-08-08：**#69 实施完成（v3.5 内补丁，版本号不变）**：关于卡去分割线与「隐私说明」标题——`.about-privacy` 简化为直接挂 about-card 的 `ul.privacy-list`（品牌区后直跟 2 条隐私条目，苹果页脚风格），CSS 去 border-top/padding-top、margin-top 18px 衔接；版本号不变（26/3.5），资源 ?v=36/36；真机验证（魅族）borderTop=0px none + 无 card-title + brandY 2077→privY 2141 + 2 条文案左对齐 + v3.5；浏览器回归一致；截图 v35_about_clean.png
 - 2026-08-08：**#68 实施完成（v3.5 内补丁，版本号不变）**：独立隐私说明卡并入 about-card——品牌区（logo/观己/版本）下方新增 `.about-privacy` 分区（隐私说明标题 + 原 2 条文案），`--line` 分隔线 + 左对齐；卡片数 9→8；版本号不变（26/3.5，about-ver 保持），资源 ?v=35/35；真机验证（魅族）cardCount=8 + 分隔线 0.73px --line + 左对齐 + 2 条文案完整 + 数据管理仍在其上 + 清除弹窗回归正常；浏览器回归一致；截图 v35_about_merged.png
 - 2026-08-08：**#67 实施完成（v3.5，用户指定版本号）**：隐私说明卡从我的页顶部移至「数据管理」卡之后（新顺序 外观→AI 设置→记录提醒→正向反馈→记录方式→实况通知→数据管理→隐私说明→关于）；版本升级 versionCode 26 / versionName 3.5 / about-ver v3.5 / 资源 ?v=34；真机验证（魅族）dumpsys 26/3.5 + CDP DOM 顺序 dataBeforePrivacy=true + 清除确认弹窗回归正常；浏览器回归一致；截图 v35_me_page.png
@@ -2612,6 +2653,40 @@ Android 16 实况通知的**未展开状态（状态条状标签 chip）**有点
   - 浏览器回归 4 项 PASS（记录打开/补记下一步/上一步返回/小字直达）+ console 零错误
 - 资源版本 ?v=33/33；版本号不变（v3.4 内补丁，用户控制版本）；截图 `debug/v66_step_transition_fixed.png`
 
+
+---
+
+## 70. 【Bug】网页原型：矮视口下状态栏显示不完全 ✅ 已修复（v3.5 内补丁）
+
+### 需求（用户 2026-08-08）
+> 修改网页原型，定位状态栏显示不完全的问题。
+
+### 根因（✅ 浏览器实测定位）
+- `.phone { height: 844px }` 固定高度 + `body { display:flex; align-items:center }` 居中
+- 桌面浏览器窗口高度 < ~890px 时（实测 1250×800 视口），手机顶部溢出视口且 flex 居中使上下同时裁切——**模拟状态栏 y=-21（顶部被裁 21px）**，「状态栏显示不完全」实锤
+- 真机不受影响（真机媒体查询已隐藏模拟状态栏 display:none）
+
+### 修复
+- `styles.css` 新增 `@media (max-height: 920px) and (pointer: fine)`：`.stage` padding 收窄 + `.phone { height: calc(100vh - 28px); min-height: 640px }`——手机 flex column 内 `.screen` flex:1 吸收高度差，状态栏 46px 恒完整可见
+- `pointer: fine` 与真机规则（coarse）互斥，真机行为零影响（已验证 matchMedia 互斥）
+- **验证**：同视口状态栏 y=-21 → **y=15 完整可见**；phone 844→772 自适应；极矮视口 min-height 640 兜底
+- 资源 ?v=37；已构建安装（真机无行为变化）；浏览器截图 `debug/statusbar-fixed.png`
+
+
+---
+
+## 71. 观己宣传海报系列（HTML 交付物） ✅ 已交付（2026-08-08）
+
+### 需求（用户 2026-08-08）
+> 参考「C:\Users\43124\Desktop\原型」里的手机界面截图，制作观己的 app 宣传海报（每个功能介绍一张），无生图模型 → 海报以 HTML 输出。
+
+### 交付
+- **7 张竖版海报（1080×1920 设计稿，JS 等比缩放适配任意视口）** → `C:\Users\43124\Desktop\观己海报\`：
+  01-全屏计时 / 02-实况通知 / 03-首页看板 / 04-AI分析 / 05-桌面小组件 / 06-历史日历 / 07-数据安全
+- 统一设计系统：Apple 风格浅色底 + 蓝渐变点缀、心形 logo、手机 mockup（按功能还原真实界面：计时页蓝渐变/锁屏胶囊+通知/AI 报告卡/小组件网格/月历/盾牌隐私卡）、卖点 chips、隐私承诺 footer
+- 生成脚本 `debug/poster-gen.cjs`（模板 + 7 功能配置，可复用/扩展）
+- 验证：Playwright 抽查 01/05/07 布局（缩放/居中/无溢出/关键元素渲染），console 仅 favicon 404（无碍）
+
 ### 实施清单（按方案 A）
 1. `app.js` `transitionSheetHeight`：chrome 偏移补偿或「先切 step 后测 sheet 自然高度」；两段式（transition:none → from → reflow → transition → to）
 2. 清理改为 `transitionend`（或与动画时长严格同步的定时器）
@@ -2668,6 +2743,582 @@ Android 16 实况通知的**未展开状态（状态条状标签 chip）**有点
 - **版本号不变**（用户指定）：26/3.5/about-ver v3.5；资源 ?v=36/36
 - **真机验证（魅族 461QYFDN226NF）**：`privBorderTop = 0px none`（无分割线）✓；about-card 无 card-title（无标题）✓；brandY=2077 → privY=2141（间距 64px 含品牌块）✓；2 条文案完整、左对齐；v3.5 显示正常；卡片数 8
 - 浏览器回归一致（无 border/无 title/v3.5/2 条）；截图 `debug/v35_about_clean.png`
+
+
+---
+
+## 72. 动效与视觉增强候选：三个 GitHub 库调研结论 ✅ 已实施（v3.5 内补丁，anime 试点）
+
+### 背景（用户 2026-08-08 调研）
+用户提出三个 GitHub 库，考察对观己的帮助：
+1. **liquid-glass-react**（https://github.com/rdev/liquid-glass-react）——苹果「液态玻璃」效果组件库（iOS 26 材质：边缘折射/位移、磨砂模糊、饱和度、色差、弹性）
+2. **cult/ui**（https://github.com/nolly-studio/cult-ui）——React 设计工程师组件库（92+ AI Agent 界面模式、模板）
+3. **anime.js**（https://github.com/juliangarnier/anime）——经典轻量 JS 动画库（v4 模块化，零依赖）
+
+### 调研结论
+- **两个 React 库直接不可用**：观己是零构建 vanilla 架构，React 组件装不进去；且这反证「不需要为动效库改 React 架构」——动效库（GSAP/anime/Lottie）均为框架无关，React 化只会引入构建链、报废 DOM-id 调试资产、WebView 性能负优化
+- **liquid-glass-react 参考价值高**：液态玻璃视觉配方（强磨砂 + saturate + 边缘高光 inset + 弹性）可纯 CSS 模拟；风险：WebView 性能（#44 backdrop-filter 前科，需 prefers-reduced-motion/低端机关闭降级）
+- **cult/ui 参考价值低**：仅 AI 产品界面模式可作灵感（观己分析页形态已定稿）
+- **anime.js 唯一可落地**：无框架无构建，补 CSS 短板——真实弹簧物理（overshoot）、stagger 交错、时间线编排、SVG 动画（环图分段入场）、数字滚动
+
+### 落地候选（待拍板）
+1. **anime.js 试点（推荐先做）**：`www/vendor/anime.min.js`（v4 单文件）→ 试点两处：①面板弹出弹簧（替代 cubic-bezier 近似）②时段分布环图分段入场 → 真机 rAF 逐帧采样对比现状，满意再铺开
+2. **液态玻璃纯 CSS 原型**：prototype/liquid-glass.html——tab 栏/弹层/卡片边缘高光 + 强磨砂，定稿后应用（含性能降级策略）
+3. 注意：anime 只动画 transform/opacity/SVG 属性，不碰布局属性（#66 教训）
+
+### 实施清单（若确认）
+1. 下载 anime v4 单文件 → www/vendor/
+2. 面板弹出（sheetUp）改造为弹簧动画 + 真机采样对比
+3. 环图 canvas/SVG 入场动画试点
+4. 液态玻璃原型（独立，可与 1-3 并行）
+
+### 待确认问题
+- anime 试点两处是否开始？液态玻璃原型是否要做？
+
+### ✅ 实施记录（2026-08-08，anime 试点）
+- **vendor**：`www/vendor/anime.min.js` = animejs **v3.2.2**（UMD 单文件，17KB）——v4 为纯 ESM 模块无浏览器全局构建（实测 jsdelivr v4 无 UMD），v3 完整支持 easing 体系
+- **面板弹出回弹动画（playSheetOpen）**：openSheet 显示后，有 anime 且非 reduced-motion 时——关闭 CSS sheetUp（animation:'none' 防双动画）→ anime `translateY ['100%','0%']` + **easeOutBack(1.4) + 550ms**（克制的 ~13% overshoot 回弹，CSS cubic-bezier 无法回弹）；changeComplete 清 transform、animation 保持 'none'（**实测恢复 '' 会让 CSS sheetUp 重播「弹完再滑一次」**，由下次 resetSheetStyle 清理）；animateSheetClose 先 pause sheetOpenAnim 防退场冲突；vendor 缺失/reduced-motion 自动回退 CSS——**零风险接入**
+- **spring easing 弃用原因**：v3 源码对 spring 无条件覆盖 duration（固定 ~1s 且不可调，实测 1003ms），对弹出动画太拖沓；easeOutBack 等效回弹且时长可控（真弹簧留待 v4 ESM 评估）
+- **环图结论**：时段分布环图已有 CSS staggered 交错入场（stroke-dasharray 0.6s + 110ms 间隔），anime 化收益低——**不替换**
+- **验证**：
+  - 浏览器（Playwright）：回弹曲线实测 100% → -6.48% overshoot → 衰减稳定；动画完成清理（animDone/transformCleared）；面板落位 bottom 对齐；退场动画正常接管；CDP evaluate 期间 rAF 被节流导致「动画不推进」为测试方法干扰，分离式验证通过
+  - 真机（魅族 461QYFDN226NF，rAF 逐帧采样）：y 序列 851→381 滑入 → **overshoot 上弹至 319**（超出锚点 62px≈13%）→ 衰减振荡 5 次 → 稳定 381；总时长 ~550ms；帧连续无停顿；无残留动画
+- 资源 ?v=38/38；版本号不变（v3.5 内补丁）；后续可试点：弹层/对话框回弹、stagger 交错、数字滚动（anime 已就位）
+
+### ✅ 液态玻璃原型（2026-08-08，已交付待定稿）
+- **`prototype/liquid-glass.html`**（桌面交互原型）：手机框 + 彩色光斑背景，三组件（悬浮 tab 栏 / 记录面板 / 数据卡）液态玻璃 vs 原毛玻璃**一键切换对比** + 面板弹簧打开（anime easeOutBack，复用 #72 vendor）+ 配方说明面板
+- **配方（CSS 实现）**：`backdrop-filter: blur(26px) saturate(180%)` + `border: 1px solid rgba(255,255,255,.65)` + inset 上缘高光 + 斜向折射光带 `::before`（radial+linear 叠加）+ 原毛玻璃组（blur 30px + 白 tint 72%）对照组
+- **验证（Playwright）**：配方全部生效（blur 26px/saturate 1.8/亮边/高光/折射带）；切换开关 ✓；弹簧打开落位 ✓；三组件 position 正确
+- **修复 2 个原型 bug**：①`.glass` 规则里 `position:relative` 覆盖组件 absolute 导致 sheet 掉进文档流（absolute 自身即 ::before 定位上下文，移除即可）②CSS 初始 `transform: translateY(120%)` 与 anime 清理冲突导致面板收回（初始态改 JS 内联）
+- 截图 `debug/v72_liquid_glass_on.png` / `v72_liquid_glass_off.png`（开/关对比）
+- **v2 调整（用户反馈「背景不需要白色模糊，哪里体现通透感」）**：`--lg-tint` 0.55→**0.10（近乎透明）**、`--lg-blur` 26→20px（轻磨砂）、`--lg-saturate` 180%→**200%**（背景色透过并提亮）——通透感来自 blur+saturate 而非白色填充，亮边 0.75 + 折射光带保留；对照组（原毛玻璃白雾 0.72）不变以突出对比；截图 `debug/v72_liquid_glass_v2.png`
+- **v3 增强（用户确认按推荐推进）**：借鉴 cult-ui 的 `distorted-glass` 实现——**SVG feTurbulence + feDisplacementMap 折射扰动**（`baseFrequency 0.12 numOctaves 1 scale 22 seed 7`，隐藏 SVG 定义 `#lg-distort`），`.glass` 三组件加 `filter: url(#lg-distort)`——玻璃表面有了折射扭曲细节（cult-ui 分析：真透镜折射需 Three.js shader，SVG 扰动是移动 WebView 可行的近似，其余组件（edge-blur mask 渐隐 / morph-surface 多层 inset 阴影）已确认与现有原型思路一致无需再借鉴；cult-ui 克隆暂存 `C:\Users\43124\ZCodeProject\cult-ui-review\`）；截图 `debug/v72_liquid_glass_v3.png`
+- **⚠️ v3 回归（用户实测「整个画面都扭曲变形」）**：整面 `filter: url(#lg-distort)` 挂玻璃主体 + 0×0 SVG（滤镜区域失效）+ scale 22 → **位移映射捕获整屏内容，全画面扭曲**——我的验证只查了 computed filter 未查视觉结果，验证方法失误；**v4 修复**：①移除玻璃主体整面滤镜 ②扰动重做为**边缘折射层**（`.lg-distort` 时 6px 透明边框 ::after 挂 `#lg-edge-distort`，inset -6px，只扰动细边）③SVG 给真实尺寸 300×300（0×0 滤镜区域失效）+ 显式 `x/y/width/height` 滤镜区域 ④参数收敛（scale 22→8、baseFrequency 0.12→0.02 温和涟漪）⑤扰动开关独立、**默认关闭**；验证：默认态 cardFilter=none + v2 配方完整（blur 20px/saturate 2/亮边/光带）、扰动开关开启后仅 ::after 边缘层带滤镜、主体 filter 仍 none；截图 `debug/v72_liquid_glass_v4_default.png` / `v72_liquid_glass_v4_distort_on.png`
+- **应用前置**：定稿后应用到 App 时需真机逐帧验证（blur+saturate 每帧重绘成本高于原毛玻璃，#44 前科）+ `prefers-reduced-motion` 降级 + 低端机关闭策略（扰动滤镜作可选项，低端机降级为无扰动）——待用户看原型拍板
+
+### ✅ 定稿应用（2026-08-08，用户「可选液体微摆不需要，其他的可以，定稿实施」）
+- **应用范围**：`.tabbar`（悬浮 tab 栏）+ `.sheet`（记录面板）——原型三组件中玻璃材质对应的两个；数据卡未应用（App 卡片为白底内容容器非玻璃材质）
+- **styles.css**：`:root`/深色块加 `--lg-tint`（浅色 0 / 深色 0.05 适配）+ `--lg-saturate: 2`；.tabbar/.sheet 替换为定稿配方——无磨砂（`blur(0px) saturate(2)`）+ 阴影栈（外侧发丝暗线 0.5px/内侧白亮环/上缘 1px 高光/下缘微光/内缘柔光/外投影）；共享 `::after` 渐变边框环（环形 mask content-box xor/exclude，不碰主体）+ `::before` 顶部受光/斜向光带；tabbar :active 按压增强（--lg-saturate 2.2）
+- **兼容确认**：reduced-transparency 偏好（盖白底）保留 ✓；#44 退场转不透明逻辑（backdropFilter:none + var(--card)）兼容 ✓；anime 弹簧弹出不受影响 ✓
+- **验证**：浏览器（Playwright）浅色/深色全过——tabbar/sheet `blur(0px) saturate(2)`、透明底、环形 mask exclude、光带、深色 tint 0.05 生效；真机（魅族 461QYFDN226NF）CDP 配方生效 + 真实点按打开面板落位 381 动画清理无残留；资源 ?v=39/39
+- **原型同步清理**：liquid-glass.html 移除液体微摆（SVG 滤镜/开关/JS/CSS），保持与定稿一致；截图 `debug/v72_liquid_glass_app.png`（App 真机）
+
+### ✅ 全 App 扩展（2026-08-08，用户「效果还可以，应用到整个app看看」）
+- **扩展范围**：`.calendar-sheet`（日历弹层）+ `.dialog`（添加/删除对话框）液态玻璃化——共享 ::after 渐变边框环 / ::before 光带选择器扩展至四组件；`.card` 内容卡片保持白底（页面背景纯色无可透内容，玻璃化无收益且伤可读性——设计决策记录）
+- **dialog 特殊处理**：遮罩（0.4 黑）之上透明会伤可读性 → 新增 `--lg-tint-strong`（浅色 0.85 / 深色 0.85 深底），玻璃边缘结构保留
+- **兼容**：reduced-transparency 媒体查询扩展至 calendar-sheet/dialog
+- **验证**：浏览器全过（日历/对话框 blur(0px) saturate(2) + 边框环 mask exclude + 光带；深色 tint 0.05/0.85 生效）；真机（魅族）CDP 配方生效 + 真实点按打开面板落位 381 清理干净；资源 ?v=40/40；截图 `debug/v72_liquid_glass_app_full.png`
+
+### ✅ 全 App 铺开（2026-08-08，用户「直接全 App 铺开」）
+- **前提**：背景增强——`.phone` 加柔和蓝晕双层 radial（`--bg-glow-1/2`，浅色 0.06/0.05、深色 0.09/0.06）——玻璃卡片有内容可透（纯色背景玻璃化无意义）
+- **内容卡玻璃化**：`.card` / `.report-card` / `.ask-answer` 替换为液态玻璃配方——新增 `--lg-tint-card`（浅色 0.55 / 深色 0.06 分层）+ `position: relative`（伪元素定位上下文）+ 玻璃阴影栈（发丝暗线/白亮环/上缘高光/投影）；共享边框环/光带选择器扩展至七组件
+- **交互控件保持实底**（设计决策）：按钮/chips/seg-slide/输入框/textarea/switch/icon-btn 不玻璃化（可读性与「可点击」暗示）
+- **兼容**：reduced-transparency 查询扩展至内容卡
+- **验证**：浏览器全过（卡片 tint 0.55/0.06 + blur(0px) saturate(2) + position relative + 边框环 + 光带；背景双层蓝晕；深色适配）；真机（魅族）配方生效 + 面板弹簧落位 381 清理干净；资源 ?v=41/41；截图 `debug/v72_liquid_glass_full_app.png`
+
+### ✅ 按钮着色玻璃（2026-08-08，用户「按钮也可以做成带颜色的玻璃」）
+- **tinted glass 配方**：半透明色底（0.55 保证白字对比，仍透出背景）+ `blur(0px) saturate(2)` + 亮边 0.55 + inset 上缘高光 + 发丝暗线 + 色相光晕投影
+- **变量**：`--lg-tint-blue / -gray / -red`（+ `-hi` hover 加深）浅色/深色双套
+- **改造范围**：`.btn-primary`（蓝）/ `.btn-ghost`（中性灰）/ `.btn-danger`（红）/ `.record-btn`（蓝主 CTA 更深光晕）/ `.chip`（灰 tinted）+ `.chip.active`（蓝 tinted 白字——原 accent-soft 浅底深字改为玻璃选中态）
+- **验证**：浏览器全过（五类按钮 tint/backdrop/亮边/高光 + 深色 0.55）；构建安装真机；截图 `debug/v72_liquid_glass_buttons.png`；资源 ?v=42/42
+
+### ✅ 双态化 + 按钮实色玻璃（2026-08-08，用户「按钮颜色太浅，保留原色做玻璃 + 我的页加模式切换」）
+- **按钮修正**：放弃半透明 tint（太浅）→ **保留原实色 + 玻璃边缘**（visionOS 风格）：`background: var(--accent)` 实蓝 + 亮边 0.6 + inset 上缘高光 + 色相光晕；ghost/danger/chip.active 同理实底 + 玻璃边缘
+- **双态架构**：CSS 全部玻璃规则改挂 `html.liquid-glass` 前缀覆盖层（文件尾部大块），默认恢复旧版（毛玻璃 tab/sheet/日历、白底 card/dialog、实色按钮、纯色背景）；`:root` 保留 --lg-tint/--lg-tint-strong/--lg-tint-card/--bg-glow-1/2 变量；废弃 --lg-tint-blue/gray/red 已删
+- **我的页开关**：外观卡加「液态玻璃（实验性）」switch-row（`guanji_liquid_glass` localStorage 默认 on）；head 防闪烁脚本同步应用类（无闪烁）；app.js initLiquidGlass 同步 UI + 点击切换 + renderHome 重绘
+- **验证**：浏览器双态全过——玻璃态（按钮 rgb(0,122,255)+亮边 0.6+高光、卡片 tint 0.55、tabbar blur(0px) saturate(2)、背景蓝晕）vs 旧版（按钮实色无边缘、卡片白底、tabbar blur(24px) saturate(1.8)、无蓝晕）；开关点击切换类 + localStorage 持久化 ✓；真机（魅族）默认玻璃态生效 + 开关切换 stored=off 生效；资源 ?v=43/43；截图 `debug/v72_liquid_glass_switch.png`
+
+### ✅ P1+P2 优化（2026-08-08，基于三篇文章分析：cocos 位移场 / 掘金 Vibrancy 与内容感知 / 知乎组件规范）
+- **P1 流动性（内容感知）**：tab 栏随内容滚动收缩——任意 screen 滚动 >60px → `.scrolled`（高度 58→50px + 玻璃态变实 `--lg-tint-scroll` 浅 0.4/深 0.1 + 阴影加深），滚回顶部恢复；0.25s 过渡；双态（旧版只收缩+阴影）
+- **P2 材质细节**：①Vibrancy 近似——tint-card 0.55→0.60/深 0.08 ②选中 tab 图标玻璃底座（32px 圆形径向渐变 + inset 高光 + 蓝光晕，tab-pill 提 z-index 1 保内容在上）③色散近似（实验）——大数字 .stat-num/.focus-num/.overview-num 极轻 RGB 双色 text-shadow（0.6px ±红 0.18/蓝 0.18）
+- **沉淀**：DESIGN-LANGUAGE.md 新增第 9 章「液态玻璃 Material 分层」——L0-L4 五级 tint 规范表 + 边缘结构/流动性/降级三小节
+- **验证**：浏览器全过（滚动收缩双态/底座/色散/深色）；真机（魅族）滚动收缩 h=50+玻璃变实 0.4、底座/色散生效；资源 ?v=44/45；截图 `debug/v72_liquid_glass_p12.png`
+- **v5 调整（参照 AndroidLiquidGlass 原生配方量级——读取 kyant0/backdrop 库源码）**：①`--lg-blur` 20px→**8px**（原生示例 `blur(8dp)` 量级——轻磨砂才通透，20px 偏重）②边缘层修正：v4 的透明边框空元素挂滤镜无可位移内容（实际不可见）——改为**半透明环带 `rgba(255,255,255,0.16)` + 小位移**（位移有了实际内容，产生「液体微摆」边缘）③**按压反馈**（参照原生按压驱动模型）：:active 时 `--lg-saturate 220% / 高光 1.0 / blur 12px / 亮边 0.9` + 卡片微缩放 0.985 + tab 微缩放 0.94（弹簧过渡）——玻璃「活」起来；原生算法参考价值（SDF 圆角矩形 + circleMap 边缘衰减 + 法线折射 + 色差）：确认「边缘折射+强度衰减」模型，AGSL 与 GLSL 兼容可作鸿蒙 ArkUI shader 直接翻译的算法底稿；克隆暂存 `C:\Users\43124\ZCodeProject\android-liquid-glass-review\`；截图 `debug/v72_liquid_glass_v5_default.png` / `v72_liquid_glass_v5_edge_on.png`
+- **v8 修复（用户反馈「边框改动影响卡片主体，通透感没了」）**：v7 双层背景 bug——`background: 透明 padding-box, 白渐变 border-box` 中**透明层遮不住 border-box 层**（border-box 覆盖整盒），白渐变实际盖满卡片主体（白纱）；修复：主体恢复 `background: var(--lg-tint)` 纯透明 + 渐变边框改 **::after 环形 mask 独立绘制**（`-webkit-mask: linear-gradient(#000) content-box, linear-gradient(#000)` + `mask-composite: exclude`——渐变只画 1px 边框环，圆角保留，不碰主体）；液体微摆开关改为环带加宽 6px + SVG 扰动（滤镜作用于有内容的环带）；验证：主体 `rgba(255,255,255,0)` + 无磨砂保持 + 环形 mask composite exclude 生效 + 发丝暗线/白亮环/光带全在；截图 `debug/v72_liquid_glass_v8.png`
+- **v7 调整（用户反馈「边框轮廓不够玻璃」）**：重构玻璃边缘——①均匀白描边 → **渐变边框**（`background: tint padding-box + linear-gradient(180deg, 白0.95→白0.55→白0.28) border-box`，上亮下暗受光感，圆角不破坏）②**外侧发丝暗线** `0 0 0 0.5px rgba(0,0,0,0.08)`（玻璃与背景分离）③**内侧白亮环** `inset 0 0 0 0.5px rgba(255,255,255,0.55)` ④上缘细高光改 1px 实线 + 内缘 12px 柔光晕 ⑤顶部转角亮斑增强（radial 130% 70% at 15% 0%）；验证：渐变边框（双层 background-clip）/发丝暗线/白亮环/高光/柔光/转角光全生效 + 圆角 24px 保留 + 无磨砂保持；截图 `debug/v72_liquid_glass_v7_edge.png`
+- **v6 调整（用户要求「彻底无磨砂」）**：`--lg-blur` 8px→**0px**、`--lg-tint` 0.12→**0（完全透明）**——backdrop-filter 仅 `saturate(200%)`，通透感完全来自饱和度 + 边缘高光/折射光带/边缘层；按压反馈去掉 blur 增强项（保留 saturate 220%/高光/亮边）；**性能红利**：无 blur 后无每帧模糊重绘，#44 前科的渲染成本基本解除（饱和度叠加为轻量操作）；验证 `blur(0px) saturate(2)` + 透明底 + 高光/光带/边缘层全生效；截图 `debug/v72_liquid_glass_v6_noblur.png`
+
+
+---
+
+## 73. 我的页：设置项顺序调整（当前杂乱） ✅ 已实施（v3.5 内补丁，用户确认「按草案，液态玻璃独立成卡」）
+
+### 需求（用户 2026-08-08）
+> 调整一下我的页，设置顺序，现在有点杂乱了。
+
+### 现状（当前顺序，index.html screen-me）
+1. **外观**（主题 chips：跟随系统/浅色/深色 + 液态玻璃实验开关）
+2. **AI 设置**（提供商/Base URL/模型/API 密钥/测试连接——最长卡，约 6 行）
+3. **记录提醒**（每日温和提醒开关 + 时间）
+4. **正向反馈**（里程碑肯定开关）
+5. **记录方式**（计时记录/快速记录 chips）
+6. **实况通知**（测试按钮 + 状态 + 后台引导）
+7. **数据管理**（导出数据/清除全部数据/恢复演示数据）
+8. **隐私说明**（并入底部关于卡）
+
+### 杂乱点分析
+- 7 张设置卡混合「偏好 / AI / 设备 / 数据」四类，无分组逻辑
+- AI 设置最长，夹在中间成为滚动视觉重心，挤压高频项（记录方式/提醒）
+- 液态玻璃（实验性）作为大开关混在「外观」主题下，性质不同（实验功能 vs 主题偏好）
+- 记录相关项（记录方式/记录提醒/正向反馈）被 AI 卡隔开
+
+### 理解与设计（草案）
+按「使用频率 + 分组」重排（高频偏好靠上，长卡 AI 下移）：
+1. **外观**（主题）
+2. **液态玻璃（实验性）**——独立成卡（与主题平级，实验性标注更清晰）
+3. **记录方式**
+4. **记录提醒**
+5. **正向反馈**
+6. **实况通知**（设备能力测试）
+7. **AI 设置**（下移，长卡不挡高频项）
+8. **数据管理**
+9. **关于**（隐私说明）
+
+### 实施清单
+1. `www/index.html` screen-me：调整 card 顺序（整块移动）+ 液态玻璃开关独立成卡
+2. 检查 app.js 绑定的 id（themeChips/liquidGlassSwitch/recordModeChips 等）——按 id 绑定不依赖顺序，移动无副作用
+3. 浏览器回归（我的页渲染 + 各开关/按钮功能）
+
+### 待确认问题
+- 分组排序是否按草案？液态玻璃是否独立成卡？
+- 是否需要视觉分组（如卡片间加分组标题）？
+
+### ✅ 实施记录（2026-08-08，用户确认「按草案，液态玻璃独立成卡」）
+- **index.html screen-me 重排**：外观（主题）→ **液态玻璃（独立卡，实验性标注）** → 记录方式 → 记录提醒 → 正向反馈 → 实况通知 → AI 设置（下移，长卡不挡高频项）→ 数据管理 → 关于（隐私说明）
+- 液态玻璃开关从外观卡独立成卡（标题「液态玻璃 实验性」+ 开关 + 说明文案）
+- app.js 全部按 id 绑定，移动无副作用（确认无顺序依赖）
+- **验证**：浏览器全过（顺序正确、液态玻璃开关切换类生效、全部 id 齐全）；真机（魅族）cardOrder 正确 + 清除确认弹窗回归正常；资源 ?v=46/46；截图 `debug/v73_me_page_reordered.png`
+
+### 验收要点
+- 我的页顺序按新方案，各设置项功能无回归
+- 液态玻璃开关独立成卡后切换/持久化正常
+- 深色模式无异常
+
+
+---
+
+## 74. 记录卡片改为悬浮形式（当前贴底） ✅ 已实施（v3.5 内补丁，用户确认「日历不悬浮」）
+
+### 需求（用户 2026-08-08）
+> 现在点击记录的时候，记录卡片是底部连着一起的，现在我想把记录卡片也做成悬浮形式的。
+
+### 现状
+- `.sheet`（记录面板）：`position:absolute; left:0; right:0; bottom:0` 贴底，圆角仅顶部 `22px 22px 0 0`，`box-shadow: var(--shadow-3)`
+- `.calendar-sheet`（日历弹层）同款贴底结构
+- 悬浮 tab 栏已是悬浮形式（left/right 12px + bottom 18px + 全圆角 999px）——记录卡与其风格不统一
+- 液态玻璃态：sheet 有 `::after` 渐变边框环（border-radius: inherit 自适应）+ 光带
+
+### 理解与设计（草案）
+改为悬浮卡片（与 tab 栏同边距体系）：
+- `.sheet`：`left:12px; right:12px; bottom:12px`（真机加 `calc(12px + var(--safe-bottom))` 避让手势条）+ `border-radius: 22px`（四周圆角）+ 增强悬浮阴影（深度提升，如 `0 20px 50px rgba(0,0,0,0.18)` 量级）
+- sheetUp 动画兼容：`translateY(100%)` 相对自身高度，悬浮后仍可完整滑出/滑入
+- 液态玻璃边缘结构（border-radius inherit）自动适配全圆角 ✓
+- #65 键盘冻结、#29 拖拽关闭、#66 高度过渡均与位置无关，兼容 ✓
+
+### 实施清单
+1. `www/styles.css`：.sheet 定位改悬浮（边距/圆角/阴影）；真机媒体查询（pointer:coarse 块）内处理 safe-bottom
+2. `.calendar-sheet`：视用户确认是否一并悬浮
+3. 浏览器回归（打开/收起/拖拽/步骤切换/键盘）+ 真机验证
+
+### 待确认问题
+- 边距 12px（对齐 tab 栏体系）是否合适？
+- 日历弹层是否一并悬浮？
+- 圆角 22px 全圆角？
+
+### ✅ 实施记录（2026-08-08，用户「日历不悬浮」）
+- **styles.css .sheet**：`left/right/bottom: 0` → `left/right/bottom: 12px`（悬浮，与 tab 栏同边距体系）+ 全圆角 `22px`（原 22px 22px 0 0）+ 增强悬浮阴影（`0 22px 55px rgba(0,0,0,0.20), 0 6px 18px rgba(0,0,0,0.10)`）
+- **玻璃态**：`.sheet` 悬浮投影（`0 20px 50px` 向下）；`.calendar-sheet` 保持贴底向上投影（日历不悬浮，拆开规则）
+- **真机媒体查询**：`.sheet { bottom: calc(12px + var(--safe-bottom)) }` 避让手势条
+- **兼容确认**：sheetUp 动画（translateY 相对自身）、拖拽关闭（#29）、键盘冻结（#65）、步骤高度过渡（#66）均与位置无关
+- **验证**：浏览器全过（四周 13px 离边 = 12+1 边框、全圆角 22px、悬浮阴影、动画完成）；真机（魅族）sheetBottom 813 vs phoneBottom 851 → 底部离边 38px = 12px + 26px safe-bottom（与 tabbar 44px = 18+26 同体系）；截图 `debug/v74_floating_sheet.png`；资源 ?v=47/47
+
+### 验收要点
+- 记录卡片悬浮显示（四周离边、全圆角、悬浮阴影）
+- 收起/拖拽/步骤切换/键盘无回归
+- 液态玻璃态边缘结构正确（全圆角边框环）
+
+
+---
+
+## 75. 记录卡片整体太大，紧凑缩小至与补记卡一致 ✅ 已实施（v3.5 内补丁，用户「两态严格一致，两个卡片都可调」）
+
+### 需求（用户 2026-08-08）
+> 这个卡片整体太大了，可以紧凑缩小一点，修改后的卡面最好可以和补记卡片大小一致。
+
+### 现状（浏览器实测，悬浮后 #74）
+- **就现在（计时器态）**：sheet 高 **452px**——grab 32 + title 22 + seg 48 + **timerBox 84**（timerDisplay 57 + timerHint 19 + margin）+ modeLink 35 + actions 49 + 各 margin/padding
+- **补记（经典步骤一）**：sheet 高 **357px**——grab + title + seg 48 + timeDisplay 29 + pickerRow 44 + actions 49 + margins
+- **差 95px**，主要来源：timerBox（84）vs timeDisplay+pickerRow（73）+ 计时态各区块 margin 偏大
+
+### 理解与设计（草案）
+压缩计时器态使卡面与补记一致（目标 452→~357）：
+1. `timer-display` 字号压缩（面板内非全屏页——全屏计时页 96px 不受影响），高度 57→~40
+2. 间距压缩：timerBox margin-top 18→8、seg 下 margin 18→10、title margin-bottom 20→14、modeLink margin、actions margin-top 22→16、grab 32→24
+3. sheet 底部 padding 26→20
+4. 液态玻璃态无需额外处理（高度由内容决定）
+
+### 实施清单
+1. `www/styles.css`：.timer-display 字号（仅面板内）+/或 #timerBox 内间距 + .sheet 内各 margin/padding 压缩
+2. 浏览器测量对比两态高度（目标 ≤10px 差）
+3. 真机验证（就现在/补记两态打开高度一致、无内容裁切）
+
+### 待确认问题
+- 两态高度严格一致 vs 接近一致（±10px）？
+- timer-display 面板内字号缩小到多少（28-32px？）——全屏计时页大数字不动
+
+### ✅ 实施记录（2026-08-08，用户「两态严格一致，两个卡片都可调」+ 追加「就现在可以不要日期时间」）
+- **公共紧凑化**：.sheet padding 10/26→8/20、sheet-grab handle margin 12→8、title mb 20→14、field-label 18/10→10/8、actions mt 22→16、picker-row input padding 11→7
+- **计时态（就现在）**：timeDisplay 隐藏（用户要求：就现在不显示「8月9日 10:56」）；timer-display 52→28px（面板内紧凑，全屏页 96px 不动）+ timerBox mt 18→6 + hint 12/8→11/3 + modeLink 紧凑
+- **补记态**：timeDisplay mt 16→3、pickerRow mt 12→2（均衡）
+- **JS**：setupNowStep/showClassicStep1/nowSeg/customSeg/modeLink 五处同步 timeDisplay 显隐（就现在隐藏、补记/quick/经典显示）
+- **迭代测量**：浏览器 452/357→304/305（diff 1）→ 真机 317/317 **diff 0 严格一致**；就现在 td=false、补记 td=true
+- **验证**：浏览器+真机两态高度一致、显隐逻辑五路径正确、步骤切换/键盘/拖拽无回归；截图 `debug/v75_sheet_compact_now.png` / `v75_sheet_compact_backfill.png`；资源 ?v=48-51/52（CSS 多轮迭代）
+
+### ✅ 回调（2026-08-08，用户「高度可以再提高一点，核心原则不要忘记」）
+- 两态**对称回调**（公共 +~19px、计时态 +12px、补记态 +13px）——保持严格一致前提下适度宽松：padding 8/20→10/24、grab 8→10、title mb 14→18、field-label 10/8→12/9、actions mt 16→20、timer-display 28→34、timerBox mt 6→10、hint mt 3→5、timeDisplay mt 3→11、pickerRow mt 2→6、picker-row input padding 7→9
+- **核心原则保持**：两态严格一致（浏览器 333/333 diff 0；真机 345/349 渲染容差 ±4）；就现在仍不显示日期时间、补记仍显示
+- 高度 317→345（真机就现在）；截图 `debug/v75_sheet_adjusted_now.png` / `v75_sheet_adjusted_backfill.png`；资源 ?v=52/53
+
+### ✅ 抖动消除（2026-08-08，用户「两态切换还有高度抖动，再调整间距」）
+- 定位：真机两态差 ~4px 来自字体行高渲染差（补记 timeDisplay 33+pickerRow 49 vs 就现在 timerBox 66+modeLink 24，CDP 区块测量）
+- 调平：timeDisplay mt 11→8（补记 -4，以真机为准）——**真机两态 347/347/347 diff 0**，切换零抖动；就现在 td=false / 补记 td=true 保持
+- 浏览器侧：333/330（差 3 为跨环境字体渲染差，真机为权威）；截图 `debug/v75_no_jitter_now.png` / `v75_no_jitter_backfill.png`；资源 ?v=54/54
+
+### 验收要点
+- 就现在卡面与补记卡面高度一致（±10px）
+- 计时数字在面板内清晰可读
+- 全屏计时页大数字无变化
+- 步骤切换/键盘/拖拽无回归
+
+
+---
+
+## 76. 【Bug】液态玻璃 tab 栏选中状态「阴影两层」观感 ✅ 已修复（v3.5 内补丁，方案 C）
+
+### 需求（用户 2026-08-08）
+> 你定位一下问题，我感觉液态玻璃版的tab栏怪怪的，选中状态的阴影好像有两层的样子。
+
+### 根因（✅ 代码定位）
+液态玻璃态选中 tab 处两个元素叠加，形成「两层阴影」观感：
+1. **`.tab-slide`**（#21/#22 选中滑块）：全宽胶囊 `background: var(--slide-bg)` = `rgba(0,122,255,0.12)` 浅蓝底，top/bottom 5px——选中项底层指示
+2. **`.tab.active::before`**（#72-P2 图标玻璃底座）：32px 圆角块居中于图标，`radial-gradient(白0.55→蓝0.14)` + **`box-shadow: inset 白高光 + 0 1px 5px rgba(0,122,255,0.22) 蓝色外阴影`**
+
+底座外阴影投在滑块上 + 滑块蓝底（0.12）与底座蓝渐变（0.14）+ tabbar 玻璃边缘（白亮环/高光）三重蓝色层次叠加 → 视觉上「两层阴影」、脏、怪
+
+### 方案（草案）
+- **A（推荐）：玻璃态移除图标玻璃底座**（`.tab.active::before` 在 `html.liquid-glass` 下 display:none）——tabbar 本身已是玻璃材质，图标再叠底座=重复玻璃；选中态由滑块承担（组件一致性与面板/补记统一，无底座）；改动最小（一条 CSS）
+- **B：保留底座但去掉蓝色外阴影**（0 1px 5px 删除，只留 inset 高光）——「两层」变「一层」但滑块+底座双元素仍在（滑块蓝底与底座渐变仍叠）
+- **C：玻璃态用底座替代滑块**（隐藏 .tab-slide，保留底座）——选中指示变 32px 圆角块而非全宽胶囊，选中面积变小（与 iOS 26 图标胶囊接近但改动大）
+
+### 实施清单
+1. `www/styles.css`：方案 A——`html.liquid-glass .tab.active::before { display: none; }`（或删除该规则块）
+2. 浏览器验证选中态无叠加（computed）
+3. 真机验证（选中 tab 阴影单层、滑块正常）
+
+### ✅ 实施记录（2026-08-08，方案 C）
+- **styles.css**：`html.liquid-glass .tab-slide { display: none }`（玻璃态隐藏全宽滑块——选中指示由底座承担，消除两层叠加）；强化 `.tab.active::before` 底座为选中指示——36px（32→36）、圆角 12px、径向渐变白 0.65→蓝 0.18、inset 白高光 0.75、**单层**外阴影 0 1px 5px 蓝 0.25（滑块已隐藏无叠加）
+- **双态验证**：玻璃态滑块 display:none + 底座 36px/渐变/高光/单层阴影 ✓；旧版滑块恢复 block、底座不渲染 ✓
+- **验证**：浏览器 computed 全过；构建安装真机；截图 `debug/v76_tab_base_selected.png`；资源 ?v=55/55
+
+### 🆕 方案 C 复测反馈（2026-08-08，用户「底座太小覆盖不了选中区域」）——待调整
+- **反馈**：36px 图标底座太小，选中区域只盖住图标一小块；用户希望**覆盖范围与旧版滑块一样大**（全宽胶囊）
+- **调整方向（草案）**：玻璃态 `.tab.active::before` 改为**全宽选中胶囊**——`position: absolute; top: 5px; bottom: 5px; left: 4px; right: 4px; border-radius: 22px`（与旧版 .tab-slide 同域：top/bottom 5px 全宽、圆角接近容器），玻璃质感保留（径向渐变 + inset 高光 + 单层蓝投影）
+- 即：方案 C 的「玻璃底座质感」+ 旧版滑块的「全宽覆盖范围」——两层叠加问题已解决（滑块已隐藏），底座放大无叠加风险
+- **待确认已拍板（2026-08-08）**：质感保留「渐变玻璃胶囊」✅（用户确认）；调整待实施
+
+### ✅ 定稿实施记录（2026-08-09，全宽渐变玻璃胶囊）
+- **styles.css**：玻璃态选中指示定为**全宽渐变玻璃胶囊**——隐藏 `.tab-slide`（选中指示由底座承担，消除两层叠加），`.tab.active::before` 放大至选中项全域：`top/bottom 5px + left/right 4px + border-radius 22px`（与旧版滑块同域），背景 `radial-gradient(120% 100% at 30% 0%, rgba(255,255,255,0.60), rgba(0,122,255,0.16) 75%)` + 阴影栈（inset 白高光 0.75 + inset 下缘 0.2 + `0 1px 5px` 蓝 0.20）
+- **双态验证**：玻璃态滑块 none + 胶囊 top 5px/bottom 5px/left 4px/right 4px/radius 22px/渐变 ✓；旧版滑块恢复、胶囊不渲染 ✓
+- **验证**：浏览器 computed 全过；构建安装真机；资源 ?v=57/57
+
+### 待确认问题
+- 方案 A（移除底座）vs B（去外阴影）vs C（底座替代滑块）——用户已确认 C
+
+### 验收要点
+- 选中 tab 无「两层阴影」观感，玻璃边缘单层清晰
+- 滑块选中指示正常、切换动画正常
+- 未选中 tab 无回归
+
+
+---
+
+## 77. 【Bug】切换 tab 时 tab 栏高度变低（滚动收缩状态残留） ✅ 已实施（v3.5 内补丁，移除滚动收缩）
+
+### 需求（用户 2026-08-08）
+> 定位一下，现在tab栏移动高度会变低是什么问题。
+
+### 根因（✅ 代码定位 + 浏览器/真机对照）
+- `syncTabbarScroll`（app.js）：`Math.max(...所有 .screen 的 scrollTop) > 60` → `.scrolled`（高度 58→50 收缩，#72-P1）
+- **max 计算包含隐藏 screen**：切到新 tab 时新 screen scrollTop=0，但旧 screen 若滚动过——浏览器里 `display:none` 会重置 scrollTop（未复现），**真机 WebView 隐藏 screen 的 scrollTop 保留** → max 仍 >60 → tab 栏保持收缩（50px）——「切换 tab 时高度变低」
+- 用户也可能感知为：滚动后 tab 栏收缩（P1 设计行为）在切换场景残留
+
+### 方案（✅ 已确认移除收缩，2026-08-08）
+- **用户拍板：不保留滚动收缩**——移除 P1 的 tab 栏滚动收缩（tab 栏恒 58px），同时消除切换残留问题
+- 移除范围：`www/app.js` syncTabbarScroll 函数 + 两个 scroll 监听；`www/styles.css` `.tabbar.scrolled` / `html.liquid-glass .tabbar.scrolled` 规则 + `--lg-tint-scroll` 变量（滚动变实）；tabbar transition 中 height/padding/box-shadow/background 项可还原
+- **说明**：P1 的「内容感知流动性」以收缩形式被否——若未来要流动感可换其他形式（如滚动时仅背景变实不收缩）
+
+### 实施清单
+1. `www/app.js`：删除 syncTabbarScroll + scroll 监听
+2. `www/styles.css`：删除 .tabbar.scrolled 相关规则与 --lg-tint-scroll 变量
+3. 真机验证：切换 tab / 滚动均无高度变化（恒 58px）
+
+### ✅ 实施记录（2026-08-09）
+- **app.js**：删除 `syncTabbarScroll` 函数 + 两处 scroll 监听 + `TABBAR_SCROLL_THRESHOLD` 常量与孤儿注释（清理复查 findstr 无残留）
+- **styles.css**：删除 `.tabbar.scrolled` / `html.liquid-glass .tabbar.scrolled` 规则与 `--lg-tint-scroll` 变量（浅 0.40/深 0.10）；`.tabbar` transition 保留
+- **验证**：浏览器滚动到底后 tabbar 恒 58px（57.99）、无 `.scrolled` 类 ✓；构建安装真机；资源 ?v=57/57
+
+### 待确认问题
+- 滚动收缩（P1）保留 or 移除？——已拍板：**移除** ✅（2026-08-08）
+
+### 验收要点
+- 切换 tab 后 tab 栏高度恢复正常（58px）
+- 当前页滚动时收缩行为符合确认结论
+
+
+---
+
+## 78. 日历页液态玻璃可读性差，建议加轻微模糊保留通透感 ✅ 已实施（v3.5 内补丁，用户选 3px）
+
+### 需求（用户 2026-08-08）
+> 现在日历页不是页改了液态玻璃，但是可读性太差，提出一下修改建议，我的建议是在玻璃材质加上一点点的模糊，但是玻璃的通透感还要保留。
+
+### 现状
+- `.calendar-sheet`（日历弹层）液态玻璃态与其他浮层同配方：`blur(0px) saturate(2)` 完全无磨砂 + 透明底
+- 日历内容密集（月历 7×5 网格 + 角标 + 选中日明细 + 按钮 + `--line` 网格线）——透明底上背景蓝晕透出，网格线/文字对比不足，可读性差
+- 对照 iOS Material 分层：内容密集组件用更厚 Material（Regular/Thick），内容少浮层用 Thin——日历属于密集内容，轻磨砂合理
+
+### 理解与设计（草案，采纳用户建议）
+- **仅日历弹层加轻磨砂**：`html.liquid-glass .calendar-sheet` backdrop-filter 改为 `blur(2-3px) saturate(2)`——磨掉背景细节提升文字/网格对比，仍保持玻璃通透（非白雾 30px）；其他浮层（tab 栏/记录面板）保持 blur 0 不变
+- 新增变量 `--lg-blur-calendar: 3px`（或直接写值）
+- 通读感保留：tint 不变（浅 0/深 0.05）、边缘结构（渐变边框环/光带/阴影栈）不变
+- 辅助可读性（可选）：日历网格线 `--line` 微加深 / 日历文字对比微调
+
+### 实施清单
+1. `www/styles.css`：`html.liquid-glass .calendar-sheet` backdrop-filter 加 `blur(var(--lg-blur-calendar))`
+2. 浏览器对比（日历网格/文字可读性）+ 真机验证
+
+### ✅ 实施记录（2026-08-08，用户原型选档 3px）
+- **原型先行**：`prototype/calendar-glass.html` 四档对比原型（0/2/3/4px 实时切换 + 细节纹理背景 + 四段并排对比条）——用户选 **3px**
+- **styles.css**：`html.liquid-glass .calendar-sheet` 单独覆盖 `blur(3px) saturate(2)`——仅日历轻磨砂（内容密集），tab 栏/记录面板/对话框/卡片保持 `blur(0px)` 无磨砂
+- **验证**：浏览器五组件对照（仅日历 3px ✓）；真机（魅族）calendarBlur blur(3px) + 其余不变 ✓；资源 ?v=56/56；截图 `debug/v78_calendar_blur3.png` / 原型截图 `v78_cal_compare_v2.png`
+
+### 待确认问题
+- blur 强度 2px or 3px？（建议 3px——磨掉背景细节同时通透感损失最小）——已拍板 **3px** ✅
+
+### 验收要点
+- 日历弹层文字/网格清晰可读
+- 通透感保留（非白雾）
+- 其他浮层（tab 栏/记录面板）无变化
+
+
+---
+
+## 79. 【Bug】日历页每日细项「分钟」灰色看不清 ✅ 已实施（v3.5 内补丁，2026-08-09）
+
+### 需求（用户 2026-08-08）
+> 日历页，下面的每日细项的分钟因为字体的灰色的所有显示不清楚。
+
+### 根因（✅ 代码定位）
+- 日历每日明细（renderCalDayDetail）：`recent-tags` 内 `· ${r.duration} 分钟` 与情绪/诱因同级，颜色 `var(--ink-2)` = `#8E8E93` 浅灰（styles.css .recent-tags 12px）
+- 液态玻璃日历弹层（透明底 + 3px 轻磨砂）上，浅灰小字对比不足 → 分钟看不清
+
+### 方案（草案）
+- **日历明细内次级文字提权**：`#calDayDetail .recent-tags` 颜色 `--ink-2` → `var(--ink)`（或中间值 #6E6E73），font-weight 500
+- **时长单独强调**：分钟用 `--accent-deep` 加粗（与其他标签区分，视觉重点）——`recent-tags` 渲染时把 `· N 分钟` 包 `<b class="dur">`
+
+### 实施清单
+1. `www/styles.css`：#calDayDetail .recent-tags 颜色提权 + .dur 强调色
+2. `www/app.js` renderCalDayDetail：时长片段包 `<b class="dur">`
+
+### ✅ 实施记录（2026-08-09）
+- **styles.css**：`#calDayDetail .recent-tags` 颜色提权 `--ink-2` → `var(--ink)` + font-weight 500；`.dur` 强调 `var(--accent-deep)` + font-weight 700
+- **app.js**：renderCalDayDetail 时长片段包 `<b class="dur">`
+- **验证**：浏览器注入记录 computed（.dur 蓝 rgb(0,98,204)/700、tags 深色/500）✓；构建安装真机；资源 ?v=57/57
+
+### 验收要点
+- 日历明细「N 分钟」清晰可读（深色/浅色模式）
+- 情绪/诱因/看片标签层次协调
+
+
+---
+
+## 80. 【Bug】日历可补记未发生的未来日期 ✅ 已实施（v3.5 内补丁，双保险，2026-08-09）
+
+### 需求（用户 2026-08-08）
+> 日历页的补记也有问题，为什么可以补记没发生的日期。
+
+### 根因（✅ 代码定位）
+- `renderCalendar` 生成日历所有日期 cell（含未来）均可点选
+- `calAddBtn` → `openSheet('backfill', dateWithOffset(calSelected))`——calSelected 可为未来（offset > 0）
+- **saveRecord 补记分支（app.js 801-810）只校验日期非空/合法，无 offset > 0（未来）拦截**——未来记录可直接保存（`offset = dayDiff(date, base)` 为正即通过）
+
+### 方案（草案，双保险）
+1. **日历层**：未来日期 cell 禁用——`renderCalendar` 对 offset > 0 的日期加 `.future` 类（灰显 + `pointer-events: none` 不可选）
+2. **保存层兜底**：saveRecord 补记分支 `if (offset > 0) { toast('未来的日期还没到哦，先记录今天吧'); return; }`——温和拦截（非评判基调）
+
+### 实施清单
+1. `www/app.js` renderCalendar：未来 cell 禁用态；saveRecord：offset > 0 拦截
+2. `www/styles.css`：`.cal-cell.future` 灰显样式
+3. 验证：未来日期不可选/不可保存、今天与过去日期正常补记
+
+### ✅ 实施记录（2026-08-09，双保险）
+- **app.js**：renderCalendar 未来 cell 加 `.future` 类 + `disabled` 属性；saveRecord 补记分支 `if (offset > 0) { toast('未来的日期还没到哦，先记录今天吧'); return; }` 温和拦截
+- **styles.css**：`.cal-cell.future` 灰显（`var(--ink-3)`）+ `cursor: default` + `pointer-events: none`
+- **验证**：浏览器 22 个未来 cell 全部 disabled + `.future` + computed 灰显 none ✓；saveRecord 未来日期 toast「未来的日期还没到哦，先记录今天吧」+ 记录数不变 ✓；构建安装真机；资源 ?v=57/57
+
+### 验收要点
+- 未来日期在日历中不可选（灰显）
+- 即使绕过 UI 也无法保存未来记录（温和提示）
+- 今天/历史日期补记正常
+
+
+---
+
+## 81. 液态玻璃 tab 切换动效丢失，切换生硬 ✅ 已实施（v3.5 内补丁，方案 C 定稿：C/20/无背景折射）
+
+### 需求（用户 2026-08-09）
+> 现在液态玻璃的tab的切换动效没了，显得特别生硬。
+> 参考：https://github.com/shuding/liquid-glass.git、https://www.volcengine.com/article/32118
+
+### 现状（✅ 代码定位）
+- **旧版（非玻璃态）有滑动动效**：`.tab-slide`（styles.css:431）独立滑块元素 `transition: left 0.55s cubic-bezier(0.23, 1, 0.32, 1.05), width 0.55s`——点击 tab 滑块平滑弹性滑到目标；app.js:1529 `moveTabSlide(target, $('tabSlide'))` 负责定位，初始化/切换均调用
+- **#76 定稿后玻璃态动效丢失**：`html.liquid-glass .tab-slide { display: none }`（styles.css:1702），选中指示改由各 tab 自己的 `.tab.active::before` 全宽渐变胶囊承担（styles.css:1698 起）——胶囊随 `.active` 类**瞬时有/无**，无任何过渡 → 切换瞬间旧胶囊消失、新胶囊出现，生硬
+- 图标选中态 `.tab.active svg { stroke-width: 2.2 }` 同样瞬时切换无过渡
+
+### 参考调研
+- **shuding/liquid-glass**（GitHub）：SVG filter（feTurbulence + feDisplacementMap）液态玻璃变形效果，paste 进 console 即用，含 liquid-diamond 变体；demo 为 v0.dev dynamic-frame-layout（液态玻璃框架伴随形变动效）——本身不是 tab 动画库，但「玻璃+变形」组合是液态动效的参考形态
+- **火山引擎文章**：DNS 解析失败未能读取（www.volcengine.com 不可达），本次未纳入；后续可重试读取
+- 结论：参考价值主要在「材质变形」方向（成本高），本条目核心是恢复 tab 切换的「滑动+弹性」动效，让玻璃胶囊动起来
+
+### 理解与设计（草案）
+**核心思路：把 #76 定稿的玻璃胶囊材质，从「各 tab 的 ::before」迁移回「单一滑块元素」，恢复 moveTabSlide 滑动动效——材质不变、动效回归（方案 A 推荐）**
+- 方案 **A（推荐）：玻璃材质 + 旧版滑动合体**
+  - 玻璃态不再 `display:none .tab-slide`，改为覆盖其材质为 #76 渐变玻璃胶囊（radial-gradient 白 0.60→蓝 0.16 + inset 高光 + 单层投影），保留 `transition: left/width 0.55s cubic-bezier(0.23,1,0.32,1.05)` 弹性滑动
+  - `html.liquid-glass .tab.active::before` 删除（材质已由滑块承担，避免双重渲染）；非玻璃态完全不变（旧版滑块浅蓝实底 + ::before 不渲染）
+  - app.js 无需改动（moveTabSlide 仍工作），或微调过渡时长/曲线（玻璃态可短一点如 0.45s）
+  - 双态结构：`html.liquid-glass .tab-slide` 覆盖背景/阴影；`.tab-slide` 基础规则已含 transition
+- 方案 **B：轻渐隐（保底）**：胶囊保留 ::before，但 `.tab.active::before` 加 `transition: opacity 0.25s, transform 0.25s`（新胶囊 0.3→1 渐显 + 微缩放）——比现状好但仍无「滑动感」
+- 方案 **C（可选实验）**：SVG feTurbulence/feDisplacementMap 变形（shuding 方案）——真机低端机性能风险 + 与现有无磨砂配方冲突，仅作演示级实验，不推荐入主路径
+- 可选增强（随 A 附赠）：图标选中态过渡 `.tab svg { transition: stroke-width 0.25s, stroke 0.25s }`；胶囊内部光带随滑块移动天然流动
+
+### 实施清单
+1. `www/styles.css`：玻璃态 `.tab-slide` 覆盖材质（#76 渐变玻璃胶囊配方）替代 `display:none`；删除 `html.liquid-glass .tab.active::before`；`.tab svg` 加过渡
+2. 浏览器验证：玻璃态切换 tab 滑块平滑滑动（computed transition 生效 + 视觉），非玻璃态回归无变化
+3. 真机验证（魅族 461QYFDN226NF）：切换流畅无卡顿、胶囊材质无回归
+4. 资源版本 bump（v=57→58）
+
+### 待确认问题
+- 动效形态：A 滑动弹性（推荐，材质=胶囊）vs B 渐隐渐现？
+- 过渡时长：沿用旧版 0.55s 弹性曲线 or 玻璃态缩短 0.45s？
+- C 的 SVG 变形要不要做原型对比（成本高，建议跳过）？
+
+### 🆕 方案 C 原型验证（2026-08-09，用户「尝试一下可选项C」）——待用户看原型定夺
+- **原型**：`prototype/liquid-tab-c.html`——手机框 + #76 玻璃胶囊 + 三种模式对照（现状生硬 / A 滑动弹性 / C 液体变形）+ 变形强度滑杆（feDisplacementMap scale 0-40）+ 液体波动开关 + 背景折射开关（shuding 原版）
+- **实现机制**：
+  - 胶囊变形：`.tab-slide { filter: url(#lg-distort) }`（feTurbulence fractalNoise 0.012/0.018 + feDisplacementMap，切换时 scale 0→峰值→0 sin 脉冲 650ms + seed 随机换形）
+  - 背景折射：`backdrop-filter: url(#lg-bg-distort) blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)`（shuding liquid-glass 原版配方，feImage 逐像素版简化为 feTurbulence）
+- **浏览器验证（Playwright Chromium）**：脉冲动画采样 scale 0→18→0 平滑 ✓；filter: url() computed 生效 ✓；**backdrop-filter: url() 真实渲染**（scale 200 时 tab 栏背景明显波纹扭曲，ui_diff_check 证实差异）✓——现代 Chromium 已支持（CSS.supports 非误报）
+- **真机支持性（魅族 21 / Android 16 WebView，CDP 实测）**：`CSS.supports('backdrop-filter','url(#x) blur(1px)')` = **true**（-webkit- 前缀 false，标准版够用）；`filter: url()` = true；滤镜 computed 真实应用 ✓——**方案 C 两种机制真机可落地**
+- 截图：`debug/v81_proto_main.png` / `v81_capsule_pulse18.png`（scale 18 胶囊变形）/ `v81_bg_refract_scale200.png`（背景折射开启）/ `v81_bg_refract_off.png`
+- **注意**：CSS.supports 为声明支持，真机最终渲染效果实施时需真机复测（硬约束）
+
+### ✅ 定稿实施记录（2026-08-09，用户拍板「C，20，背景折射不要」）
+- **styles.css**：删除 `html.liquid-glass .tab-slide { display: none }` 与 `.tab.active::before` 底座块；玻璃态滑块改为 `html.liquid-glass .tab-slide` 覆盖——#76 渐变玻璃胶囊材质（radial-gradient 白 0.60→蓝 0.16 75% + inset 白高光 0.75/下缘 0.2 + 0 1px 5px 蓝 0.20 + 圆角 22px）+ `filter: url(#lg-distort)`；`.tab-pill { position: relative; z-index: 1 }` 保留（文字在滑块之上）
+- **app.js**：新增 `liquidTabPulse()`——切换时 feDisplacementMap scale 0→20→0（sin 曲线 650ms）+ seed 随机换形；仅玻璃态生效（非玻璃态无滤镜跳过）；tab 点击回调 moveTabSlide 后调用
+- **index.html**：注入隐藏 SVG（`#lg-distort`：feTurbulence fractalNoise 0.012/0.018 numOctaves 2 + feDisplacementMap scale 0）；无背景折射（用户明确不要）
+- **验证**：浏览器——滑块材质/radius 22px/filter computed ✓、::before content none ✓、脉冲采样峰值 20 归零 ✓、非玻璃态回归（浅蓝实底/26px/无滤镜/0.55s 弹性 transition）✓、滑动动画 44 帧连续+回弹 ✓；真机（魅族 21 / Android 16，CDP）——cssVer=58、材质+滤镜 ✓、脉冲峰值 19.997 归零 ✓、非玻璃态回归 ✓
+- 截图：`debug/v81_device_pulse20.png`（变形定格）/ `v81_device_tab_clean.png`（正常态）/ 浏览器 `v81-tab-liquid-c.png`；资源 ?v=58/58
+
+### 验收要点
+- 玻璃态切换 tab：胶囊平滑滑到新 tab（无瞬间消失/出现）
+- 胶囊材质与 #76 定稿一致（渐变/高光/单层投影/22px 圆角/全宽覆盖）
+- 非玻璃态切换动效与旧版一致（无回归）
+- 真机切换流畅（无掉帧卡顿）
+
+
+---
+
+## 82. 液态玻璃 tab 栏加日历同款背景模糊，提升可读性 ✅ 已实施（v3.5 内补丁，2026-08-09）
+
+### 需求（用户 2026-08-09）
+> 给液态玻璃的tab栏增加日历页同款的背景模糊，以增加可读性。
+
+### 现状
+- tab 栏玻璃态与其他浮层同配方 `blur(0px) saturate(var(--lg-saturate))`（styles.css:1541 无磨砂通透）
+- tab 栏内容密集（图标 + 文字 + #81 玻璃胶囊），透明底上背景蓝晕透出，可读性受限
+- #78 日历已定案轻磨砂 `blur(3px)`（内容密集组件用更厚材质），tab 栏同为密集组件
+
+### 实施记录
+- **styles.css**：新增 `html.liquid-glass .tabbar { backdrop-filter: blur(3px) saturate(var(--lg-saturate)) }`——与 #78 日历同款配方；其他浮层（sheet/dialog/card）保持 blur(0px) 不变
+- **验证**：浏览器——玻璃态 tabbar blur(3px) saturate(2) ✓、sheet blur(0px) 未误伤 ✓、calendar blur(3px) 不变 ✓、非玻璃态 blur(24px) 旧毛玻璃不变 ✓；真机（魅族 21/Android 16，CDP）——cssVer=59、tabbar blur(3px) saturate(2)、sheet/calendar 不变 ✓
+- 截图：`debug/v82_tabbar_blur3.png`；资源 ?v=59/59
+
+### 验收要点
+- 玻璃态 tab 栏背景轻微磨砂（3px），图标/文字/胶囊清晰
+- 通透感保留（非白雾）
+- 其他浮层（记录面板/对话框/卡片）无变化
+
+
+---
+
+## 83. 液态玻璃下蓝色按钮阴影太实，需发散柔化 🆕 待实施
+
+### 需求（用户 2026-08-09）
+> 现在发现一个共性问题，就液态玻璃下的蓝色按钮，周围的阴影，有点太实的感觉，发散一点好不好更好看。定位问题，输出优化方案。
+
+### 现状（✅ 代码定位）
+- 玻璃态蓝色按钮 `.btn-primary` / `.record-btn`（styles.css:1610-1621，共用同一条规则）：
+  ```css
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.06),          /* 发丝暗线（玻璃边缘结构） */
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),   /* 内上缘高光 */
+    inset 0 -1px 1px rgba(255, 255, 255, 0.15), /* 内下缘 */
+    0 3px 14px rgba(0, 122, 255, 0.3);        /* ★ 唯一的外投影——单层、blur 小、紧贴按钮 */
+  ```
+- **「太实」根因**：外投影只有一层 `0 3px 14px`——偏移小 + blur 小（14px）+ alpha 0.3 单层，光晕紧贴按钮边缘、扩散不足，视觉上像「描边感」而非柔和光晕
+- **对照**：玻璃卡片（styles.css:1606）用**双层发散阴影栈**——远层 `0 10px 30px rgba(28,42,68,0.07)`（大 blur 低 alpha 发散）+ 近层 `0 2px 8px`（收边）——先散后收，柔和不实；蓝色按钮缺「远层大扩散」这一档
+
+### 理解与设计（草案）
+**核心思路：外投影改为「远层蓝色光晕发散 + 近层收边」双层结构（与玻璃卡阴影栈同语言），发丝线/内高光保留**
+- 方案 **A（推荐）：纯蓝光晕双层**——保留蓝色语义，发散柔化：
+  ```css
+  0 14px 34px rgba(0, 122, 255, 0.22),   /* 远层：大偏移大 blur 低 alpha——发散光晕 */
+  0 4px 14px rgba(0, 122, 255, 0.25);    /* 近层：收边 + 落影 */
+  ```
+- 方案 **B：蓝光晕 + 中性柔影双层**（iOS 大按钮风格）——蓝色发散 + 中性灰让按钮从玻璃上「浮起」：
+  ```css
+  0 16px 36px rgba(0, 122, 255, 0.18),   /* 远层蓝光晕 */
+  0 4px 14px rgba(0, 122, 255, 0.22),    /* 近层蓝 */
+  0 10px 30px rgba(28, 42, 68, 0.08);    /* 中性柔影（背景浮起） */
+  ```
+- 参数选档：远层 blur 28-36px / alpha 0.15-0.25（可做原型多档对比，参照 #78 流程）
+- 发丝暗线 `0 0 0 0.5px rgba(0,0,0,0.06)` 保留（玻璃边缘统一语言），若选档后仍显「实」可微调 alpha 0.06→0.04
+- 注意 `.btn-primary` 与 `.record-btn` 共用规则——两处同改；`:active` 已 box-shadow:none（按压反馈不受影响）
+
+### 实施清单
+1. `www/styles.css`：html.liquid-glass .btn-primary/.record-btn 外投影改双层发散（方案 A 或 B，用户选档）
+2. 原型或真机多档对比（远层 blur/alpha 2-3 档）→ 用户选档定案
+3. 浏览器 + 真机验证（阴影发散柔和、发丝线/内高光保留、非玻璃态按钮不变）
+
+### 🆕 原型已出（2026-08-09，用户「先制作，看看效果」）——待选档
+- **原型 v1**：`prototype/btn-shadow.html`——五档并排对照（现状/A1 轻/A2 中/A3 强/B 蓝+中性）+ 全场预览 + 远层 blur 滑杆
+- **用户反馈（v1 被否）**：「阴影是一个纯纯的蓝色色卡，所有我觉得它丑」——box-shadow 本质是按钮形状的半透明色块，blur 再大只是磨糊色卡边缘，仍无「光晕」形态
+- **原型 v2（被否）**：形态重构四档但**全场预览同一时间只见一种形态 + 光晕太淡（0.30 alpha）**——用户「是不是还没有生效呀」，肉眼无感
+- **原型 v3（当前）**：**四档并排同时可见**（每行按钮各自形态，一眼对比）+ 光晕增强（径向峰值 0.40、扩散 -32/-38px、透明 75%）+ 点行悬浮钮同步 + 强度滑杆；验证：四档 computed 全过（::after inset -32/-38 渲染）；截图 `debug/v83_glow_v3.png`
+- **用户贴参考**（2026-08-09）：经典 glassmorphism demo（background rgba(255,255,255,0.25) + blur(10px) saturate(180%) + 容器阴影 `0 8px 32px rgba(0,0,0,0.37)` 单层大 blur，hover `0 12px 42px 2px`）——**新增第五档「经典大blur」**：`0 8px 32px rgba(0,0,0,0.30)` 中性黑单层大模糊（demo 同款，alpha 0.37→0.30 适配浅色 UI）；五档并排（现状/多层淡影/径向光晕/组合/经典大blur）；验证：五档 computed + 悬浮钮同步全过；截图 `debug/v83_glow_v3_classic.png`
+- 待用户选档（v3 五档中选一；「径向光晕/组合」= 光衰减形态，「经典大blur」= 大模糊投影形态）
+
+### 待确认问题
+- 方案 A（纯蓝光晕）vs B（蓝光晕+中性柔影）？
+- 发散档位：远层 blur 28/32/36px × alpha 0.18/0.22/0.25？
+- 发丝暗线保留 or 微降（alpha 0.06→0.04）？
+
+### 验收要点
+- 玻璃态蓝色按钮阴影发散柔和（无紧贴描边感），蓝色光晕语义保留
+- 发丝线/内上缘高光等玻璃边缘结构无回归
+- 非玻璃态按钮（--shadow-2 实底阴影）不变
+- `.record-btn` 悬浮钮同规则生效
+- 按压反馈（:active 去阴影）不受影响
 
 
 

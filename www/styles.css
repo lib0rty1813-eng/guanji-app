@@ -9,6 +9,10 @@
   --bg-elev: #E5E5EA;
   --card: #FFFFFF;
 
+  /* #72 浅色背景蓝晕（玻璃卡片可透内容） */
+  --bg-glow-1: rgba(0, 122, 255, 0.06);
+  --bg-glow-2: rgba(0, 122, 255, 0.05);
+
   /* 文字（iOS label / secondaryLabel / tertiaryLabel） */
   --ink: #000000;
   --ink-2: #8E8E93;
@@ -51,6 +55,14 @@
   --glass: rgba(255, 255, 255, 0.82);
   --glass-strong: rgba(249, 249, 249, 0.94);
 
+  /* #72 液态玻璃（定稿 v8）：无磨砂通透配方——通透感来自饱和度 + 边缘结构 */
+  --lg-tint: rgba(255, 255, 255, 0);
+  --lg-saturate: 2;
+  /* 对话框用高 tint（0.4 遮罩之上需可读性） */
+  --lg-tint-strong: rgba(255, 255, 255, 0.85);
+  /* 内容卡用半透明 tint（透出背景渐变，保持阅读性）——#72-P2 Vibrancy 近似：微升至 0.6 */
+  --lg-tint-card: rgba(255, 255, 255, 0.60);
+
   /* tab 滑块 */
   --slide-bg: rgba(0, 122, 255, 0.12);
 
@@ -75,6 +87,10 @@
   --accent-soft: rgba(10, 132, 255, 0.16);
 
   --sage: #32D74B;
+
+  /* #72 深色背景蓝晕（玻璃卡片可透内容） */
+  --bg-glow-1: rgba(10, 132, 255, 0.09);
+  --bg-glow-2: rgba(10, 132, 255, 0.06);
   --sage-soft: rgba(50, 215, 75, 0.16);
   --amber: #FF9F0A;
 
@@ -95,6 +111,11 @@
   /* 毛玻璃（深色半透明） */
   --glass: rgba(28, 28, 30, 0.82);
   --glass-strong: rgba(28, 28, 30, 0.94);
+
+  /* #72 液态玻璃深色适配：深色下 saturate 无感，给极轻底色提升层次 */
+  --lg-tint: rgba(255, 255, 255, 0.05);
+  --lg-tint-strong: rgba(28, 28, 30, 0.85);
+  --lg-tint-card: rgba(255, 255, 255, 0.08);   /* #72-P2 Vibrancy 近似 */
 
   --slide-bg: rgba(10, 132, 255, 0.20);
 }
@@ -125,7 +146,7 @@ body {
   position: relative;
   width: 390px;
   height: 844px;
-  background: var(--bg);
+  background: var(--bg);   /* 默认旧版纯色；液态玻璃态（html.liquid-glass）由覆盖层加蓝晕 */
   border-radius: 44px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28), 0 6px 18px rgba(0, 0, 0, 0.08);
@@ -250,7 +271,7 @@ body {
 /* ============ 卡片与区块 ============ */
 
 .card {
-  background: var(--card);
+  background: var(--card);   /* 默认旧版白底（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
   padding: 20px;
@@ -366,6 +387,7 @@ body {
   bottom: calc(12px + var(--safe-bottom));
   height: 58px;
   display: flex;
+  /* 默认旧版：iOS 悬浮胶囊毛玻璃（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   background: var(--glass);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -430,7 +452,7 @@ body {
 
 .btn-primary {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--accent);
+  background: var(--accent);   /* 默认旧版实色（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   color: #FFF;
   border: none;
   border-radius: 999px;
@@ -451,7 +473,7 @@ body {
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .btn-ghost {
-  background: var(--bg-elev);
+  background: var(--bg-elev);   /* 默认旧版 */
   color: var(--ink);
   border: 1px solid var(--line);   /* #40：加边框 + 主文字色，避免「灰到像禁用」 */
   border-radius: 999px;
@@ -470,7 +492,7 @@ body {
 .btn-ghost:active { transform: scale(0.97); }
 
 .btn-danger {
-  background: var(--accent-deep);
+  background: var(--accent-deep);   /* 默认旧版 */
   color: #FFF;
   border: none;
   border-radius: 999px;
@@ -491,7 +513,7 @@ body {
 
 .record-btn {
   display: flex; align-items: center; gap: 8px;
-  background: var(--accent);
+  background: var(--accent);   /* 默认旧版实色（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   color: #FFF;
   border: none;
   border-radius: 999px;
@@ -543,7 +565,7 @@ body {
 /* ============ 报告 ============ */
 
 .report-card {
-  background: var(--card);
+  background: var(--card);   /* 默认旧版白底（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
   padding: 22px;
@@ -602,7 +624,7 @@ body {
 
 .ask-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.02em; }
 .ask-answer {
-  background: var(--card);
+  background: var(--card);   /* 默认旧版白底（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
   padding: 20px;
@@ -718,21 +740,24 @@ body.keyboard-up .backdrop.dialog-layer {
 
 .sheet {
   position: absolute;
-  left: 0; right: 0; bottom: 0;
+  left: 12px; right: 12px; bottom: 12px;   /* #74：悬浮形式（四周离边，与 tab 栏同边距体系） */
+  /* 默认旧版：毛玻璃（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   background: var(--glass-strong);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border-radius: 22px 22px 0 0;
-  padding: 10px 22px 26px;
+  border-radius: 22px;   /* #74：全圆角（原 22px 22px 0 0 贴底样式） */
+  padding: 10px 22px 24px;   /* #75：回调至 10/24（保持两态一致前提下适度宽松） */
   z-index: 30;
   max-height: 86%;
   overflow-y: auto;
   scrollbar-width: none;
-  box-shadow: var(--shadow-3);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.20), 0 6px 18px rgba(0, 0, 0, 0.10);   /* #74：增强悬浮阴影 */
   animation: sheetUp 0.32s var(--ease-spring) both;
 }
 .sheet::-webkit-scrollbar { display: none; }
 .sheet.hidden { display: none; }
+
+/* 渐变边框环（#72 玻璃态专用，由 html.liquid-glass 覆盖层启用）——见文件尾部 */
 
 @keyframes sheetUp {
   from { transform: translateY(100%); }
@@ -743,7 +768,7 @@ body.keyboard-up .backdrop.dialog-layer {
   width: 36px; height: 4px;
   border-radius: 999px;
   background: var(--line);
-  margin: 4px 0 12px;
+  margin: 4px 0 10px;   /* #75：回调至 10 */
 }
 
 /* #29：拖拽热区（小横杠所在行，扩大点击区域；touch-action none 防滚动冲突） */
@@ -755,9 +780,9 @@ body.keyboard-up .backdrop.dialog-layer {
   cursor: grab;
 }
 .sheet-grab:active { cursor: grabbing; }
-.sheet-title { font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 20px; letter-spacing: 0.02em; }
-.sheet .field-label { margin: 18px 0 10px; }
-.sheet .field-label:first-of-type { margin-top: 4px; }
+.sheet-title { font-size: 17px; font-weight: 800; text-align: center; margin-bottom: 18px; letter-spacing: 0.02em; }   /* #75：回调至 18 */
+.sheet .field-label { margin: 12px 0 9px; }   /* #75：回调至 12/9 */
+.sheet .field-label:first-of-type { margin-top: 3px; }
 /* #28 步骤高度由 JS 过渡动画控制，不再用固定 min-height */
 
 .field-label {
@@ -814,25 +839,25 @@ body.keyboard-up .backdrop.dialog-layer {
   box-shadow: var(--shadow-1);
 }
 
-.time-display { font-size: 22px; font-weight: 800; margin-top: 16px; letter-spacing: -0.01em; color: var(--ink); }
+.time-display { font-size: 22px; font-weight: 800; margin-top: 8px; letter-spacing: -0.01em; color: var(--ink); }   /* #75：以真机为准调平两态 */
 
 /* #51：「就现在」计时器态 */
-#timerBox { margin-top: 18px; text-align: center; }
+#timerBox { margin-top: 10px; text-align: center; }   /* #75：回调至 10 */
 .timer-display {
-  font-size: 52px;
+  font-size: 34px;   /* #75：回调至 34（面板内紧凑，全屏计时页 .timer-big 96px 不受影响） */
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   color: var(--ink);
-  line-height: 1.1;
+  line-height: 1.0;
 }
-.timer-hint { font-size: 12px; color: var(--ink-3); margin-top: 8px; line-height: 1.6; }
+.timer-hint { font-size: 11px; color: var(--ink-3); margin-top: 5px; line-height: 1.3; }   /* #75：回调至 5 */
 .mode-link {
   display: block;
   width: 100%;
-  margin-top: 14px;
-  padding: 8px;
-  font-size: 13px;
+  margin-top: 0;   /* #75：紧凑化 */
+  padding: 3px;
+  font-size: 12px;   /* #75：13→12 */
   color: var(--accent-deep);
   background: none;
   border: none;
@@ -995,13 +1020,13 @@ body.keyboard-up .backdrop.dialog-layer {
 .summary-resume:active, .summary-abandon:active { opacity: 0.6; }
 .summary-resume:focus-visible, .summary-abandon:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.6); outline-offset: 2px; }
 
-.picker-row { display: flex; gap: 10px; margin-top: 12px; }
+.picker-row { display: flex; gap: 10px; margin-top: 6px; }   /* #75：回调至 6（与计时态均衡） */
 .picker-row input {
   flex: 1;
   min-width: 0;   /* textZoom 兜底：允许收缩，让位给保存按钮 */
   font-family: var(--font);
   font-size: 14px;
-  padding: 11px 12px;
+  padding: 9px 12px;   /* #75：回调至 9 */
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--card);
@@ -1049,7 +1074,7 @@ body.keyboard-up .backdrop.dialog-layer {
 .chip {
   position: relative;   /* #47：× 删除按钮定位基准 */
   border: 1px solid var(--line);
-  background: var(--card);
+  background: var(--card);   /* 默认旧版白底（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   border-radius: 999px;
   padding: 9px 15px;
   font-size: 13px;
@@ -1086,7 +1111,7 @@ body.keyboard-up .backdrop.dialog-layer {
 }
 .chip:focus-visible { outline: 2px solid var(--accent-deep); outline-offset: 1px; }
 .chip.active {
-  background: var(--accent-soft);
+  background: var(--accent-soft);   /* 默认旧版（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   border-color: transparent;
   color: var(--accent-deep);
   font-weight: 600;
@@ -1148,14 +1173,14 @@ textarea {
 }
 textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; border-color: transparent; }
 
-.sheet-actions { display: flex; gap: 10px; margin-top: 22px; }
+.sheet-actions { display: flex; gap: 10px; margin-top: 20px; }   /* #75：回调至 20 */
 .sheet-actions .btn-primary, .sheet-actions .btn-ghost { flex: 1; }
 
 /* ============ 弹窗 ============ */
 
 .dialog {
   width: 300px;
-  background: var(--card);
+  background: var(--card);   /* 默认旧版白底（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   border-radius: var(--radius-lg);
   padding: 26px 22px 18px;
   text-align: center;
@@ -1216,6 +1241,7 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
 .calendar-sheet {
   position: absolute;
   left: 0; right: 0; bottom: 0;
+  /* 默认旧版：毛玻璃（液态玻璃态由 html.liquid-glass 覆盖层接管） */
   background: var(--glass-strong);
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
@@ -1313,6 +1339,13 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   background: var(--accent-soft);
 }
 .cal-cell.sel .cal-daynum { color: var(--accent-deep); font-weight: 700; }
+/* #80：未来日期不可补记——灰显禁用 */
+.cal-cell.future {
+  color: var(--ink-3);
+  cursor: default;
+  pointer-events: none;
+}
+.cal-cell.future .cal-daynum { color: var(--ink-3); }
 .cal-badge {
   position: absolute;
   top: 5px;
@@ -1361,6 +1394,15 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* #79：日历每日明细——标签行提权 + 时长强调（分钟清晰可读） */
+#calDayDetail .recent-tags {
+  color: var(--ink);
+  font-weight: 500;
+}
+#calDayDetail .recent-tags .dur {
+  color: var(--accent-deep);
+  font-weight: 700;
 }
 .recent-del {
   flex: 0 0 30px;
@@ -1421,7 +1463,7 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .tabbar, .sheet { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .tabbar, .sheet, .calendar-sheet, .dialog, .card, .report-card, .ask-answer { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 /* ============ 真机适配（触摸屏 + 窄视口时铺满全屏） ============ */
@@ -1460,7 +1502,230 @@ textarea:focus { outline: 2px solid var(--accent-deep); outline-offset: 0; borde
     right: 12px;
     bottom: calc(18px + var(--safe-bottom));
   }
-
+  /* #74：悬浮记录卡片同样避让手势条 */
+  .sheet {
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + var(--safe-bottom));
+  }
   /* 屏幕底部留白适配悬浮栏 + 手势条 */
   .screen { padding-bottom: calc(112px + var(--safe-bottom)); }
+}
+
+/* #70：桌面矮视口（笔记本窗口高度不足）时手机高度跟随视口收缩——
+   原固定 844px + body flex 居中会把顶部（模拟状态栏）裁出屏幕（实测 800 高视口状态栏 y=-21）；
+   .phone 为 flex column，.screen flex:1 吸收高度差，状态栏 46px 恒完整可见。
+   仅 fine 指针生效——真机（coarse）已由上方真机媒体查询处理，互不干扰 */
+@media (max-height: 920px) and (pointer: fine) {
+  .stage { padding: 14px 0; }
+  .phone { height: calc(100vh - 28px); min-height: 640px; }
+}
+
+/* ============ #72 液态玻璃（实验性，html.liquid-glass 时启用） ============
+   我的页「外观」卡开关切换；localStorage guanji_liquid_glass（默认 on）；
+   按钮 = 保留原实色 + 玻璃边缘（visionOS 风格：亮边/上缘高光/色相光晕） */
+
+/* 背景蓝晕（玻璃卡片可透内容） */
+html.liquid-glass .phone {
+  background:
+    radial-gradient(120% 80% at 85% -10%, var(--bg-glow-1), transparent 60%),
+    radial-gradient(100% 70% at 0% 100%, var(--bg-glow-2), transparent 55%),
+    var(--bg);
+}
+
+/* 浮层：无磨砂通透玻璃（tab 栏 / 记录面板 / 日历弹层 / 对话框） */
+html.liquid-glass .tabbar,
+html.liquid-glass .sheet,
+html.liquid-glass .calendar-sheet {
+  background: var(--lg-tint);
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  border: none;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 8px rgba(255, 255, 255, 0.08),
+    0 10px 34px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+/* #78：日历内容密集，加轻磨砂 3px 提升可读性（用户原型选档定案）；通透感保留，其余浮层不变 */
+html.liquid-glass .calendar-sheet {
+  backdrop-filter: blur(3px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(3px) saturate(var(--lg-saturate));
+}
+/* #82：tab 栏内容密集（图标+文字+玻璃胶囊），加轻磨砂 3px 提升可读性——与 #78 日历同款配方；通透感保留 */
+html.liquid-glass .tabbar {
+  backdrop-filter: blur(3px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(3px) saturate(var(--lg-saturate));
+}
+html.liquid-glass .sheet {
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 8px rgba(255, 255, 255, 0.08),
+    0 20px 50px rgba(0, 0, 0, 0.16), 0 5px 16px rgba(0, 0, 0, 0.08);   /* #74：悬浮投影 */
+}
+html.liquid-glass .calendar-sheet {
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 8px rgba(255, 255, 255, 0.08),
+    0 -18px 44px rgba(0, 0, 0, 0.12), 0 -4px 14px rgba(0, 0, 0, 0.06);   /* 日历贴底：保持向上投影 */
+}
+html.liquid-glass .dialog {
+  background: var(--lg-tint-strong);   /* 遮罩之上高 tint 保可读 */
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 8px rgba(255, 255, 255, 0.08),
+    var(--shadow-4);
+}
+
+/* 内容卡：半透明 tint 透出背景蓝晕 */
+html.liquid-glass .card,
+html.liquid-glass .report-card,
+html.liquid-glass .ask-answer {
+  position: relative;   /* 伪元素定位上下文 */
+  background: var(--lg-tint-card);
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.18),
+    0 10px 30px rgba(28, 42, 68, 0.07), 0 2px 8px rgba(28, 42, 68, 0.04);
+}
+
+/* 按钮：保留原实色 + 玻璃边缘（亮边 / 上缘高光 / 色相光晕） */
+html.liquid-glass .btn-primary,
+html.liquid-glass .record-btn {
+  background: var(--accent);
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.15),
+    0 3px 14px rgba(0, 122, 255, 0.3);
+}
+html.liquid-glass .btn-ghost {
+  background: var(--bg-elev);
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.12);
+}
+html.liquid-glass .btn-danger {
+  background: var(--accent-deep);
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.12),
+    0 2px 10px rgba(255, 69, 58, 0.2);
+}
+
+/* chips：未选中灰玻璃 / 选中蓝实色玻璃 */
+html.liquid-glass .chip {
+  background: var(--bg-elev);
+  backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  -webkit-backdrop-filter: blur(0px) saturate(var(--lg-saturate));
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+html.liquid-glass .chip.active {
+  background: var(--accent);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 1px 6px rgba(0, 122, 255, 0.18);
+  color: #FFF;
+}
+
+/* 玻璃边缘结构（渐变边框环 ::after + 顶部受光/光带 ::before） */
+html.liquid-glass .tabbar::after,
+html.liquid-glass .sheet::after,
+html.liquid-glass .calendar-sheet::after,
+html.liquid-glass .dialog::after,
+html.liquid-glass .card::after,
+html.liquid-glass .report-card::after,
+html.liquid-glass .ask-answer::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.55) 45%, rgba(255,255,255,0.28)) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+html.liquid-glass .tabbar::before,
+html.liquid-glass .sheet::before,
+html.liquid-glass .calendar-sheet::before,
+html.liquid-glass .dialog::before,
+html.liquid-glass .card::before,
+html.liquid-glass .report-card::before,
+html.liquid-glass .ask-answer::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(130% 70% at 15% 0%, rgba(255,255,255,0.4), transparent 50%),
+    linear-gradient(105deg, rgba(255,255,255,0.16), transparent 40%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 按压反馈（tab 栏饱和度增强） */
+html.liquid-glass .tabbar:active { --lg-saturate: 2.2; }
+
+/* #72-P2/#76/#81 玻璃态选中滑块：材质迁回单一滑块（滑动弹性 + SVG 液体变形脉冲）
+   —— #76 定稿的渐变玻璃胶囊材质由 .tab-slide 承担（::before 底座删除，避免双重渲染） */
+html.liquid-glass .tab-pill { position: relative; z-index: 1; }
+/* #81 方案 C 定稿：玻璃态滑块 = 渐变玻璃胶囊材质 + filter: url(#lg-distort) 液体变形
+   （切换时 app.js liquidTabPulse 驱动 feDisplacementMap scale 0→20→0；静止时 scale=0 无变形） */
+html.liquid-glass .tab-slide {
+  background: radial-gradient(120% 100% at 30% 0%, rgba(255, 255, 255, 0.60), rgba(0, 122, 255, 0.16) 75%);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.2),
+    0 1px 5px rgba(0, 122, 255, 0.20);   /* 单层投影 */
+  filter: url(#lg-distort);
+}
+
+/* #72-P2 色散近似（实验）：大数字极轻 RGB 双色色边——模拟玻璃色散，克制防「假」 */
+html.liquid-glass .stat-num,
+html.liquid-glass .focus-num,
+html.liquid-glass .overview-num {
+  text-shadow: 0.6px 0 rgba(255, 59, 92, 0.18), -0.6px 0 rgba(0, 122, 255, 0.18);
+}
+
+/* reduced-transparency：玻璃态下回退实底 */
+@media (prefers-reduced-transparency: reduce) {
+  html.liquid-glass .tabbar, html.liquid-glass .sheet, html.liquid-glass .calendar-sheet,
+  html.liquid-glass .dialog, html.liquid-glass .card, html.liquid-glass .report-card,
+  html.liquid-glass .ask-answer { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }

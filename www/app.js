@@ -421,6 +421,8 @@ function resetSheetStyle(sheetEl) {
 
 /* 退场：遮罩与卡片同步平滑退出（#49：统一 easeOutCubic 曲线 + 同速淡出 + 微缩放，一体感） */
 function animateSheetClose(sheetEl, backdropEl, doHide) {
+  // #72：若弹出弹簧仍在播放，先暂停（避免 anime 每帧重写 transform 与退场过渡冲突）
+  if (sheetOpenAnim) { sheetOpenAnim.pause(); sheetOpenAnim = null; }
   // #44：退场转不透明 + 关闭毛玻璃
   sheetEl.style.backdropFilter = 'none';
   sheetEl.style.webkitBackdropFilter = 'none';
@@ -517,8 +519,9 @@ function renderCalendar() {
     const cnt = countRange(off, off);
     const isToday = off === 0;
     const isSel = off === calSelected;
+    const isFuture = off > 0;   // #80：未来日期不可补记（灰显禁用）
     cells += `
-      <button class="cal-cell${cnt > 0 ? ' has' : ''}${isToday ? ' today' : ''}${isSel ? ' sel' : ''}" data-off="${off}">
+      <button class="cal-cell${cnt > 0 ? ' has' : ''}${isToday ? ' today' : ''}${isSel ? ' sel' : ''}${isFuture ? ' future' : ''}" data-off="${off}" ${isFuture ? 'disabled' : ''}>
         <span class="cal-daynum">${d}</span>
         ${cnt > 0 ? `<span class="cal-badge">${cnt}</span>` : ''}
       </button>`;
@@ -544,7 +547,7 @@ function renderCalDayDetail() {
       <div class="recent-item">
         <div class="recent-main">
           <p class="recent-time">${r.time}</p>
-          <p class="recent-tags">${[...r.moods, ...r.triggers].join(' · ')}${r.duration ? ` · ${r.duration} 分钟` : ''}${r.media ? ' · 看片' : ''}</p>
+          <p class="recent-tags">${[...r.moods, ...r.triggers].join(' · ')}${r.duration ? ` · <b class="dur">${r.duration} 分钟</b>` : ''}${r.media ? ' · 看片' : ''}</p>
         </div>
         <div class="recent-actions">
           <button class="recent-edit" data-id="${r.id}" title="编辑这条记录" aria-label="编辑">
@@ -708,7 +711,33 @@ function openSheet(mode, presetDate) {
 
   $('sheetBackdrop').classList.remove('hidden');
   $('recordSheet').classList.remove('hidden');
+  playSheetOpen();   // #72：anime 弹簧弹出（vendor 缺失/减弱动效时回退 CSS sheetUp）
   initSegSlide('timeSegRow', 'timeSegSlide');   // #22：面板显示后滑块定位到当前选中
+}
+
+/* #72：面板弹出回弹动画试点——anime v3.2（vendor 缺失/减弱动效回退 CSS sheetUp）。
+   easeOutBack(1.4) 实现克制的 overshoot 回弹（CSS cubic-bezier 无法回弹）：
+   v3 的 spring easing 时长被固定 ~1s 不可调（源码无条件覆盖 duration），对弹出太拖沓，
+   故用 easeOutBack + 550ms（回弹幅度 ~7%）。只动画 transform，不碰布局属性（#66 教训） */
+let sheetOpenAnim = null;
+
+function playSheetOpen() {
+  const sheet = $('recordSheet');
+  if (!window.anime || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  sheet.style.animation = 'none';               // 关闭 CSS sheetUp，避免与 anime 双动画
+  sheet.style.transform = 'translateY(100%)';
+  sheetOpenAnim = anime({
+    targets: sheet,
+    translateY: ['100%', '0%'],
+    easing: 'easeOutBack(1.4)',
+    duration: 550,
+    changeComplete: () => {
+      sheetOpenAnim = null;
+      sheet.style.transform = '';
+      // animation 保持 'none' 不回恢复——恢复会让 CSS sheetUp 重新播放（实测弹完再滑一次）；
+      // 下次 openSheet 的 resetSheetStyle 会清空该内联值
+    }
+  });
 }
 
 function closeSheet() {
@@ -778,6 +807,8 @@ function saveRecord() {
     date = new Date(+parts[0], +parts[1] - 1, +parts[2], +t[0], +t[1]);
     if (isNaN(date.getTime())) { toast('日期或时间无效，请重新选择'); return; }
     offset = dayDiff(date, base);
+    // #80：未来日期不可补记（温和拦截，非评判）
+    if (offset > 0) { toast('未来的日期还没到哦，先记录今天吧'); return; }
     time = fmtTime(date);
   }
 
@@ -1467,6 +1498,22 @@ $('themeChips').addEventListener('click', (e) => {
   renderHome();   // 重绘图表（环色/面积图随主题）
 });
 
+/* #72：液态玻璃实验开关（我的 → 外观，localStorage 持久化，默认开） */
+const LG_KEY = 'guanji_liquid_glass';
+
+function initLiquidGlass() {
+  const on = (localStorage.getItem(LG_KEY) || 'on') !== 'off';
+  document.documentElement.classList.toggle('liquid-glass', on);
+  $('liquidGlassSwitch').classList.toggle('on', on);
+}
+
+$('liquidGlassSwitch').addEventListener('click', () => {
+  const on = $('liquidGlassSwitch').classList.toggle('on');
+  localStorage.setItem(LG_KEY, on ? 'on' : 'off');
+  document.documentElement.classList.toggle('liquid-glass', on);
+  renderHome();   // 背景/卡片随玻璃态重绘
+});
+
 // 跟随系统模式：系统主题变化时自动切换
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   const mode = localStorage.getItem(THEME_KEY) || 'system';
@@ -1487,6 +1534,26 @@ function moveTabSlide(target, slideEl) {
   slideEl.style.width = tRect.width + 'px';
 }
 
+/* #81 方案 C 定稿：液态玻璃 tab 切换——SVG 液体变形脉冲
+   切换瞬间 feDisplacementMap scale 0→20→0（sin 曲线 650ms）+ seed 随机换形；
+   仅玻璃态生效（非玻璃态滑块无 filter，跳过）；静止时 scale=0 无变形无性能负担 */
+function liquidTabPulse() {
+  if (!document.documentElement.classList.contains('liquid-glass')) return;
+  const disp = document.getElementById('lg-disp');
+  if (!disp) return;
+  const turb = document.getElementById('lg-turb');
+  if (turb) turb.setAttribute('seed', Math.floor(Math.random() * 999));
+  const peak = 20;
+  const dur = 650;
+  const t0 = performance.now();
+  function frame(t) {
+    const p = Math.min((t - t0) / dur, 1);
+    disp.setAttribute('scale', Math.sin(p * Math.PI) * peak);
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
 // Tab 切换
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.addEventListener('click', () => {
@@ -1497,6 +1564,7 @@ document.querySelectorAll('.tab').forEach((tab) => {
     });
     if (tab.dataset.screen === 'analysis') maybeAutoGenerate();
     moveTabSlide(tab, $('tabSlide'));
+    liquidTabPulse();
   });
 });
 
@@ -1516,6 +1584,7 @@ $('nowSeg').addEventListener('click', () => {
   $('nowSeg').classList.add('active');
   $('customSeg').classList.remove('active');
   $('pickerRow').classList.add('hidden');
+  $('timeDisplay').classList.add('hidden');   // #75：就现在计时态不显示日期时间
   moveSegSlide($('timeSegRow'), $('timeSegSlide'), $('nowSeg'));   // #22：滑块跟随
   // #55：timer 模式「就现在」= 计时器态
   if (loadRecordMode() === 'timer' && !timerState.running) {
@@ -1531,6 +1600,7 @@ $('customSeg').addEventListener('click', () => {
   $('customSeg').classList.add('active');
   $('nowSeg').classList.remove('active');
   $('pickerRow').classList.remove('hidden');
+  $('timeDisplay').classList.remove('hidden');   // #75：补记经典流程显示日期时间
   moveSegSlide($('timeSegRow'), $('timeSegSlide'), $('customSeg'));   // #22：滑块跟随
   // #55：切到「补记」= 经典流程（计时器态让位）
   $('timerBox').classList.add('hidden');
@@ -2194,6 +2264,7 @@ function setupNowStep() {
   if (loadRecordMode() === 'quick') {
     $('timeSegRow').classList.remove('hidden');
     $('timerBox').classList.add('hidden');
+    $('timeDisplay').classList.remove('hidden');   // #75：经典流程保留日期时间
     $('nextBtn').textContent = '下一步';
     $('modeLink').textContent = '想要精准计时？开始计时';
     $('modeLink').classList.remove('hidden');
@@ -2204,6 +2275,7 @@ function setupNowStep() {
     $('customSeg').classList.remove('active');
     $('pickerRow').classList.add('hidden');
     $('timerBox').classList.remove('hidden');
+    $('timeDisplay').classList.add('hidden');   // #75：就现在计时态不显示日期时间（更简洁紧凑）
     $('nextBtn').textContent = '开始记录';
     $('modeLink').textContent = '不想计时？直接填写';
     $('modeLink').classList.remove('hidden');
@@ -2215,6 +2287,7 @@ function setupNowStep() {
 function showClassicStep1() {
   $('timeSegRow').classList.remove('hidden');
   $('timerBox').classList.add('hidden');
+  $('timeDisplay').classList.remove('hidden');   // #75：经典流程（补记/编辑）显示日期时间
   $('modeLink').classList.add('hidden');
   $('nextBtn').textContent = '下一步';
 }
@@ -2225,6 +2298,7 @@ $('modeLink').addEventListener('click', () => {
   if (loadRecordMode() === 'quick') {
     $('timeSegRow').classList.remove('hidden');
     $('timerBox').classList.remove('hidden');
+    $('timeDisplay').classList.add('hidden');   // #75：切回计时器态隐藏日期时间
     $('nextBtn').textContent = '开始记录';
     $('modeLink').textContent = '不想计时？直接填写';
     $('timerDisplay').textContent = '00:00';
@@ -2434,6 +2508,7 @@ records = Storage.loadRecords();
 // 密钥回显由 initAIUI 按 active 提供商负责（#43 per-provider），这里保持配置同步
 syncActiveConfig();
 initTheme();                       // 深色模式初始化（head 内联脚本已做初值，这里同步 UI）
+initLiquidGlass();                 // #72：液态玻璃实验开关同步 UI（head 内联脚本已应用类）
 initReminderUI();                  // 提醒设置回显（#13）
 initRecordModeUI();                // #51：记录方式偏好回显
 applyReminderSchedule(loadReminder());   // 重启后恢复/更新调度（幂等）
